@@ -1,0 +1,12 @@
+[package]
+name = "can-messages"
+version = "0.1.0"
+authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
+edition = "2018"
+
+[dependencies]
+bitsh = { git = "https://github.com/bitbleep/bitsh/" }
+
+[features]
+default = ["debug"]
+debug = []

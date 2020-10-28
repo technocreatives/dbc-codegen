@@ -1,0 +1,25 @@
+# Testing
+
+## Generating code from DBC files
+
+The `./generate_example_code.sh foo.dbc` script will use dbc-codegen to generate Rust code
+from a given DBC file in `./dbc-examples` (`example.dbc` when no file is given).
+
+IMPORTANT: The `rust-itegration` crate uses the generated code!
+
+## Generate test data using nodejs and socketcan
+
+This small tool can be used to create test data for CAN messages.
+Since we have successfully used NodeJS with socketcan to connect CAN devices,
+we chose this known-working solution to compare our Rust tooling against.
+
+## Setup
+
+NOTE: This is only known to work on Linux.
+
+- Run `sudo ./setup_virtual_can.sh`
+- Launch `candump vcan0 -L` in a seperate terminal window
+- In `node-socketcan`, edit `main.js` to your liking and run `node main.js --def=../dbc-examples/example.kcd`
+
+`candump` will output lines like `(1603881557.238509) vcan0 200#0594000000000000`.
+These can be used as test cases in the `rust-itegration` crate.

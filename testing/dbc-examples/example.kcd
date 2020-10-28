@@ -1,0 +1,50 @@
+<NetworkDefinition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://kayak.2codeornot2code.org/1.0" xsi:schemaLocation="Definition.xsd">
+  <Document name="Some Document Name">some text</Document>
+  <Node name="Lorem" id="1"/>
+  <Node name="Ipsum" id="2"/>
+  <Node name="Dolor" id="3"/>
+  <Bus name="Example">
+    <Message id="0x100" name="Foo" length="4">
+      <Notes></Notes>
+      <Producer>
+        <NodeRef id="1"/>
+      </Producer>
+      <Signal name="Voltage" offset="16" length="16">
+        <Value slope="0.000976562" max="63.9990234375" unit="V"/>
+      </Signal>
+      <Signal name="Current" offset="0" length="16">
+        <Value type="signed" slope="0.0625" min="-2048" max="2047.9375" unit="A"/>
+      </Signal>
+    </Message>
+    <Message id="0x200" name="Bar" length="8">
+      <Notes></Notes>
+      <Producer>
+        <NodeRef id="2"/>
+      </Producer>
+      <Signal name="One" offset="8" length="2" endianess="big">
+        <Consumer>
+          <NodeRef id="3"/>
+        </Consumer>
+        <Value max="3"/>
+      </Signal>
+      <Signal name="Two" offset="0" length="8" endianess="big">
+        <Consumer>
+          <NodeRef id="3"/>
+        </Consumer>
+        <Value slope="0.39" max="100" unit="%"/>
+      </Signal>
+      <Signal name="Three" offset="10" length="3" endianess="big">
+        <Consumer>
+          <NodeRef id="3"/>
+        </Consumer>
+        <Value max="7"/>
+      </Signal>
+      <Signal name="Four" offset="13" length="2" endianess="big">
+        <Consumer>
+          <NodeRef id="3"/>
+        </Consumer>
+        <Value max="3"/>
+      </Signal>
+    </Message>
+  </Bus>
+</NetworkDefinition>

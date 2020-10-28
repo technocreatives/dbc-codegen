@@ -1,0 +1,9 @@
+[package]
+name = "read_candump"
+version = "0.1.0"
+authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
+edition = "2018"
+
+[dependencies]
+approx = "0.4"
+can-messages = { path = "../can-messages", features = ["debug"] }

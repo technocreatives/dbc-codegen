@@ -1,0 +1,16 @@
+{
+  "name": "can-test",
+  "version": "0.1.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pascal Hertleif <pascal@technocreatives.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^14.14.3",
+    "minimist": "^1.2.5",
+    "socketcan": "^2.8.0"
+  }
+}
