@@ -1,5 +1,5 @@
 use anyhow::{anyhow, ensure, Context, Result};
-use can_dbc::{Message, MessageId, Signal, DBC};
+use can_dbc::{Message, Signal, ValDescription, ValueDescription, DBC};
 use heck::{CamelCase, SnakeCase};
 use pad::PadAdapter;
 use std::{fs::File, io::BufWriter, io::Write, path::PathBuf};
@@ -10,8 +10,13 @@ mod pad;
 
 #[derive(Debug, StructOpt)]
 struct Cli {
+    /// Path to a `.dbc` file
     dbc_path: PathBuf,
+    /// Target directory to write Rust source file(s) to
     out_path: PathBuf,
+    /// Enable debug printing
+    #[structopt(long)]
+    debug: bool,
 }
 
 fn main() -> Result<()> {
@@ -20,6 +25,9 @@ fn main() -> Result<()> {
         .with_context(|| format!("could not read `{}`", args.dbc_path.display()))?;
     let dbc = can_dbc::DBC::from_slice(&dbc)
         .map_err(|e| anyhow!("Could not parse dbc file: {:#?}", e))?;
+    if args.debug {
+        eprintln!("{:#?}", dbc);
+    }
 
     ensure!(
         args.out_path.is_dir(),
@@ -53,7 +61,7 @@ fn main() -> Result<()> {
     writeln!(&mut w, "use bitsh::Pack;")?;
     writeln!(&mut w)?;
 
-    render_dbc(&dbc, &mut w).context("could not generate Rust code")?;
+    render_dbc(&mut w, &dbc).context("could not generate Rust code")?;
 
     writeln!(&mut w)?;
     writeln!(&mut w, "/// This is just to make testing easier")?;
@@ -65,11 +73,11 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn render_dbc(dbc: &DBC, mut w: impl Write) -> Result<()> {
-    render_root_enum(dbc, &mut w)?;
+fn render_dbc(mut w: impl Write, dbc: &DBC) -> Result<()> {
+    render_root_enum(&mut w, dbc)?;
 
     for msg in dbc.messages() {
-        render_message(msg, &mut w, dbc)
+        render_message(&mut w, msg, dbc)
             .with_context(|| format!("write message `{}`", msg.message_name()))?;
         writeln!(w)?;
     }
@@ -77,7 +85,7 @@ fn render_dbc(dbc: &DBC, mut w: impl Write) -> Result<()> {
     Ok(())
 }
 
-fn render_root_enum(dbc: &DBC, mut w: impl Write) -> Result<()> {
+fn render_root_enum(mut w: impl Write, dbc: &DBC) -> Result<()> {
     writeln!(w, "/// All messages")?;
     writeln!(w, "#[derive(Clone)]")?;
     writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
@@ -130,7 +138,7 @@ fn render_root_enum(dbc: &DBC, mut w: impl Write) -> Result<()> {
     Ok(())
 }
 
-fn render_message(msg: &Message, mut w: impl Write, dbc: &DBC) -> Result<()> {
+fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
     writeln!(w, "/// {}", msg.message_name())?;
     writeln!(w, "///")?;
     writeln!(w, "/// - ID: {0} (0x{0:x})", msg.message_id().0)?;
@@ -202,7 +210,7 @@ fn render_message(msg: &Message, mut w: impl Write, dbc: &DBC) -> Result<()> {
         writeln!(w)?;
 
         for signal in msg.signals().iter() {
-            render_signal(signal, &mut w, dbc, msg)
+            render_signal(&mut w, signal, dbc, msg)
                 .with_context(|| format!("write signal impl `{}`", signal.name()))?;
         }
     }
@@ -240,14 +248,33 @@ fn render_message(msg: &Message, mut w: impl Write, dbc: &DBC) -> Result<()> {
         }
         writeln!(&mut w, "}}")?;
     }
-
     writeln!(w, "}}")?;
     writeln!(w)?;
+
+    let enums_for_this_message = dbc.value_descriptions().iter().filter_map(|x| {
+        if let ValueDescription::Signal {
+            message_id,
+            signal_name,
+            value_descriptions,
+        } = x
+        {
+            if message_id != msg.message_id() {
+                return None;
+            }
+            let signal = dbc.signal_by_name(*message_id, signal_name).unwrap();
+            Some((signal, value_descriptions))
+        } else {
+            None
+        }
+    });
+    for (signal, variants) in enums_for_this_message {
+        write_enum(&mut w, signal, msg, variants.as_slice())?;
+    }
 
     Ok(())
 }
 
-fn render_signal(signal: &Signal, mut w: impl Write, dbc: &DBC, msg: &Message) -> Result<()> {
+fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -> Result<()> {
     writeln!(w, "/// {}", signal.name())?;
     if let Some(comment) = dbc.signal_comment(*msg.message_id(), &signal.name()) {
         writeln!(w, "///")?;
@@ -255,28 +282,74 @@ fn render_signal(signal: &Signal, mut w: impl Write, dbc: &DBC, msg: &Message) -
             writeln!(w, "/// {}", line)?;
         }
     }
+    writeln!(w, "///")?;
+    writeln!(w, "/// - Min: {}", signal.min)?;
+    writeln!(w, "/// - Max: {}", signal.max)?;
+    writeln!(w, "/// - Unit: {:?}", signal.unit())?;
+    writeln!(w, "/// - Receivers: {}", signal.receivers().join(", "))?;
+    writeln!(w, "#[inline(always)]")?;
+    if let Some(variants) = dbc.value_descriptions_for_signal(*msg.message_id(), signal.name()) {
+        let type_name = enum_name(msg, signal);
+        let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
+            "bool" => |x: f64| format!("{}", (x as i64) == 1),
+            "f64" => |x: f64| format!("{}", x),
+            _ => |x: f64| format!("{}", x as i64),
+        };
 
+        writeln!(
+            w,
+            "pub fn {}(&self) -> {} {{",
+            field_name(signal.name()),
+            type_name,
+        )?;
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            writeln!(&mut w, "match self.{}_raw() {{", field_name(signal.name()))?;
+            {
+                let mut w = PadAdapter::wrap(&mut w);
+                for variant in variants {
+                    let literal = match_on_raw_type(*variant.a());
+                    writeln!(&mut w, "{} => {}::{},", literal, type_name, variant.b())?;
+                }
+                writeln!(&mut w, "x => {}::Other(x),", type_name,)?;
+            }
+            writeln!(&mut w, "}}")?;
+        }
+        writeln!(&mut w, "}}")?;
+        writeln!(w)?;
+    } else {
+        writeln!(
+            w,
+            "pub fn {}(&self) -> {} {{",
+            field_name(signal.name()),
+            signal_to_rust_type(signal)
+        )?;
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            writeln!(&mut w, "self.{}_raw()", field_name(signal.name()))?;
+        }
+        writeln!(&mut w, "}}")?;
+        writeln!(w)?;
+    }
+
+    writeln!(w, "/// Get raw value of {}", signal.name())?;
     writeln!(w, "///")?;
     writeln!(w, "/// - Start bit: {}", signal.start_bit)?;
     writeln!(w, "/// - Signal size: {} bits", signal.signal_size)?;
     writeln!(w, "/// - Factor: {}", signal.factor)?;
     writeln!(w, "/// - Offset: {}", signal.offset)?;
-    writeln!(w, "/// - Min: {}", signal.min)?;
-    writeln!(w, "/// - Max: {}", signal.max)?;
     writeln!(w, "/// - Byte order: {:?}", signal.byte_order())?;
     writeln!(w, "/// - Value type: {:?}", signal.value_type())?;
-    writeln!(w, "/// - Unit: {:?}", signal.unit())?;
-    writeln!(w, "/// - Receivers: {}", signal.receivers().join(", "))?;
     writeln!(w, "#[inline(always)]")?;
     writeln!(
         w,
-        "pub fn {}(&self) -> {} {{",
+        "pub fn {}_raw(&self) -> {} {{",
         field_name(signal.name()),
         signal_to_rust_type(&signal)
     )?;
     {
         let mut w = PadAdapter::wrap(&mut w);
-        signal_from_payload(signal, &mut w)?;
+        signal_from_payload(&mut w, signal)?;
     }
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
@@ -291,7 +364,7 @@ fn render_signal(signal: &Signal, mut w: impl Write, dbc: &DBC, msg: &Message) -
     )?;
     {
         let mut w = PadAdapter::wrap(&mut w);
-        signal_to_payload(signal, &mut w)?;
+        signal_to_payload(&mut w, signal)?;
     }
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
@@ -299,7 +372,7 @@ fn render_signal(signal: &Signal, mut w: impl Write, dbc: &DBC, msg: &Message) -
     Ok(())
 }
 
-fn signal_from_payload(signal: &Signal, mut w: impl Write) -> Result<()> {
+fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
     let read_fn = match signal.byte_order() {
         can_dbc::ByteOrder::LittleEndian => format!(
             "{typ}::unpack_le_bits(&self.raw, {start}, {size})",
@@ -331,7 +404,7 @@ fn signal_from_payload(signal: &Signal, mut w: impl Write) -> Result<()> {
     Ok(())
 }
 
-fn signal_to_payload(signal: &Signal, mut w: impl Write) -> Result<()> {
+fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
     if signal.signal_size == 1 {
         // Map boolean to byte so we can pack it
         writeln!(&mut w, "let value = value as u8;")?;
@@ -361,6 +434,26 @@ fn signal_to_payload(signal: &Signal, mut w: impl Write) -> Result<()> {
     )?;
 
     writeln!(&mut w, "Ok(())")?;
+    Ok(())
+}
+
+fn write_enum(
+    mut w: impl Write,
+    signal: &Signal,
+    msg: &Message,
+    variants: &[ValDescription],
+) -> Result<()> {
+    writeln!(w, "/// Defined values for {}", signal.name())?;
+    writeln!(w, "#[derive(Clone, Copy)]")?;
+    writeln!(w, "pub enum {} {{", enum_name(msg, signal))?;
+    {
+        let mut w = PadAdapter::wrap(&mut w);
+        for variant in variants {
+            writeln!(w, "{},", variant.b())?;
+        }
+        writeln!(w, "Other({}),", signal_to_rust_type(signal))?;
+    }
+    writeln!(w, "}}")?;
     Ok(())
 }
 
@@ -396,14 +489,18 @@ fn signal_to_rust_type(signal: &Signal) -> String {
     }
 }
 
-pub fn type_name(x: &str) -> String {
+fn type_name(x: &str) -> String {
     x.to_camel_case()
 }
 
-pub fn field_name(x: &str) -> String {
+fn field_name(x: &str) -> String {
     x.to_snake_case()
 }
 
-pub fn to_enum_name(message_id: MessageId, signal_name: &str) -> String {
-    format!("{}{}", &signal_name.to_camel_case(), message_id.0)
+fn enum_name(msg: &Message, signal: &Signal) -> String {
+    format!(
+        "{}{}",
+        msg.message_name().to_camel_case(),
+        signal.name().to_camel_case()
+    )
 }

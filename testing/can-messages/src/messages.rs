@@ -57,18 +57,25 @@ impl Foo {
     
     /// Voltage
     ///
-    /// - Start bit: 16
-    /// - Signal size: 16 bits
-    /// - Factor: 0.000976562
-    /// - Offset: 0
     /// - Min: 0
     /// - Max: 63.9990234375
-    /// - Byte order: LittleEndian
-    /// - Value type: Unsigned
     /// - Unit: "V"
     /// - Receivers: Vector__XXX
     #[inline(always)]
     pub fn voltage(&self) -> f64 {
+        self.voltage_raw()
+    }
+    
+    /// Get raw value of Voltage
+    ///
+    /// - Start bit: 16
+    /// - Signal size: 16 bits
+    /// - Factor: 0.000976562
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn voltage_raw(&self) -> f64 {
         let signal = u16::unpack_le_bits(&self.raw, 16, 16);
         
         let factor = 0.000976562_f64;
@@ -91,18 +98,25 @@ impl Foo {
     
     /// Current
     ///
-    /// - Start bit: 0
-    /// - Signal size: 16 bits
-    /// - Factor: 0.0625
-    /// - Offset: 0
     /// - Min: -2048
     /// - Max: 2047.9375
-    /// - Byte order: LittleEndian
-    /// - Value type: Signed
     /// - Unit: "A"
     /// - Receivers: Vector__XXX
     #[inline(always)]
     pub fn current(&self) -> f64 {
+        self.current_raw()
+    }
+    
+    /// Get raw value of Current
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 16 bits
+    /// - Factor: 0.0625
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Signed
+    #[inline(always)]
+    pub fn current_raw(&self) -> f64 {
         let signal = i16::unpack_le_bits(&self.raw, 0, 16);
         
         let factor = 0.0625_f64;
@@ -164,18 +178,25 @@ impl Bar {
     
     /// One
     ///
-    /// - Start bit: 15
-    /// - Signal size: 2 bits
-    /// - Factor: 1
-    /// - Offset: 0
     /// - Min: 0
     /// - Max: 3
-    /// - Byte order: BigEndian
-    /// - Value type: Unsigned
     /// - Unit: ""
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn one(&self) -> u8 {
+        self.one_raw()
+    }
+    
+    /// Get raw value of One
+    ///
+    /// - Start bit: 15
+    /// - Signal size: 2 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: BigEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn one_raw(&self) -> u8 {
         let signal = u8::unpack_be_bits(&self.raw, (15 - (2 - 1)), 2);
         
         signal
@@ -192,18 +213,25 @@ impl Bar {
     
     /// Two
     ///
-    /// - Start bit: 7
-    /// - Signal size: 8 bits
-    /// - Factor: 0.39
-    /// - Offset: 0
     /// - Min: 0
     /// - Max: 100
-    /// - Byte order: BigEndian
-    /// - Value type: Unsigned
     /// - Unit: "%"
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn two(&self) -> f64 {
+        self.two_raw()
+    }
+    
+    /// Get raw value of Two
+    ///
+    /// - Start bit: 7
+    /// - Signal size: 8 bits
+    /// - Factor: 0.39
+    /// - Offset: 0
+    /// - Byte order: BigEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn two_raw(&self) -> f64 {
         let signal = u8::unpack_be_bits(&self.raw, (7 - (8 - 1)), 8);
         
         let factor = 0.39_f64;
@@ -226,18 +254,25 @@ impl Bar {
     
     /// Three
     ///
-    /// - Start bit: 13
-    /// - Signal size: 3 bits
-    /// - Factor: 1
-    /// - Offset: 0
     /// - Min: 0
     /// - Max: 7
-    /// - Byte order: BigEndian
-    /// - Value type: Unsigned
     /// - Unit: ""
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn three(&self) -> u8 {
+        self.three_raw()
+    }
+    
+    /// Get raw value of Three
+    ///
+    /// - Start bit: 13
+    /// - Signal size: 3 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: BigEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn three_raw(&self) -> u8 {
         let signal = u8::unpack_be_bits(&self.raw, (13 - (3 - 1)), 3);
         
         signal
@@ -254,18 +289,31 @@ impl Bar {
     
     /// Four
     ///
+    /// - Min: 0
+    /// - Max: 3
+    /// - Unit: ""
+    /// - Receivers: Dolor
+    #[inline(always)]
+    pub fn four(&self) -> BarFour {
+        match self.four_raw() {
+            0 => BarFour::Off,
+            1 => BarFour::On,
+            2 => BarFour::Oner,
+            3 => BarFour::Onest,
+            x => BarFour::Other(x),
+        }
+    }
+    
+    /// Get raw value of Four
+    ///
     /// - Start bit: 10
     /// - Signal size: 2 bits
     /// - Factor: 1
     /// - Offset: 0
-    /// - Min: 0
-    /// - Max: 3
     /// - Byte order: BigEndian
     /// - Value type: Unsigned
-    /// - Unit: ""
-    /// - Receivers: Dolor
     #[inline(always)]
-    pub fn four(&self) -> u8 {
+    pub fn four_raw(&self) -> u8 {
         let signal = u8::unpack_be_bits(&self.raw, (10 - (2 - 1)), 2);
         
         signal
@@ -294,6 +342,15 @@ impl core::convert::TryFrom<&[u8]> for Bar {
     }
 }
 
+/// Defined values for Four
+#[derive(Clone, Copy)]
+pub enum BarFour {
+    Off,
+    On,
+    Oner,
+    Onest,
+    Other(u8),
+}
 
 
 /// This is just to make testing easier
