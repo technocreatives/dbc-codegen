@@ -44,6 +44,12 @@
           <NodeRef id="3"/>
         </Consumer>
         <Value max="3"/>
+        <LabelSet>
+          <Label name="Off" value="0"/>
+          <Label name="On" value="1"/>
+          <Label name="Oner" value="2"/>
+          <Label name="Onest" value="3"/>
+        </LabelSet>
       </Signal>
     </Message>
   </Bus>
