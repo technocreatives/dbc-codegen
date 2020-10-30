@@ -445,6 +445,7 @@ fn write_enum(
 ) -> Result<()> {
     writeln!(w, "/// Defined values for {}", signal.name())?;
     writeln!(w, "#[derive(Clone, Copy)]")?;
+    writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
     writeln!(w, "pub enum {} {{", enum_name(msg, signal))?;
     {
         let mut w = PadAdapter::wrap(&mut w);
