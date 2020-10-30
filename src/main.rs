@@ -341,7 +341,7 @@ fn signal_to_payload(signal: &Signal, mut w: impl Write) -> Result<()> {
         writeln!(&mut w, "let offset = {}_f64;", signal.offset)?;
         writeln!(
             &mut w,
-            "let value = ((value  - offset) / factor) as {};",
+            "let value = ((value - offset) / factor) as {};",
             signal_to_rust_int(signal)
         )?;
         writeln!(&mut w)?;
