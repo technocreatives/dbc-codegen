@@ -344,6 +344,7 @@ impl core::convert::TryFrom<&[u8]> for Bar {
 
 /// Defined values for Four
 #[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
 pub enum BarFour {
     Off,
     On,
