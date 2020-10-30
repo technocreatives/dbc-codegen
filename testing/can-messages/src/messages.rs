@@ -23,7 +23,7 @@ impl Messages {
     #[inline(never)]
     pub fn from_can_message(id: u32, payload: &[u8]) -> Result<Self, CanError> {
         use core::convert::TryFrom;
-        
+
         let res = match id {
             256 => Messages::Foo(Foo::try_from(payload)?),
             512 => Messages::Bar(Bar::try_from(payload)?),
@@ -46,7 +46,7 @@ pub struct Foo {
 
 impl Foo {
     pub const MESSAGE_ID: u32 = 256;
-    
+
     /// Construct new Foo from values
     pub fn new(voltage: f64, current: f64) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 4] };
@@ -54,7 +54,7 @@ impl Foo {
         res.set_current(current)?;
         Ok(res)
     }
-    
+
     /// Voltage
     ///
     /// - Min: 0
@@ -65,7 +65,7 @@ impl Foo {
     pub fn voltage(&self) -> f64 {
         self.voltage_raw()
     }
-    
+
     /// Get raw value of Voltage
     ///
     /// - Start bit: 16
@@ -77,25 +77,25 @@ impl Foo {
     #[inline(always)]
     pub fn voltage_raw(&self) -> f64 {
         let signal = u16::unpack_le_bits(&self.raw, 16, 16);
-        
+
         let factor = 0.000976562_f64;
         let offset = 0_f64;
         (signal as f64) * factor + offset
     }
-    
+
     /// Set value of Voltage
     #[inline(always)]
     pub fn set_voltage(&mut self, value: f64) -> Result<(), CanError> {
         let factor = 0.000976562_f64;
         let offset = 0_f64;
         let value = ((value - offset) / factor) as u16;
-        
+
         let start_bit = 16;
         let bits = 16;
         value.pack_le_bits(&mut self.raw, start_bit, bits);
         Ok(())
     }
-    
+
     /// Current
     ///
     /// - Min: -2048
@@ -106,7 +106,7 @@ impl Foo {
     pub fn current(&self) -> f64 {
         self.current_raw()
     }
-    
+
     /// Get raw value of Current
     ///
     /// - Start bit: 0
@@ -118,39 +118,39 @@ impl Foo {
     #[inline(always)]
     pub fn current_raw(&self) -> f64 {
         let signal = i16::unpack_le_bits(&self.raw, 0, 16);
-        
+
         let factor = 0.0625_f64;
         let offset = 0_f64;
         (signal as f64) * factor + offset
     }
-    
+
     /// Set value of Current
     #[inline(always)]
     pub fn set_current(&mut self, value: f64) -> Result<(), CanError> {
         let factor = 0.0625_f64;
         let offset = 0_f64;
         let value = ((value - offset) / factor) as i16;
-        
+
         let start_bit = 0;
         let bits = 16;
         value.pack_le_bits(&mut self.raw, start_bit, bits);
         Ok(())
     }
-    
 }
 
 impl core::convert::TryFrom<&[u8]> for Foo {
     type Error = CanError;
-    
+
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 4 { return Err(CanError::InvalidPayloadSize); }
+        if payload.len() != 4 {
+            return Err(CanError::InvalidPayloadSize);
+        }
         let mut raw = [0u8; 4];
         raw.copy_from_slice(&payload[..4]);
         Ok(Self { raw })
     }
 }
-
 
 /// Bar
 ///
@@ -165,7 +165,7 @@ pub struct Bar {
 
 impl Bar {
     pub const MESSAGE_ID: u32 = 512;
-    
+
     /// Construct new Bar from values
     pub fn new(one: u8, two: f64, three: u8, four: u8) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
@@ -175,7 +175,7 @@ impl Bar {
         res.set_four(four)?;
         Ok(res)
     }
-    
+
     /// One
     ///
     /// - Min: 0
@@ -186,7 +186,7 @@ impl Bar {
     pub fn one(&self) -> u8 {
         self.one_raw()
     }
-    
+
     /// Get raw value of One
     ///
     /// - Start bit: 15
@@ -198,10 +198,10 @@ impl Bar {
     #[inline(always)]
     pub fn one_raw(&self) -> u8 {
         let signal = u8::unpack_be_bits(&self.raw, (15 - (2 - 1)), 2);
-        
+
         signal
     }
-    
+
     /// Set value of One
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
@@ -210,7 +210,7 @@ impl Bar {
         value.pack_be_bits(&mut self.raw, start_bit, bits);
         Ok(())
     }
-    
+
     /// Two
     ///
     /// - Min: 0
@@ -221,7 +221,7 @@ impl Bar {
     pub fn two(&self) -> f64 {
         self.two_raw()
     }
-    
+
     /// Get raw value of Two
     ///
     /// - Start bit: 7
@@ -233,25 +233,25 @@ impl Bar {
     #[inline(always)]
     pub fn two_raw(&self) -> f64 {
         let signal = u8::unpack_be_bits(&self.raw, (7 - (8 - 1)), 8);
-        
+
         let factor = 0.39_f64;
         let offset = 0_f64;
         (signal as f64) * factor + offset
     }
-    
+
     /// Set value of Two
     #[inline(always)]
     pub fn set_two(&mut self, value: f64) -> Result<(), CanError> {
         let factor = 0.39_f64;
         let offset = 0_f64;
         let value = ((value - offset) / factor) as u8;
-        
+
         let start_bit = 7;
         let bits = 8;
         value.pack_be_bits(&mut self.raw, start_bit, bits);
         Ok(())
     }
-    
+
     /// Three
     ///
     /// - Min: 0
@@ -262,7 +262,7 @@ impl Bar {
     pub fn three(&self) -> u8 {
         self.three_raw()
     }
-    
+
     /// Get raw value of Three
     ///
     /// - Start bit: 13
@@ -274,10 +274,10 @@ impl Bar {
     #[inline(always)]
     pub fn three_raw(&self) -> u8 {
         let signal = u8::unpack_be_bits(&self.raw, (13 - (3 - 1)), 3);
-        
+
         signal
     }
-    
+
     /// Set value of Three
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
@@ -286,7 +286,7 @@ impl Bar {
         value.pack_be_bits(&mut self.raw, start_bit, bits);
         Ok(())
     }
-    
+
     /// Four
     ///
     /// - Min: 0
@@ -303,7 +303,7 @@ impl Bar {
             x => BarFour::Other(x),
         }
     }
-    
+
     /// Get raw value of Four
     ///
     /// - Start bit: 10
@@ -315,10 +315,10 @@ impl Bar {
     #[inline(always)]
     pub fn four_raw(&self) -> u8 {
         let signal = u8::unpack_be_bits(&self.raw, (10 - (2 - 1)), 2);
-        
+
         signal
     }
-    
+
     /// Set value of Four
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
@@ -327,15 +327,16 @@ impl Bar {
         value.pack_be_bits(&mut self.raw, start_bit, bits);
         Ok(())
     }
-    
 }
 
 impl core::convert::TryFrom<&[u8]> for Bar {
     type Error = CanError;
-    
+
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 8 { return Err(CanError::InvalidPayloadSize); }
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
         let mut raw = [0u8; 8];
         raw.copy_from_slice(&payload[..8]);
         Ok(Self { raw })
@@ -353,7 +354,6 @@ pub enum BarFour {
     Other(u8),
 }
 
-
 /// This is just to make testing easier
 fn main() {}
 
@@ -363,4 +363,3 @@ pub enum CanError {
     UnknownMessageId(u32),
     InvalidPayloadSize,
 }
-

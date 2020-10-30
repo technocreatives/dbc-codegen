@@ -27,7 +27,7 @@ fn weirdly_aligned_bigendian_message_1() {
     assert_eq!(msg.one(), 2);
     assert_f64_eq(msg.two(), 2_f64);
     assert_eq!(msg.three(), 2);
-    assert_eq!(msg.four(), 2);
+    assert!(matches!(msg.four(), messages::BarFour::Oner));
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn weirdly_aligned_bigendian_message_2() {
     assert_eq!(msg.one(), 1);
     assert_f64_eq(msg.two(), 2_f64);
     assert_eq!(msg.three(), 3);
-    assert_eq!(msg.four(), 1);
+    assert!(matches!(msg.four(), messages::BarFour::On));
 }
 
 fn parse_canframe(candump_line: &str) -> (u32, Vec<u8>) {
