@@ -292,7 +292,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         let type_name = enum_name(msg, signal);
         let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
             "bool" => |x: f64| format!("{}", (x as i64) == 1),
-            "f64" => |x: f64| format!("{}", x),
+            "f32" => |x: f64| format!("{}", x),
             _ => |x: f64| format!("{}", x as i64),
         };
 
@@ -395,9 +395,9 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         writeln!(&mut w, "signal == 1")?;
     } else if signal_is_float_in_rust(signal) {
         // Scaling is always done on floats
-        writeln!(&mut w, "let factor = {}_f64;", signal.factor)?;
-        writeln!(&mut w, "let offset = {}_f64;", signal.offset)?;
-        writeln!(&mut w, "(signal as f64) * factor + offset")?;
+        writeln!(&mut w, "let factor = {}_f32;", signal.factor)?;
+        writeln!(&mut w, "let offset = {}_f32;", signal.offset)?;
+        writeln!(&mut w, "(signal as f32) * factor + offset")?;
     } else {
         writeln!(&mut w, "signal")?;
     }
@@ -410,8 +410,8 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         writeln!(&mut w, "let value = value as u8;")?;
     } else if signal_is_float_in_rust(signal) {
         // Massage value into an int
-        writeln!(&mut w, "let factor = {}_f64;", signal.factor)?;
-        writeln!(&mut w, "let offset = {}_f64;", signal.offset)?;
+        writeln!(&mut w, "let factor = {}_f32;", signal.factor)?;
+        writeln!(&mut w, "let offset = {}_f32;", signal.offset)?;
         writeln!(
             &mut w,
             "let value = ((value - offset) / factor) as {};",
@@ -483,8 +483,8 @@ fn signal_to_rust_type(signal: &Signal) -> String {
     if signal.signal_size == 1 {
         String::from("bool")
     } else if signal_is_float_in_rust(signal) {
-        // If there is any scaling needed, go for double precision
-        String::from("f64")
+        // If there is any scaling needed, go for float
+        String::from("f32")
     } else {
         signal_to_rust_int(signal)
     }

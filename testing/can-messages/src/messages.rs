@@ -48,7 +48,7 @@ impl Foo {
     pub const MESSAGE_ID: u32 = 256;
 
     /// Construct new Foo from values
-    pub fn new(voltage: f64, current: f64) -> Result<Self, CanError> {
+    pub fn new(voltage: f32, current: f32) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 4] };
         res.set_voltage(voltage)?;
         res.set_current(current)?;
@@ -62,7 +62,7 @@ impl Foo {
     /// - Unit: "V"
     /// - Receivers: Vector__XXX
     #[inline(always)]
-    pub fn voltage(&self) -> f64 {
+    pub fn voltage(&self) -> f32 {
         self.voltage_raw()
     }
 
@@ -75,19 +75,19 @@ impl Foo {
     /// - Byte order: LittleEndian
     /// - Value type: Unsigned
     #[inline(always)]
-    pub fn voltage_raw(&self) -> f64 {
+    pub fn voltage_raw(&self) -> f32 {
         let signal = u16::unpack_le_bits(&self.raw, 16, 16);
 
-        let factor = 0.000976562_f64;
-        let offset = 0_f64;
-        (signal as f64) * factor + offset
+        let factor = 0.000976562_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
     }
 
     /// Set value of Voltage
     #[inline(always)]
-    pub fn set_voltage(&mut self, value: f64) -> Result<(), CanError> {
-        let factor = 0.000976562_f64;
-        let offset = 0_f64;
+    pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
+        let factor = 0.000976562_f32;
+        let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
 
         let start_bit = 16;
@@ -103,7 +103,7 @@ impl Foo {
     /// - Unit: "A"
     /// - Receivers: Vector__XXX
     #[inline(always)]
-    pub fn current(&self) -> f64 {
+    pub fn current(&self) -> f32 {
         self.current_raw()
     }
 
@@ -116,19 +116,19 @@ impl Foo {
     /// - Byte order: LittleEndian
     /// - Value type: Signed
     #[inline(always)]
-    pub fn current_raw(&self) -> f64 {
+    pub fn current_raw(&self) -> f32 {
         let signal = i16::unpack_le_bits(&self.raw, 0, 16);
 
-        let factor = 0.0625_f64;
-        let offset = 0_f64;
-        (signal as f64) * factor + offset
+        let factor = 0.0625_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
     }
 
     /// Set value of Current
     #[inline(always)]
-    pub fn set_current(&mut self, value: f64) -> Result<(), CanError> {
-        let factor = 0.0625_f64;
-        let offset = 0_f64;
+    pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
+        let factor = 0.0625_f32;
+        let offset = 0_f32;
         let value = ((value - offset) / factor) as i16;
 
         let start_bit = 0;
@@ -167,7 +167,7 @@ impl Bar {
     pub const MESSAGE_ID: u32 = 512;
 
     /// Construct new Bar from values
-    pub fn new(one: u8, two: f64, three: u8, four: u8) -> Result<Self, CanError> {
+    pub fn new(one: u8, two: f32, three: u8, four: u8) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_one(one)?;
         res.set_two(two)?;
@@ -218,7 +218,7 @@ impl Bar {
     /// - Unit: "%"
     /// - Receivers: Dolor
     #[inline(always)]
-    pub fn two(&self) -> f64 {
+    pub fn two(&self) -> f32 {
         self.two_raw()
     }
 
@@ -231,19 +231,19 @@ impl Bar {
     /// - Byte order: BigEndian
     /// - Value type: Unsigned
     #[inline(always)]
-    pub fn two_raw(&self) -> f64 {
+    pub fn two_raw(&self) -> f32 {
         let signal = u8::unpack_be_bits(&self.raw, (7 - (8 - 1)), 8);
 
-        let factor = 0.39_f64;
-        let offset = 0_f64;
-        (signal as f64) * factor + offset
+        let factor = 0.39_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
     }
 
     /// Set value of Two
     #[inline(always)]
-    pub fn set_two(&mut self, value: f64) -> Result<(), CanError> {
-        let factor = 0.39_f64;
-        let offset = 0_f64;
+    pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
+        let factor = 0.39_f32;
+        let offset = 0_f32;
         let value = ((value - offset) / factor) as u8;
 
         let start_bit = 7;
