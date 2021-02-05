@@ -26,7 +26,7 @@ fn weirdly_aligned_bigendian_message_1() {
 
     assert_eq!(msg.one(), 2);
     assert_f32_eq(msg.two(), 2_f32);
-    assert_eq!(msg.three(), 2);
+    assert!(matches!(msg.three(), messages::BarThree::Oner));
     assert!(matches!(msg.four(), messages::BarFour::Oner));
 }
 
@@ -37,7 +37,7 @@ fn weirdly_aligned_bigendian_message_2() {
 
     assert_eq!(msg.one(), 1);
     assert_f32_eq(msg.two(), 2_f32);
-    assert_eq!(msg.three(), 3);
+    assert!(matches!(msg.three(), messages::BarThree::Onest));
     assert!(matches!(msg.four(), messages::BarFour::On));
 }
 
