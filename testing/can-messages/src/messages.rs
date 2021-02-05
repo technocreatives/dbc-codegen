@@ -259,8 +259,14 @@ impl Bar {
     /// - Unit: ""
     /// - Receivers: Dolor
     #[inline(always)]
-    pub fn three(&self) -> u8 {
-        self.three_raw()
+    pub fn three(&self) -> BarThree {
+        match self.three_raw() {
+            0 => BarThree::Off,
+            1 => BarThree::On,
+            2 => BarThree::Oner,
+            3 => BarThree::Onest,
+            x => BarThree::Other(x),
+        }
     }
 
     /// Get raw value of Three
@@ -343,6 +349,16 @@ impl core::convert::TryFrom<&[u8]> for Bar {
     }
 }
 
+/// Defined values for Three
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum BarThree {
+    Off,
+    On,
+    Oner,
+    Onest,
+    Other(u8),
+}
 /// Defined values for Four
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
