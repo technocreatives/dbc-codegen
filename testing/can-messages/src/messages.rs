@@ -15,6 +15,7 @@
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitvec::prelude::{BitField, BitView, Lsb0, Msb0};
+use float_cmp::approx_eq;
 
 /// All messages
 #[derive(Clone)]
@@ -779,7 +780,7 @@ impl Dolor {
     pub const MESSAGE_ID: u32 = 1028;
 
     /// Construct new Dolor from values
-    pub fn new(one_float: u16) -> Result<Self, CanError> {
+    pub fn new(one_float: f32) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_one_float(one_float)?;
         Ok(res)
@@ -797,32 +798,41 @@ impl Dolor {
     /// - Unit: ""
     /// - Receivers: Vector__XXX
     #[inline(always)]
-    pub fn one_float(&self) -> u16 {
-        self.one_float_raw()
+    pub fn one_float(&self) -> DolorOneFloat {
+        match self.one_float_raw() {
+            x if approx_eq!(f32, x, 3_f32, ulps = 2) => DolorOneFloat::Dolor,
+            x => DolorOneFloat::Other(x),
+        }
     }
 
     /// Get raw value of OneFloat
     ///
     /// - Start bit: 0
     /// - Signal size: 12 bits
-    /// - Factor: 1
+    /// - Factor: 0.5
     /// - Offset: 0
     /// - Byte order: BigEndian
     /// - Value type: Unsigned
     #[inline(always)]
-    pub fn one_float_raw(&self) -> u16 {
+    pub fn one_float_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<Msb0>()[7..19].load_be::<u16>();
 
-        signal
+        let factor = 0.5_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
     }
 
     /// Set value of OneFloat
     #[inline(always)]
-    pub fn set_one_float(&mut self, value: u16) -> Result<(), CanError> {
+    pub fn set_one_float(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
-        if value < 0_u16 || 130_u16 < value {
+        if value < 0_f32 || 130_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1028 });
         }
+        let factor = 0.5_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
         self.raw.view_bits_mut::<Msb0>()[7..19].store_be(value);
         Ok(())
     }
@@ -858,9 +868,16 @@ impl core::fmt::Debug for Dolor {
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Dolor {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
-        let one_float = u.int_in_range(0..=130)?;
+        let one_float = u.float_in_range(0_f32..=130_f32)?;
         Dolor::new(one_float).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
+}
+/// Defined values for OneFloat
+#[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum DolorOneFloat {
+    Dolor,
+    Other(f32),
 }
 
 /// This is just to make testing easier

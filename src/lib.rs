@@ -51,6 +51,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
         &mut w,
         "use bitvec::prelude::{{BitField, BitView, Lsb0, Msb0}};"
     )?;
+    writeln!(&mut w, "use float_cmp::approx_eq;")?;
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
     writeln!(&mut w)?;
@@ -300,8 +301,8 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         let type_name = enum_name(msg, signal);
         let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
             "bool" => |x: f64| format!("{}", (x as i64) == 1),
-            "f32" => |x: f64| format!("{}", x),
-            _ => |x: f64| format!("{}", x as i64),
+            "f32" => |x: f64| format!("x if approx_eq!(f32, x, {}_f32, ulps = 2)", x),
+            _ => |x: f64| format!("{}", x),
         };
 
         writeln!(

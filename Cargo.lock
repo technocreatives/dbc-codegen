@@ -114,6 +114,7 @@ name = "can-embedded"
 version = "0.1.0"
 dependencies = [
  "bitvec",
+ "float-cmp",
 ]
 
 [[package]]
@@ -124,6 +125,7 @@ dependencies = [
  "arbitrary",
  "bitvec",
  "dbc-codegen",
+ "float-cmp",
 ]
 
 [[package]]
@@ -230,6 +232,15 @@ name = "exitcode"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de853764b47027c2e862a995c34978ffa63c1501f2e15f987ba11bd4f9bba193"
+
+[[package]]
+name = "float-cmp"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1267f4ac4f343772758f7b1bdcbe767c218bbab93bb432acbf5162bbf85a6c4"
+dependencies = [
+ "num-traits",
+]
 
 [[package]]
 name = "funty"

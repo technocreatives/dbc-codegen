@@ -51,8 +51,8 @@ fn pack_message_signed_positive() {
 
 #[test]
 fn pack_big_endian_signal_with_start_bit_zero() {
-    let dbc_codegen_bar = can_messages::Dolor::new(1).unwrap();
-    let one_float = unsafe { example_dolor_one_float_encode(1.0) };
+    let dbc_codegen_bar = can_messages::Dolor::new(0.5).unwrap();
+    let one_float = unsafe { example_dolor_one_float_encode(0.5) };
 
     let dolor = example_dolor_t { one_float };
     let mut buffer: [u8; 8] = [0; 8];
