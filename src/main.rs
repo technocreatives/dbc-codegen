@@ -444,7 +444,7 @@ fn write_enum(
     variants: &[ValDescription],
 ) -> Result<()> {
     writeln!(w, "/// Defined values for {}", signal.name())?;
-    writeln!(w, "#[derive(Clone, Copy)]")?;
+    writeln!(w, "#[derive(Clone, Copy, PartialEq)]")?;
     writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
     writeln!(w, "pub enum {} {{", enum_name(msg, signal))?;
     {
