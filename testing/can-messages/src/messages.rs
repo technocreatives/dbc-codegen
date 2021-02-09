@@ -55,6 +55,11 @@ impl Foo {
         Ok(res)
     }
 
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+
     /// Voltage
     ///
     /// - Min: 0
@@ -174,6 +179,11 @@ impl Bar {
         res.set_three(three)?;
         res.set_four(four)?;
         Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
     }
 
     /// One

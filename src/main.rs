@@ -209,6 +209,15 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         writeln!(&mut w, "}}")?;
         writeln!(w)?;
 
+        writeln!(&mut w, "/// Access message payload raw value")?;
+        writeln!(&mut w, "pub fn raw(&self) -> &[u8] {{")?;
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            writeln!(&mut w, "&self.raw")?;
+        }
+        writeln!(&mut w, "}}")?;
+        writeln!(w)?;
+
         for signal in msg.signals().iter() {
             render_signal(&mut w, signal, dbc, msg)
                 .with_context(|| format!("write signal impl `{}`", signal.name()))?;
