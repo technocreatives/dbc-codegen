@@ -5,9 +5,9 @@ pub enum CanError {
     /// Signal parameter is not within the range
     /// defined in the dbc
     ParameterOutOfRange {
-        /// Minimum value defined in DBC for signal
+        /// Minimum value defined in DBC
         min: f64,
-        /// Maximum value defined in DBC for signal
+        /// Maximum value defined in DBC
         max: f64,
     },
     InvalidPayloadSize,
