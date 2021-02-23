@@ -7,7 +7,7 @@ fn check_range_value_error() {
     let result = messages::Bar::new(1, 2.0, 3, 4);
     assert!(matches!(
         result,
-        Err(CanError::ParameterOutOfRange { min: 0.0, max: 3.0 })
+        Err(CanError::ParameterOutOfRange { message_id: 512 })
     ));
 }
 

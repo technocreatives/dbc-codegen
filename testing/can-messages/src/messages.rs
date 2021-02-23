@@ -93,10 +93,7 @@ impl Foo {
     pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 63.9990234375_f32 < value {
-            return Err(CanError::ParameterOutOfRange {
-                min: 0_f64,
-                max: 63.9990234375_f64,
-            });
+            return Err(CanError::ParameterOutOfRange { message_id: 256 });
         }
         let factor = 0.000976562_f32;
         let offset = 0_f32;
@@ -141,10 +138,7 @@ impl Foo {
     pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < -2048_f32 || 2047.9375_f32 < value {
-            return Err(CanError::ParameterOutOfRange {
-                min: -2048_f64,
-                max: 2047.9375_f64,
-            });
+            return Err(CanError::ParameterOutOfRange { message_id: 256 });
         }
         let factor = 0.0625_f32;
         let offset = 0_f32;
@@ -231,10 +225,7 @@ impl Bar {
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
-            return Err(CanError::ParameterOutOfRange {
-                min: 0_f64,
-                max: 3_f64,
-            });
+            return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         let start_bit = 15;
         let bits = 2;
@@ -275,10 +266,7 @@ impl Bar {
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 100_f32 < value {
-            return Err(CanError::ParameterOutOfRange {
-                min: 0_f64,
-                max: 100_f64,
-            });
+            return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         let factor = 0.39_f32;
         let offset = 0_f32;
@@ -327,10 +315,7 @@ impl Bar {
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value {
-            return Err(CanError::ParameterOutOfRange {
-                min: 0_f64,
-                max: 7_f64,
-            });
+            return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         let start_bit = 13;
         let bits = 3;
@@ -375,10 +360,7 @@ impl Bar {
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
-            return Err(CanError::ParameterOutOfRange {
-                min: 0_f64,
-                max: 3_f64,
-            });
+            return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         let start_bit = 10;
         let bits = 2;
@@ -432,10 +414,8 @@ pub enum CanError {
     /// Signal parameter is not within the range
     /// defined in the dbc
     ParameterOutOfRange {
-        /// Minimum value defined in DBC for signal
-        min: f64,
-        /// Maximum value defined in DBC for signal
-        max: f64,
+        /// dbc message id
+        message_id: u32,
     },
     InvalidPayloadSize,
 }
