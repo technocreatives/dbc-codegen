@@ -382,11 +382,10 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         writeln!(w, r##"#[cfg(feature = "range_checked")]"##)?;
         writeln!(
             w,
-            r##"assert!({}{} <= value && value <= {}{});"##,
-            signal.min(),
-            signal_to_rust_type(&signal),
-            signal.max(),
-            signal_to_rust_type(&signal)
+            r##"if value < {min}{typ} || {max}{typ} < value {{ return Err(CanError::ParameterOutOfRange{{ min: {min}f64 , max: {max}f64 }}); }}"##,
+            typ = signal_to_rust_type(&signal),
+            min = signal.min(),
+            max = signal.max(),
         )?;
         signal_to_payload(&mut w, signal)?;
     }
