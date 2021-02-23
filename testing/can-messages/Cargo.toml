@@ -10,3 +10,4 @@ bitsh = { git = "https://github.com/bitbleep/bitsh/" }
 [features]
 default = ["debug"]
 debug = []
+range_checked = []

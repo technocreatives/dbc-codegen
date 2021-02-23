@@ -91,6 +91,8 @@ impl Foo {
     /// Set value of Voltage
     #[inline(always)]
     pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        assert!(0f32 <= value && value <= 63.9990234375f32);
         let factor = 0.000976562_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
@@ -132,6 +134,8 @@ impl Foo {
     /// Set value of Current
     #[inline(always)]
     pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        assert!(-2048f32 <= value && value <= 2047.9375f32);
         let factor = 0.0625_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as i16;
@@ -215,6 +219,8 @@ impl Bar {
     /// Set value of One
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        assert!(0u8 <= value && value <= 3u8);
         let start_bit = 15;
         let bits = 2;
         value.pack_be_bits(&mut self.raw, start_bit, bits);
@@ -252,6 +258,8 @@ impl Bar {
     /// Set value of Two
     #[inline(always)]
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        assert!(0f32 <= value && value <= 100f32);
         let factor = 0.39_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u8;
@@ -297,6 +305,8 @@ impl Bar {
     /// Set value of Three
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        assert!(0u8 <= value && value <= 7u8);
         let start_bit = 13;
         let bits = 3;
         value.pack_be_bits(&mut self.raw, start_bit, bits);
@@ -338,6 +348,8 @@ impl Bar {
     /// Set value of Four
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        assert!(0u8 <= value && value <= 3u8);
         let start_bit = 10;
         let bits = 2;
         value.pack_be_bits(&mut self.raw, start_bit, bits);
@@ -360,7 +372,7 @@ impl core::convert::TryFrom<&[u8]> for Bar {
 }
 
 /// Defined values for Three
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum BarThree {
     Off,

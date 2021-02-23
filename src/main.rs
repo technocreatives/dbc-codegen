@@ -379,6 +379,15 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     )?;
     {
         let mut w = PadAdapter::wrap(&mut w);
+        writeln!(w, r##"#[cfg(feature = "range_checked")]"##)?;
+        writeln!(
+            w,
+            r##"assert!({}{} <= value && value <= {}{});"##,
+            signal.min(),
+            signal_to_rust_type(&signal),
+            signal.max(),
+            signal_to_rust_type(&signal)
+        )?;
         signal_to_payload(&mut w, signal)?;
     }
     writeln!(&mut w, "}}")?;
