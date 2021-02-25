@@ -59,7 +59,13 @@ fn main() -> Result<()> {
     writeln!(&mut w, "//!")?;
     writeln!(&mut w, "//! - Version: `{:?}`", dbc.version())?;
     writeln!(&mut w)?;
+    #[cfg(feature = "bitsh-backend")]
     writeln!(&mut w, "use bitsh::Pack;")?;
+    #[cfg(feature = "bitvec-backend")]
+    writeln!(
+        &mut w,
+        "use bitvec::prelude::{{BitField, BitStore, BitView, LocalBits}};"
+    )?;
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
     writeln!(&mut w)?;
@@ -405,6 +411,8 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
 }
 
 fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
+    let read_fn = String::new();
+    #[cfg(feature = "bitsh-backend")]
     let read_fn = match signal.byte_order() {
         can_dbc::ByteOrder::LittleEndian => format!(
             "{typ}::unpack_le_bits(&self.raw, {start}, {size})",
@@ -418,6 +426,23 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
             start = signal.start_bit,
             size = signal.signal_size,
         ),
+    };
+    #[cfg(feature = "bitvec-backend")]
+    let read_fn = match signal.byte_order() {
+        can_dbc::ByteOrder::LittleEndian => format!(
+            "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_le::<{typ}>()",
+            typ = signal_to_rust_uint(signal),
+            start = signal.start_bit,
+            end = signal.start_bit + signal.signal_size
+        ),
+        can_dbc::ByteOrder::BigEndian => {
+            format!(
+                "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_be::<{typ}>()",
+                typ = signal_to_rust_uint(signal),
+                start = signal.start_bit,
+                end = signal.start_bit + signal.signal_size
+            )
+        }
     };
 
     writeln!(&mut w, r#"let signal = {};"#, read_fn)?;
@@ -447,22 +472,31 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         writeln!(
             &mut w,
             "let value = ((value - offset) / factor) as {};",
-            signal_to_rust_int(signal)
+            signal_to_rust_uint(signal)
         )?;
         writeln!(&mut w)?;
     }
 
-    writeln!(&mut w, "let start_bit = {};", signal.start_bit)?;
-    writeln!(&mut w, "let bits = {};", signal.signal_size)?;
     let endianness = match signal.byte_order() {
         can_dbc::ByteOrder::LittleEndian => "le",
         can_dbc::ByteOrder::BigEndian => "be",
     };
-
+    #[cfg(feature = "bitsh-backend")]
     writeln!(
         &mut w,
-        r#"value.pack_{}_bits(&mut self.raw, start_bit, bits);"#,
-        endianness
+        r#"value.pack_{endianness}_bits(&mut self.raw, {start_bit}, {bits});"#,
+        start_bit = signal.start_bit,
+        bits = signal.signal_size,
+        endianness = endianness
+    )?;
+
+    #[cfg(feature = "bitvec-backend")]
+    writeln!(
+        &mut w,
+        r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_{endianness}(value);"#,
+        start_bit = signal.start_bit,
+        end_bit = signal.start_bit + signal.signal_size,
+        endianness = endianness
     )?;
 
     writeln!(&mut w, "Ok(())")?;
@@ -504,6 +538,17 @@ fn signal_to_rust_int(signal: &Signal) -> String {
     };
 
     format!("{}{}", sign, size)
+}
+
+fn signal_to_rust_uint(signal: &Signal) -> String {
+    let size = match *signal.signal_size() {
+        n if n <= 8 => "8",
+        n if n <= 16 => "16",
+        n if n <= 32 => "32",
+        _ => "64",
+    };
+
+    format!("u{}", size)
 }
 
 #[allow(clippy::float_cmp)]

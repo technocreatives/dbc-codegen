@@ -6,9 +6,7 @@
 //!
 //! - Version: `Version("43")`
 
-#[cfg(feature = "arb")]
-use arbitrary::{Arbitrary, Unstructured};
-use bitsh::Pack;
+use bitvec::prelude::{BitField, BitStore, BitView, LocalBits};
 
 /// All messages
 #[derive(Clone)]
@@ -83,7 +81,7 @@ impl Foo {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn voltage_raw(&self) -> f32 {
-        let signal = u16::unpack_le_bits(&self.raw, 16, 16);
+        let signal = self.raw.view_bits::<LocalBits>()[16..32].load_le::<u16>();
 
         let factor = 0.000976562_f32;
         let offset = 0_f32;
@@ -101,7 +99,7 @@ impl Foo {
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
 
-        value.pack_le_bits(&mut self.raw, 16, 16);
+        self.raw.view_bits_mut::<LocalBits>()[16..32].store_le(value);
         Ok(())
     }
 
@@ -126,7 +124,7 @@ impl Foo {
     /// - Value type: Signed
     #[inline(always)]
     pub fn current_raw(&self) -> f32 {
-        let signal = i16::unpack_le_bits(&self.raw, 0, 16);
+        let signal = self.raw.view_bits::<LocalBits>()[0..16].load_le::<u16>();
 
         let factor = 0.0625_f32;
         let offset = 0_f32;
@@ -144,7 +142,7 @@ impl Foo {
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
 
-        value.pack_le_bits(&mut self.raw, 0, 16);
+        self.raw.view_bits_mut::<LocalBits>()[0..16].store_le(value);
         Ok(())
     }
 }
@@ -163,15 +161,6 @@ impl core::convert::TryFrom<&[u8]> for Foo {
     }
 }
 
-#[cfg(feature = "arb")]
-impl<'a> Arbitrary<'a> for Foo {
-    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
-        let voltage = 0_f32;
-        let current = -2048_f32;
-        Foo::new(voltage, current).map_err(|_| arbitrary::Error::IncorrectFormat)
-    }
-}
-
 /// Bar
 ///
 /// - ID: 512 (0x200)
@@ -187,13 +176,12 @@ impl Bar {
     pub const MESSAGE_ID: u32 = 512;
 
     /// Construct new Bar from values
-    pub fn new(one: u8, two: f32, three: u8, four: u8, xtype: bool) -> Result<Self, CanError> {
+    pub fn new(one: u8, two: f32, three: u8, four: u8) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_one(one)?;
         res.set_two(two)?;
         res.set_three(three)?;
         res.set_four(four)?;
-        res.set_xtype(xtype)?;
         Ok(res)
     }
 
@@ -223,7 +211,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn one_raw(&self) -> u8 {
-        let signal = u8::unpack_be_bits(&self.raw, (15 - (2 - 1)), 2);
+        let signal = self.raw.view_bits::<LocalBits>()[15..17].load_be::<u8>();
 
         signal
     }
@@ -235,7 +223,7 @@ impl Bar {
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
-        value.pack_be_bits(&mut self.raw, 15, 2);
+        self.raw.view_bits_mut::<LocalBits>()[15..17].store_be(value);
         Ok(())
     }
 
@@ -260,7 +248,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn two_raw(&self) -> f32 {
-        let signal = u8::unpack_be_bits(&self.raw, (7 - (8 - 1)), 8);
+        let signal = self.raw.view_bits::<LocalBits>()[7..15].load_be::<u8>();
 
         let factor = 0.39_f32;
         let offset = 0_f32;
@@ -278,7 +266,7 @@ impl Bar {
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u8;
 
-        value.pack_be_bits(&mut self.raw, 7, 8);
+        self.raw.view_bits_mut::<LocalBits>()[7..15].store_be(value);
         Ok(())
     }
 
@@ -309,7 +297,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn three_raw(&self) -> u8 {
-        let signal = u8::unpack_be_bits(&self.raw, (17 - (3 - 1)), 3);
+        let signal = self.raw.view_bits::<LocalBits>()[17..20].load_be::<u8>();
 
         signal
     }
@@ -321,7 +309,7 @@ impl Bar {
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
-        value.pack_be_bits(&mut self.raw, 17, 3);
+        self.raw.view_bits_mut::<LocalBits>()[17..20].store_be(value);
         Ok(())
     }
 
@@ -352,7 +340,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn four_raw(&self) -> u8 {
-        let signal = u8::unpack_be_bits(&self.raw, (20 - (2 - 1)), 2);
+        let signal = self.raw.view_bits::<LocalBits>()[20..22].load_be::<u8>();
 
         signal
     }
@@ -364,47 +352,7 @@ impl Bar {
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
-        value.pack_be_bits(&mut self.raw, 20, 2);
-        Ok(())
-    }
-
-    /// Type
-    ///
-    /// - Min: 0
-    /// - Max: 1
-    /// - Unit: "boolean"
-    /// - Receivers: Dolor
-    #[inline(always)]
-    pub fn xtype(&self) -> BarType {
-        match self.xtype_raw() {
-            false => BarType::X0off,
-            true => BarType::X1on,
-            x => BarType::Other(x),
-        }
-    }
-
-    /// Get raw value of Type
-    ///
-    /// - Start bit: 30
-    /// - Signal size: 1 bits
-    /// - Factor: 1
-    /// - Offset: 0
-    /// - Byte order: BigEndian
-    /// - Value type: Unsigned
-    #[inline(always)]
-    pub fn xtype_raw(&self) -> bool {
-        let signal = u8::unpack_be_bits(&self.raw, (30 - (1 - 1)), 1);
-
-        signal == 1
-    }
-
-    /// Set value of Type
-    #[inline(always)]
-    pub fn set_xtype(&mut self, value: bool) -> Result<(), CanError> {
-        let value = value as u8;
-        let start_bit = 30;
-        let bits = 1;
-        value.pack_be_bits(&mut self.raw, start_bit, bits);
+        self.raw.view_bits_mut::<LocalBits>()[20..22].store_be(value);
         Ok(())
     }
 }
@@ -423,17 +371,6 @@ impl core::convert::TryFrom<&[u8]> for Bar {
     }
 }
 
-#[cfg(feature = "arb")]
-impl<'a> Arbitrary<'a> for Bar {
-    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
-        let one = u.int_in_range(0..=3)?;
-        let two = 0_f32;
-        let three = u.int_in_range(0..=7)?;
-        let four = u.int_in_range(0..=3)?;
-        let xtype = u.int_in_range(0..=1)? == 1;
-        Bar::new(one, two, three, four, xtype).map_err(|_| arbitrary::Error::IncorrectFormat)
-    }
-}
 /// Defined values for Three
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
@@ -453,14 +390,6 @@ pub enum BarFour {
     Oner,
     Onest,
     Other(u8),
-}
-/// Defined values for Type
-#[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
-pub enum BarType {
-    X0off,
-    X1on,
-    Other(bool),
 }
 
 /// This is just to make testing easier

@@ -19,4 +19,12 @@ members = [
     "testing/rust-integration",
     "testing/can-messages",
     "testing/cantools-messages",
+    "testing/can-messages-bitvec",
 ]
+
+[features]
+default = ["bitsh-backend"]
+# Use bitsh crate for encoding and decoding of messages
+bitsh-backend = []
+# Use bitvec crate for encoding and decoding of messages
+bitvec-backend = []
