@@ -5,7 +5,6 @@ authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
 edition = "2018"
 
 [dependencies]
-bitsh = { git = "https://github.com/bitbleep/bitsh/" }
 bitvec = { version = "0.21", default-features = false }
 
 [features]

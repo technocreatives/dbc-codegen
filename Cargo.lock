@@ -120,14 +120,12 @@ version = "0.1.0"
 dependencies = [
  "arbitrary",
  "bitsh",
- "bitvec",
 ]
 
 [[package]]
 name = "can-messages-bitvec"
 version = "0.1.0"
 dependencies = [
- "bitsh",
  "bitvec",
 ]
 
