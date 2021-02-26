@@ -180,12 +180,13 @@ impl Bar {
     pub const MESSAGE_ID: u32 = 512;
 
     /// Construct new Bar from values
-    pub fn new(one: u8, two: f32, three: u8, four: u8) -> Result<Self, CanError> {
+    pub fn new(one: u8, two: f32, three: u8, four: u8, five: bool) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_one(one)?;
         res.set_two(two)?;
         res.set_three(three)?;
         res.set_four(four)?;
+        res.set_five(five)?;
         Ok(res)
     }
 
@@ -364,6 +365,42 @@ impl Bar {
         }
         let start_bit = 10;
         let bits = 2;
+        value.pack_be_bits(&mut self.raw, start_bit, bits);
+        Ok(())
+    }
+
+    /// Five
+    ///
+    /// - Min: 0
+    /// - Max: 1
+    /// - Unit: "boolean"
+    /// - Receivers: Dolor
+    #[inline(always)]
+    pub fn five(&self) -> bool {
+        self.five_raw()
+    }
+
+    /// Get raw value of Five
+    ///
+    /// - Start bit: 30
+    /// - Signal size: 1 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: BigEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn five_raw(&self) -> bool {
+        let signal = u8::unpack_be_bits(&self.raw, (30 - (1 - 1)), 1);
+
+        signal == 1
+    }
+
+    /// Set value of Five
+    #[inline(always)]
+    pub fn set_five(&mut self, value: bool) -> Result<(), CanError> {
+        let value = value as u8;
+        let start_bit = 30;
+        let bits = 1;
         value.pack_be_bits(&mut self.raw, start_bit, bits);
         Ok(())
     }
