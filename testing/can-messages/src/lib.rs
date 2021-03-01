@@ -27,9 +27,10 @@ fn pack_unpack_message() {
 
 #[test]
 fn pack_unpack_message2() {
-    let result = messages::Bar::new(1, 0.39, 3, 3).unwrap();
+    let result = messages::Bar::new(1, 0.39, 3, 3, true).unwrap();
     assert_eq!(result.one_raw(), 1);
     assert_eq!(result.two_raw(), 0.39);
     assert_eq!(result.three_raw(), 3);
     assert_eq!(result.four_raw(), 3);
+    assert_eq!(result.five_raw(), true);
 }
