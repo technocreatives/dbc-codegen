@@ -19,6 +19,8 @@ pub enum Messages {
     Foo(Foo),
     /// Bar
     Bar(Bar),
+    /// Amet
+    Amet(Amet),
 }
 
 impl Messages {
@@ -30,6 +32,7 @@ impl Messages {
         let res = match id {
             256 => Messages::Foo(Foo::try_from(payload)?),
             512 => Messages::Bar(Bar::try_from(payload)?),
+            1024 => Messages::Amet(Amet::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -293,7 +296,7 @@ impl Bar {
     
     /// Get raw value of Three
     ///
-    /// - Start bit: 16
+    /// - Start bit: 13
     /// - Signal size: 3 bits
     /// - Factor: 1
     /// - Offset: 0
@@ -301,7 +304,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn three_raw(&self) -> u8 {
-        let signal = self.raw.view_bits::<LocalBits>()[16..19].load_be::<u8>();
+        let signal = self.raw.view_bits::<LocalBits>()[13..16].load_be::<u8>();
         
         signal
     }
@@ -311,7 +314,7 @@ impl Bar {
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value { return Err(CanError::ParameterOutOfRange{ message_id: 512 }); }
-        self.raw.view_bits_mut::<LocalBits>()[16..19].store_be(value);
+        self.raw.view_bits_mut::<LocalBits>()[13..16].store_be(value);
         Ok(())
     }
     
@@ -334,7 +337,7 @@ impl Bar {
     
     /// Get raw value of Four
     ///
-    /// - Start bit: 20
+    /// - Start bit: 10
     /// - Signal size: 2 bits
     /// - Factor: 1
     /// - Offset: 0
@@ -342,7 +345,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn four_raw(&self) -> u8 {
-        let signal = self.raw.view_bits::<LocalBits>()[20..22].load_be::<u8>();
+        let signal = self.raw.view_bits::<LocalBits>()[10..12].load_be::<u8>();
         
         signal
     }
@@ -352,7 +355,7 @@ impl Bar {
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value { return Err(CanError::ParameterOutOfRange{ message_id: 512 }); }
-        self.raw.view_bits_mut::<LocalBits>()[20..22].store_be(value);
+        self.raw.view_bits_mut::<LocalBits>()[10..12].store_be(value);
         Ok(())
     }
     
