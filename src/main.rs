@@ -415,14 +415,12 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
             start = signal.start_bit,
             end = signal.start_bit + signal.signal_size
         ),
-        can_dbc::ByteOrder::BigEndian => {
-            format!(
-                "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_be::<{typ}>()",
-                typ = signal_to_rust_uint(signal),
-                start = signal.start_bit,
-                end = signal.start_bit + signal.signal_size
-            )
-        }
+        can_dbc::ByteOrder::BigEndian => format!(
+            "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_be::<{typ}>()",
+            typ = signal_to_rust_uint(signal),
+            start = signal.start_bit,
+            end = signal.start_bit + signal.signal_size
+        ),
     };
 
     writeln!(&mut w, r#"let signal = {};"#, read_fn)?;
