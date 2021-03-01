@@ -59,9 +59,6 @@ fn main() -> Result<()> {
     writeln!(&mut w, "//!")?;
     writeln!(&mut w, "//! - Version: `{:?}`", dbc.version())?;
     writeln!(&mut w)?;
-    #[cfg(feature = "bitsh-backend")]
-    writeln!(&mut w, "use bitsh::Pack;")?;
-    #[cfg(feature = "bitvec-backend")]
     writeln!(
         &mut w,
         "use bitvec::prelude::{{BitField, BitStore, BitView, LocalBits}};"
@@ -411,23 +408,6 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
 }
 
 fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
-    let read_fn = String::new();
-    #[cfg(feature = "bitsh-backend")]
-    let read_fn = match signal.byte_order() {
-        can_dbc::ByteOrder::LittleEndian => format!(
-            "{typ}::unpack_le_bits(&self.raw, {start}, {size})",
-            typ = signal_to_rust_int(signal),
-            start = signal.start_bit,
-            size = signal.signal_size,
-        ),
-        can_dbc::ByteOrder::BigEndian => format!(
-            "{typ}::unpack_be_bits(&self.raw, ({start} - ({size} - 1)), {size})",
-            typ = signal_to_rust_int(signal),
-            start = signal.start_bit,
-            size = signal.signal_size,
-        ),
-    };
-    #[cfg(feature = "bitvec-backend")]
     let read_fn = match signal.byte_order() {
         can_dbc::ByteOrder::LittleEndian => format!(
             "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_le::<{typ}>()",
@@ -481,16 +461,7 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         can_dbc::ByteOrder::LittleEndian => "le",
         can_dbc::ByteOrder::BigEndian => "be",
     };
-    #[cfg(feature = "bitsh-backend")]
-    writeln!(
-        &mut w,
-        r#"value.pack_{endianness}_bits(&mut self.raw, {start_bit}, {bits});"#,
-        start_bit = signal.start_bit,
-        bits = signal.signal_size,
-        endianness = endianness
-    )?;
 
-    #[cfg(feature = "bitvec-backend")]
     writeln!(
         &mut w,
         r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_{endianness}(value);"#,
