@@ -418,8 +418,8 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         can_dbc::ByteOrder::BigEndian => format!(
             "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_be::<{typ}>()",
             typ = signal_to_rust_uint(signal),
-            start = signal.start_bit,
-            end = signal.start_bit + signal.signal_size
+            start = signal.start_bit - (signal.signal_size - 1),
+            end = signal.start_bit - (signal.signal_size - 1) + signal.signal_size
         ),
     };
 
@@ -455,18 +455,24 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         writeln!(&mut w)?;
     }
 
-    let endianness = match signal.byte_order() {
-        can_dbc::ByteOrder::LittleEndian => "le",
-        can_dbc::ByteOrder::BigEndian => "be",
+    match signal.byte_order() {
+        can_dbc::ByteOrder::LittleEndian => {
+            writeln!(
+                &mut w,
+                r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_le(value);"#,
+                start_bit = signal.start_bit,
+                end_bit = signal.start_bit + signal.signal_size,
+            )?;
+        }
+        can_dbc::ByteOrder::BigEndian => {
+            writeln!(
+                &mut w,
+                r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_be(value);"#,
+                start_bit = signal.start_bit - (signal.signal_size - 1),
+                end_bit = signal.start_bit - (signal.signal_size - 1) + signal.signal_size,
+            )?;
+        }
     };
-
-    writeln!(
-        &mut w,
-        r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_{endianness}(value);"#,
-        start_bit = signal.start_bit,
-        end_bit = signal.start_bit + signal.signal_size,
-        endianness = endianness
-    )?;
 
     writeln!(&mut w, "Ok(())")?;
     Ok(())
