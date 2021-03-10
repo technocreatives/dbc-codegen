@@ -180,13 +180,13 @@ impl Bar {
     pub const MESSAGE_ID: u32 = 512;
 
     /// Construct new Bar from values
-    pub fn new(one: u8, two: f32, three: u8, four: u8, five: bool) -> Result<Self, CanError> {
+    pub fn new(one: u8, two: f32, three: u8, four: u8, xtype: bool) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_one(one)?;
         res.set_two(two)?;
         res.set_three(three)?;
         res.set_four(four)?;
-        res.set_five(five)?;
+        res.set_xtype(xtype)?;
         Ok(res)
     }
 
@@ -369,24 +369,24 @@ impl Bar {
         Ok(())
     }
 
-    /// Five
+    /// Type
     ///
     /// - Min: 0
     /// - Max: 1
     /// - Unit: "boolean"
     /// - Receivers: Dolor
     #[inline(always)]
-    pub fn five(&self) -> BarFive {
-        match self.five_raw() {
-            false => BarFive::X0off,
-            true => BarFive::X1on,
-            false => BarFive::X2oner,
-            false => BarFive::X3onest,
-            x => BarFive::Other(x),
+    pub fn xtype(&self) -> BarType {
+        match self.xtype_raw() {
+            false => BarType::X0off,
+            true => BarType::X1on,
+            false => BarType::X2oner,
+            false => BarType::Type,
+            x => BarType::Other(x),
         }
     }
 
-    /// Get raw value of Five
+    /// Get raw value of Type
     ///
     /// - Start bit: 30
     /// - Signal size: 1 bits
@@ -395,15 +395,15 @@ impl Bar {
     /// - Byte order: BigEndian
     /// - Value type: Unsigned
     #[inline(always)]
-    pub fn five_raw(&self) -> bool {
+    pub fn xtype_raw(&self) -> bool {
         let signal = u8::unpack_be_bits(&self.raw, (30 - (1 - 1)), 1);
 
         signal == 1
     }
 
-    /// Set value of Five
+    /// Set value of Type
     #[inline(always)]
-    pub fn set_five(&mut self, value: bool) -> Result<(), CanError> {
+    pub fn set_xtype(&mut self, value: bool) -> Result<(), CanError> {
         let value = value as u8;
         let start_bit = 30;
         let bits = 1;
@@ -446,14 +446,14 @@ pub enum BarFour {
     Onest,
     Other(u8),
 }
-/// Defined values for Five
+/// Defined values for Type
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub enum BarFive {
+pub enum BarType {
     X0off,
     X1on,
     X2oner,
-    X3onest,
+    Type,
     Other(bool),
 }
 
