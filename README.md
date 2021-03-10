@@ -22,6 +22,9 @@ cargo build --all
 
 # run all tests
 cargo test --all
+
+# format before commiting anything
+cargo fmt --all
 ```
 
 ## Generate .kdc from .dbc
