@@ -57,7 +57,7 @@
           <Label name="Onest" value="3"/>
         </LabelSet>
       </Signal>
-      <Signal name="Five" offset="25" endianess="big">
+      <Signal name="Type" offset="25" endianess="big">
         <Consumer>
           <NodeRef id="3"/>
         </Consumer>
@@ -66,7 +66,7 @@
           <Label name="0Off" value="0"/>
           <Label name="1On" value="1"/>
           <Label name="2Oner" value="2"/>
-          <Label name="3Onest" value="3"/>
+          <Label name="TYPE" value="3"/>
         </LabelSet>
       </Signal>
     </Message>
