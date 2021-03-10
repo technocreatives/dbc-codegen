@@ -3,7 +3,7 @@
   <Node name="Lorem" id="1"/>
   <Node name="Ipsum" id="2"/>
   <Node name="Dolor" id="3"/>
-  <Bus name="Example">
+  <Bus name="testing/dbc-examples/example">
     <Message id="0x100" name="Foo" length="4">
       <Notes></Notes>
       <Producer>
@@ -38,6 +38,12 @@
           <NodeRef id="3"/>
         </Consumer>
         <Value max="7"/>
+        <LabelSet>
+          <Label name="OFF" value="0"/>
+          <Label name="ON" value="1"/>
+          <Label name="ONER" value="2"/>
+          <Label name="ONEST" value="3"/>
+        </LabelSet>
       </Signal>
       <Signal name="Four" offset="13" length="2" endianess="big">
         <Consumer>
@@ -49,6 +55,18 @@
           <Label name="On" value="1"/>
           <Label name="Oner" value="2"/>
           <Label name="Onest" value="3"/>
+        </LabelSet>
+      </Signal>
+      <Signal name="Five" offset="25" endianess="big">
+        <Consumer>
+          <NodeRef id="3"/>
+        </Consumer>
+        <Value unit="boolean"/>
+        <LabelSet>
+          <Label name="0Off" value="0"/>
+          <Label name="1On" value="1"/>
+          <Label name="2Oner" value="2"/>
+          <Label name="3Onest" value="3"/>
         </LabelSet>
       </Signal>
     </Message>

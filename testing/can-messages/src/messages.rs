@@ -376,8 +376,14 @@ impl Bar {
     /// - Unit: "boolean"
     /// - Receivers: Dolor
     #[inline(always)]
-    pub fn five(&self) -> bool {
-        self.five_raw()
+    pub fn five(&self) -> BarFive {
+        match self.five_raw() {
+            false => BarFive::X0off,
+            true => BarFive::X1on,
+            false => BarFive::X2oner,
+            false => BarFive::X3onest,
+            x => BarFive::Other(x),
+        }
     }
 
     /// Get raw value of Five
@@ -439,6 +445,16 @@ pub enum BarFour {
     Oner,
     Onest,
     Other(u8),
+}
+/// Defined values for Five
+#[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum BarFive {
+    X0off,
+    X1on,
+    X2oner,
+    X3onest,
+    Other(bool),
 }
 
 /// This is just to make testing easier

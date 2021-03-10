@@ -534,5 +534,9 @@ fn enum_name(msg: &Message, signal: &Signal) -> String {
 }
 
 fn enum_variant_name(x: &str) -> String {
-    x.to_camel_case()
+    if !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
+        format!("X{}", x.to_camel_case())
+    } else {
+        x.to_camel_case()
+    }
 }
