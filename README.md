@@ -4,14 +4,48 @@ Generates Rust messages from a `dbc` file.
 
 ⚠️ This is experimental - use with caution. Breaking changes will happen when you least expect it. ⚠️
 
-# Usage
+## Usage
 
 Generate `messages.rs` from `example.dbc`.
 ```bash
 cargo run -- testing/dbc-examples/example.dbc dir/where/messages_rs/file/is/written
 ```
 
-# Development
+If some field name starts with a non-alphabetic character or is a Rust keyword then it is prepended with `x`.
+
+For example:
+```
+VAL_ 512 Five 0 "0Off" 1 "1On" 2 "2Oner" 3 "3Onest";
+```
+..is generated to:
+```rust
+pub enum BarFive {
+    X0off,
+    X1on,
+    X2oner,
+    X3onest,
+    Other(bool),
+}
+```
+
+`Type` here:
+```
+SG_ Type : 30|1@0+ (1,0) [0|1] "boolean" Dolor
+```
+..would become Rust keyword `type` therefore it is prepended with `x`:
+```rust
+pub fn xtype(&self) -> BarType {
+    match self.xtype_raw() {
+        false => BarType::X0off,
+        true => BarType::X1on,
+        false => BarType::X2oner,
+        false => BarType::Type,
+        x => BarType::Other(x),
+    }
+}
+```
+
+## Development
 
 ```bash
 # generate messages.rs
@@ -27,7 +61,7 @@ cargo test --all
 cargo fmt --all
 ```
 
-## Generate .kdc from .dbc
+### Generate .kdc from .dbc
 
 Use [canmatrix](https://github.com/ebroecker/canmatrix) if you need to generate a new `.kcd` file from a `.dbc`.
 
