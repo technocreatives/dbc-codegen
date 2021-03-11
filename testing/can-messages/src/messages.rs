@@ -9,7 +9,7 @@
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitsh::Pack;
-use bitvec::prelude::{BitField, BitStore, BitView, LocalBits};
+use bitvec::prelude::{BitField, BitStore, BitView, LocalBits, Lsb0, Msb0};
 
 /// All messages
 #[derive(Clone)]
@@ -87,7 +87,7 @@ impl Foo {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn voltage_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<LocalBits>()[16..32].load_le::<u16>();
+        let signal = self.raw.view_bits::<Lsb0>()[16..32].load_le::<u16>();
         
         let factor = 0.000976562_f32;
         let offset = 0_f32;
@@ -103,7 +103,7 @@ impl Foo {
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
         
-        self.raw.view_bits_mut::<LocalBits>()[16..32].store_le(value);
+        self.raw.view_bits_mut::<Lsb0>()[16..32].store_le(value);
         Ok(())
     }
     
@@ -128,7 +128,7 @@ impl Foo {
     /// - Value type: Signed
     #[inline(always)]
     pub fn current_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<LocalBits>()[0..16].load_le::<u16>();
+        let signal = self.raw.view_bits::<Lsb0>()[0..16].load_le::<u16>();
         
         let factor = 0.0625_f32;
         let offset = 0_f32;
@@ -144,7 +144,7 @@ impl Foo {
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
         
-        self.raw.view_bits_mut::<LocalBits>()[0..16].store_le(value);
+        self.raw.view_bits_mut::<Lsb0>()[0..16].store_le(value);
         Ok(())
     }
     
@@ -222,7 +222,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn one_raw(&self) -> u8 {
-        let signal = self.raw.view_bits::<LocalBits>()[14..16].load_be::<u8>();
+        let signal = self.raw.view_bits::<Msb0>()[15..17].load_be::<u8>();
         
         signal
     }
@@ -232,7 +232,7 @@ impl Bar {
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value { return Err(CanError::ParameterOutOfRange{ message_id: 512 }); }
-        self.raw.view_bits_mut::<LocalBits>()[14..16].store_be(value);
+        self.raw.view_bits_mut::<Msb0>()[15..17].store_be(value);
         Ok(())
     }
     
@@ -257,7 +257,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn two_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<LocalBits>()[0..8].load_be::<u8>();
+        let signal = self.raw.view_bits::<Msb0>()[7..15].load_be::<u8>();
         
         let factor = 0.39_f32;
         let offset = 0_f32;
@@ -273,7 +273,7 @@ impl Bar {
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u8;
         
-        self.raw.view_bits_mut::<LocalBits>()[0..8].store_be(value);
+        self.raw.view_bits_mut::<Msb0>()[7..15].store_be(value);
         Ok(())
     }
     
@@ -304,7 +304,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn three_raw(&self) -> u8 {
-        let signal = self.raw.view_bits::<LocalBits>()[11..14].load_be::<u8>();
+        let signal = self.raw.view_bits::<Msb0>()[13..16].load_be::<u8>();
         
         signal
     }
@@ -314,7 +314,7 @@ impl Bar {
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value { return Err(CanError::ParameterOutOfRange{ message_id: 512 }); }
-        self.raw.view_bits_mut::<LocalBits>()[11..14].store_be(value);
+        self.raw.view_bits_mut::<Msb0>()[13..16].store_be(value);
         Ok(())
     }
     
@@ -345,7 +345,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn four_raw(&self) -> u8 {
-        let signal = self.raw.view_bits::<LocalBits>()[9..11].load_be::<u8>();
+        let signal = self.raw.view_bits::<Msb0>()[10..12].load_be::<u8>();
         
         signal
     }
@@ -355,7 +355,7 @@ impl Bar {
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value { return Err(CanError::ParameterOutOfRange{ message_id: 512 }); }
-        self.raw.view_bits_mut::<LocalBits>()[9..11].store_be(value);
+        self.raw.view_bits_mut::<Msb0>()[10..12].store_be(value);
         Ok(())
     }
     
@@ -380,7 +380,7 @@ impl Bar {
     /// - Value type: Unsigned
     #[inline(always)]
     pub fn five_raw(&self) -> bool {
-        let signal = self.raw.view_bits::<LocalBits>()[30..31].load_be::<u8>();
+        let signal = self.raw.view_bits::<Msb0>()[30..31].load_be::<u8>();
         
         signal == 1
     }
@@ -389,7 +389,7 @@ impl Bar {
     #[inline(always)]
     pub fn set_five(&mut self, value: bool) -> Result<(), CanError> {
         let value = value as u8;
-        self.raw.view_bits_mut::<LocalBits>()[30..31].store_be(value);
+        self.raw.view_bits_mut::<Msb0>()[30..31].store_be(value);
         Ok(())
     }
     
