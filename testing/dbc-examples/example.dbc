@@ -29,4 +29,4 @@ BO_ 512 Bar: 8 Ipsum
 
 VAL_ 512 Three 0 "OFF" 1 "ON" 2 "ONER" 3 "ONEST";
 VAL_ 512 Four 0 "Off" 1 "On" 2 "Oner" 3 "Onest";
-VAL_ 512 Type 0 "0Off" 1 "1On" 2 "2Oner" 3 "TYPE";
+VAL_ 512 Type 0 "0Off" 1 "1On";

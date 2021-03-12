@@ -65,8 +65,6 @@
         <LabelSet>
           <Label name="0Off" value="0"/>
           <Label name="1On" value="1"/>
-          <Label name="2Oner" value="2"/>
-          <Label name="TYPE" value="3"/>
         </LabelSet>
       </Signal>
     </Message>
