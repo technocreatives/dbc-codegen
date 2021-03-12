@@ -523,7 +523,7 @@ fn type_name(x: &str) -> String {
 }
 
 fn field_name(x: &str) -> String {
-    if keywords::is_keyword(x) {
+    if keywords::is_keyword(x) || !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
         format!("x{}", x.to_snake_case())
     } else {
         x.to_snake_case()
