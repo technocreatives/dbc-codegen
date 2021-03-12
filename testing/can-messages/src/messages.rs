@@ -380,8 +380,6 @@ impl Bar {
         match self.xtype_raw() {
             false => BarType::X0off,
             true => BarType::X1on,
-            false => BarType::X2oner,
-            false => BarType::Type,
             x => BarType::Other(x),
         }
     }
@@ -452,8 +450,6 @@ pub enum BarFour {
 pub enum BarType {
     X0off,
     X1on,
-    X2oner,
-    Type,
     Other(bool),
 }
 
