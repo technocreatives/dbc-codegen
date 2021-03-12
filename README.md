@@ -38,8 +38,6 @@ pub fn xtype(&self) -> BarType {
     match self.xtype_raw() {
         false => BarType::X0off,
         true => BarType::X1on,
-        false => BarType::X2oner,
-        false => BarType::Type,
         x => BarType::Other(x),
     }
 }
