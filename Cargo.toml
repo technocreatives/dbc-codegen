@@ -18,4 +18,5 @@ members = [
     ".",
     "testing/rust-integration",
     "testing/can-messages",
+    "testing/cantools-messages"
 ]

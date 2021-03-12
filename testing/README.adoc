@@ -23,3 +23,10 @@ NOTE: This is only known to work on Linux.
 
 `candump` will output lines like `(1603881557.238509) vcan0 200#0594000000000000`.
 These can be used as test cases in the `rust-itegration` crate.
+
+## Cantools
+
+[cantools](https://github.com/eerimoq/cantools) are used for comparing results of packing and unpacking.
+- Install cantools
+- Run `./cantools-messages/generate_example_code` in order to regenerate the c source code which is based on the dbc example.
+- Run `cargo test` in cantools-messages
