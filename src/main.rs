@@ -6,6 +6,7 @@ use std::{fs::File, io::BufWriter, io::Write, path::PathBuf};
 use structopt::StructOpt;
 
 mod includes;
+mod keywords;
 mod pad;
 
 #[derive(Debug, StructOpt)]
@@ -522,7 +523,11 @@ fn type_name(x: &str) -> String {
 }
 
 fn field_name(x: &str) -> String {
-    x.to_snake_case()
+    if keywords::is_keyword(x) || !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
+        format!("x{}", x.to_snake_case())
+    } else {
+        x.to_snake_case()
+    }
 }
 
 fn enum_name(msg: &Message, signal: &Signal) -> String {
