@@ -5,6 +5,7 @@
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[test]
+#[ignore]
 fn pack_message() {
     let dbc_codegen_bar = can_messages::Bar::new(1, 0.0, 0, 0, false).unwrap();
     let one = unsafe { example_bar_one_encode(1.0) };
@@ -26,6 +27,7 @@ fn pack_message() {
 }
 
 #[test]
+#[ignore]
 fn pack_message_signed() {
     let dbc_codegen_foo = can_messages::Foo::new(63.99899, -10.0).unwrap();
     let current = unsafe { example_foo_current_encode(-10.0) };
