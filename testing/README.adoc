@@ -26,7 +26,7 @@ These can be used as test cases in the `rust-itegration` crate.
 
 ## Cantools
 
-[cantools](https://github.com/eerimoq/cantools) are used for comparing results of packing and unpacking.
+https://github.com/eerimoq/cantools[cantools] are used for comparing results of packing and unpacking.
 - Install cantools
 - Run `./cantools-messages/generate_example_code` in order to regenerate the c source code which is based on the dbc example.
 - Run `cargo test` in cantools-messages
