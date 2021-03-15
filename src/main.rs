@@ -426,6 +426,14 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
     writeln!(&mut w, r#"let signal = {};"#, read_fn)?;
     writeln!(&mut w)?;
 
+    if *signal.value_type() == can_dbc::ValueType::Signed {
+        writeln!(
+            &mut w,
+            "let signal: {} = unsafe {{ core::mem::transmute(signal) }};",
+            signal_to_rust_int(signal)
+        )?;
+    };
+
     if signal.signal_size == 1 {
         writeln!(&mut w, "signal == 1")?;
     } else if signal_is_float_in_rust(signal) {

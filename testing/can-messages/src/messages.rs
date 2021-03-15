@@ -132,6 +132,7 @@ impl Foo {
     pub fn current_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<LocalBits>()[0..16].load_le::<u16>();
 
+        let signal: i16 = unsafe { core::mem::transmute(signal) };
         let factor = 0.0625_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset

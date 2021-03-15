@@ -26,6 +26,13 @@ fn pack_unpack_message() {
 }
 
 #[test]
+fn pack_unpack_message_negative() {
+    let result = messages::Foo::new(0.000976562, -3.0 * 0.0625).unwrap();
+    assert_eq!(result.voltage_raw(), 0.000976562);
+    assert_eq!(result.current_raw(), -3.0 * 0.0625);
+}
+
+#[test]
 fn pack_unpack_message2() {
     let result = messages::Amet::new(1, 0.39, 3, 3, true).unwrap();
     assert_eq!(result.one_raw(), 1);
