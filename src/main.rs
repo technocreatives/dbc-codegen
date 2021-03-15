@@ -450,10 +450,18 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         writeln!(
             &mut w,
             "let value = ((value - offset) / factor) as {};",
-            signal_to_rust_uint(signal)
+            signal_to_rust_int(signal)
         )?;
         writeln!(&mut w)?;
     }
+
+    if *signal.value_type() == can_dbc::ValueType::Signed {
+        writeln!(
+            &mut w,
+            "let value: {} = unsafe {{ core::mem::transmute(value) }};",
+            signal_to_rust_uint(signal)
+        )?;
+    };
 
     match signal.byte_order() {
         can_dbc::ByteOrder::LittleEndian => {

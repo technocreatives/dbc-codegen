@@ -146,8 +146,9 @@ impl Foo {
         }
         let factor = 0.0625_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as u16;
+        let value = ((value - offset) / factor) as i16;
 
+        let value: u16 = unsafe { core::mem::transmute(value) };
         self.raw.view_bits_mut::<LocalBits>()[0..16].store_le(value);
         Ok(())
     }

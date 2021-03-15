@@ -26,11 +26,22 @@ fn pack_message() {
 }
 
 #[test]
-#[ignore]
-fn pack_message_signed() {
-    let dbc_codegen_foo = can_messages::Foo::new(63.99899, -10.0).unwrap();
-    let current = unsafe { example_foo_current_encode(-10.0) };
-    let voltage = unsafe { example_foo_voltage_encode(63.99899) };
+fn pack_message_signed_negative() {
+    let dbc_codegen_foo = can_messages::Foo::new(0.000976562, -3.0 * 0.0625).unwrap();
+    let current = unsafe { example_foo_current_encode(-3.0 * 0.0625) };
+    let voltage = unsafe { example_foo_voltage_encode(0.000976562) };
+
+    let foo = example_foo_t { current, voltage };
+    let mut buffer: [u8; 4] = [0; 4];
+    unsafe { example_foo_pack(buffer.as_mut_ptr(), &foo, buffer.len() as u64) };
+    assert_eq!(dbc_codegen_foo.raw(), buffer);
+}
+
+#[test]
+fn pack_message_signed_positive() {
+    let dbc_codegen_foo = can_messages::Foo::new(0.000976562, 0.0625).unwrap();
+    let current = unsafe { example_foo_current_encode(0.0625) };
+    let voltage = unsafe { example_foo_voltage_encode(0.000976562) };
 
     let foo = example_foo_t { current, voltage };
     let mut buffer: [u8; 4] = [0; 4];
