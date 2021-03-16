@@ -60,6 +60,8 @@ fn main() -> Result<()> {
     writeln!(&mut w, "//! - Version: `{:?}`", dbc.version())?;
     writeln!(&mut w)?;
     writeln!(&mut w, "use bitsh::Pack;")?;
+    writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
+    writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
     writeln!(&mut w)?;
 
     render_dbc(&mut w, &dbc).context("could not generate Rust code")?;
@@ -260,6 +262,8 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
     }
     writeln!(w, "}}")?;
     writeln!(w)?;
+
+    render_arbitrary(&mut w, &msg)?;
 
     let enums_for_this_message = dbc.value_descriptions().iter().filter_map(|x| {
         if let ValueDescription::Signal {
@@ -544,4 +548,49 @@ fn enum_variant_name(x: &str) -> String {
     } else {
         x.to_camel_case()
     }
+}
+
+fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
+    writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
+    writeln!(
+        w,
+        "impl<'a> Arbitrary<'a> for {typ}",
+        typ = type_name(msg.message_name())
+    )?;
+    writeln!(w, "{{")?;
+    {
+        let mut w = PadAdapter::wrap(&mut w);
+        writeln!(
+            w,
+            "fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary:Error> {{"
+        )?;
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            for signal in msg.signals() {
+                writeln!(
+                    w,
+                    "let {} = {}::arbitary(u)?;",
+                    field_name(signal.name()),
+                    signal_to_rust_type(&signal)
+                )?;
+            }
+
+            let args: Vec<String> = msg
+                .signals()
+                .iter()
+                .map(|signal| field_name(signal.name()))
+                .collect();
+
+            writeln!(
+                w,
+                "Ok({typ}::new({args}))",
+                typ = type_name(msg.message_name()),
+                args = args.join(",")
+            )?;
+        }
+        writeln!(w, "}}")?;
+    }
+    writeln!(w, "}}")?;
+
+    Ok(())
 }
