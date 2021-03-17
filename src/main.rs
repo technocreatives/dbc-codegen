@@ -569,9 +569,9 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
             for signal in msg.signals() {
                 writeln!(
                     w,
-                    "let {} = {}::arbitary(u)?;",
-                    field_name(signal.name()),
-                    signal_to_rust_type(&signal)
+                    "let {field_name} = {arbitrary_value};",
+                    field_name = field_name(signal.name()),
+                    arbitrary_value = signal_to_arbitrary(signal),
                 )?;
             }
 
@@ -593,4 +593,19 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
     writeln!(w, "}}")?;
 
     Ok(())
+}
+
+fn signal_to_arbitrary(signal: &Signal) -> String {
+    if signal.signal_size == 1 {
+        "u.int_in_range(0..=1)? as bool".to_string()
+    } else if signal_is_float_in_rust(signal) {
+        // TODO generate arbitrary value for float
+        signal.min().to_string()
+    } else {
+        format!(
+            "u.int_in_range({min}..={max})?",
+            min = signal.min(),
+            max = signal.max()
+        )
+    }
 }

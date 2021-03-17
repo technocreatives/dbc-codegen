@@ -170,8 +170,8 @@ impl core::convert::TryFrom<&[u8]> for Foo {
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Foo {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary: Error> {
-        let voltage = f32::arbitary(u)?;
-        let current = f32::arbitary(u)?;
+        let voltage = 0;
+        let current = -2048;
         Ok(Foo::new(voltage, current))
     }
 }
@@ -438,12 +438,12 @@ impl core::convert::TryFrom<&[u8]> for Bar {
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Bar {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary: Error> {
-        let one = u8::arbitary(u)?;
-        let two = f32::arbitary(u)?;
-        let three = u8::arbitary(u)?;
-        let four = u8::arbitary(u)?;
-        let five = bool::arbitary(u)?;
-        Ok(Bar::new(one, two, three, four, five))
+        let one = u.int_in_range(0..=3)?;
+        let two = 0;
+        let three = u.int_in_range(0..=7)?;
+        let four = u.int_in_range(0..=3)?;
+        let xtype = u.int_in_range(0..=1)? as bool;
+        Ok(Bar::new(one, two, three, four, xtype))
     }
 }
 /// Defined values for Three
