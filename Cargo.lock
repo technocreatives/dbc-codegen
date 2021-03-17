@@ -88,11 +88,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
-name = "bitsh"
-version = "0.1.0"
-source = "git+https://github.com/bitbleep/bitsh/#2b4f5d718ed39a0acb0bcc426641d3c1edfb09c0"
-
-[[package]]
 name = "bitvec"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -119,7 +114,6 @@ name = "can-messages"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
- "bitsh",
  "bitvec",
 ]
 
