@@ -380,8 +380,12 @@ impl Bar {
     /// - Unit: "boolean"
     /// - Receivers: Dolor
     #[inline(always)]
-    pub fn xtype(&self) -> bool {
-        self.xtype_raw()
+    pub fn xtype(&self) -> BarType {
+        match self.xtype_raw() {
+            false => BarType::X0off,
+            true => BarType::X1on,
+            x => BarType::Other(x),
+        }
     }
 
     /// Get raw value of Type
@@ -452,6 +456,14 @@ pub enum BarFour {
     Oner,
     Onest,
     Other(u8),
+}
+/// Defined values for Type
+#[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum BarType {
+    X0off,
+    X1on,
+    Other(bool),
 }
 
 /// Amet

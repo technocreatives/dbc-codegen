@@ -72,6 +72,9 @@ extern "C" {
 #define EXAMPLE_BAR_FOUR_ONER_CHOICE (2u)
 #define EXAMPLE_BAR_FOUR_ONEST_CHOICE (3u)
 
+#define EXAMPLE_BAR_TYPE_0_OFF_CHOICE (0u)
+#define EXAMPLE_BAR_TYPE_1_ON_CHOICE (1u)
+
 /**
  * Signals in message Foo.
  *
