@@ -60,6 +60,8 @@ fn main() -> Result<()> {
     writeln!(&mut w, "//! - Version: `{:?}`", dbc.version())?;
     writeln!(&mut w)?;
     writeln!(&mut w, "use bitsh::Pack;")?;
+    writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
+    writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
     writeln!(&mut w)?;
 
     render_dbc(&mut w, &dbc).context("could not generate Rust code")?;
@@ -260,6 +262,8 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
     }
     writeln!(w, "}}")?;
     writeln!(w)?;
+
+    render_arbitrary(&mut w, &msg)?;
 
     let enums_for_this_message = dbc.value_descriptions().iter().filter_map(|x| {
         if let ValueDescription::Signal {
@@ -543,5 +547,65 @@ fn enum_variant_name(x: &str) -> String {
         format!("X{}", x.to_camel_case())
     } else {
         x.to_camel_case()
+    }
+}
+
+fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
+    writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
+    writeln!(
+        w,
+        "impl<'a> Arbitrary<'a> for {typ}",
+        typ = type_name(msg.message_name())
+    )?;
+    writeln!(w, "{{")?;
+    {
+        let mut w = PadAdapter::wrap(&mut w);
+        writeln!(
+            w,
+            "fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {{"
+        )?;
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            for signal in msg.signals() {
+                writeln!(
+                    w,
+                    "let {field_name} = {arbitrary_value};",
+                    field_name = field_name(signal.name()),
+                    arbitrary_value = signal_to_arbitrary(signal),
+                )?;
+            }
+
+            let args: Vec<String> = msg
+                .signals()
+                .iter()
+                .map(|signal| field_name(signal.name()))
+                .collect();
+
+            writeln!(
+                w,
+                "{typ}::new({args}).map_err(|_| arbitrary::Error::IncorrectFormat)",
+                typ = type_name(msg.message_name()),
+                args = args.join(",")
+            )?;
+        }
+        writeln!(w, "}}")?;
+    }
+    writeln!(w, "}}")?;
+
+    Ok(())
+}
+
+fn signal_to_arbitrary(signal: &Signal) -> String {
+    if signal.signal_size == 1 {
+        "u.int_in_range(0..=1)? == 1".to_string()
+    } else if signal_is_float_in_rust(signal) {
+        // TODO generate arbitrary value for float
+        format!("{}_f32", signal.min())
+    } else {
+        format!(
+            "u.int_in_range({min}..={max})?",
+            min = signal.min(),
+            max = signal.max()
+        )
     }
 }

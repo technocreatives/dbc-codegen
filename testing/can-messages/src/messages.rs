@@ -6,6 +6,8 @@
 //!
 //! - Version: `Version("43")`
 
+#[cfg(feature = "arb")]
+use arbitrary::{Arbitrary, Unstructured};
 use bitsh::Pack;
 
 /// All messages
@@ -162,6 +164,15 @@ impl core::convert::TryFrom<&[u8]> for Foo {
         let mut raw = [0u8; 4];
         raw.copy_from_slice(&payload[..4]);
         Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for Foo {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let voltage = 0_f32;
+        let current = -2048_f32;
+        Foo::new(voltage, current).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
@@ -424,6 +435,17 @@ impl core::convert::TryFrom<&[u8]> for Bar {
     }
 }
 
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for Bar {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let one = u.int_in_range(0..=3)?;
+        let two = 0_f32;
+        let three = u.int_in_range(0..=7)?;
+        let four = u.int_in_range(0..=3)?;
+        let xtype = u.int_in_range(0..=1)? == 1;
+        Bar::new(one, two, three, four, xtype).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
 /// Defined values for Three
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
