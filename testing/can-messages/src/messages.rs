@@ -169,10 +169,10 @@ impl core::convert::TryFrom<&[u8]> for Foo {
 
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Foo {
-    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary: Error> {
-        let voltage = 0;
-        let current = -2048;
-        Ok(Foo::new(voltage, current))
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let voltage = 0_f32;
+        let current = -2048_f32;
+        Foo::new(voltage, current).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
@@ -437,13 +437,13 @@ impl core::convert::TryFrom<&[u8]> for Bar {
 
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Bar {
-    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary: Error> {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
         let one = u.int_in_range(0..=3)?;
-        let two = 0;
+        let two = 0_f32;
         let three = u.int_in_range(0..=7)?;
         let four = u.int_in_range(0..=3)?;
-        let xtype = u.int_in_range(0..=1)? as bool;
-        Ok(Bar::new(one, two, three, four, xtype))
+        let xtype = u.int_in_range(0..=1)? == 1;
+        Bar::new(one, two, three, four, xtype).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 /// Defined values for Three

@@ -562,7 +562,7 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
         let mut w = PadAdapter::wrap(&mut w);
         writeln!(
             w,
-            "fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary:Error> {{"
+            "fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {{"
         )?;
         {
             let mut w = PadAdapter::wrap(&mut w);
@@ -583,7 +583,7 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
 
             writeln!(
                 w,
-                "Ok({typ}::new({args}))",
+                "{typ}::new({args}).map_err(|_| arbitrary::Error::IncorrectFormat)",
                 typ = type_name(msg.message_name()),
                 args = args.join(",")
             )?;
@@ -597,10 +597,10 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
 
 fn signal_to_arbitrary(signal: &Signal) -> String {
     if signal.signal_size == 1 {
-        "u.int_in_range(0..=1)? as bool".to_string()
+        "u.int_in_range(0..=1)? == 1".to_string()
     } else if signal_is_float_in_rust(signal) {
         // TODO generate arbitrary value for float
-        signal.min().to_string()
+        format!("{}_f32", signal.min())
     } else {
         format!(
             "u.int_in_range({min}..={max})?",
