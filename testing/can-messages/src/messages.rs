@@ -6,7 +6,6 @@
 //!
 //! - Version: `Version("43")`
 
-
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitvec::prelude::{BitField, BitStore, BitView, LocalBits};
@@ -132,7 +131,7 @@ impl Foo {
     pub fn current_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<LocalBits>()[0..16].load_le::<u16>();
 
-        let signal: i16 = unsafe { core::mem::transmute(signal) };
+        let signal = i16::from_ne_bytes(signal.to_ne_bytes());
         let factor = 0.0625_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset
@@ -149,7 +148,7 @@ impl Foo {
         let offset = 0_f32;
         let value = ((value - offset) / factor) as i16;
 
-        let value: u16 = unsafe { core::mem::transmute(value) };
+        let value = u16::from_ne_bytes(value.to_ne_bytes());
         self.raw.view_bits_mut::<LocalBits>()[0..16].store_le(value);
         Ok(())
     }
@@ -169,7 +168,6 @@ impl core::convert::TryFrom<&[u8]> for Foo {
     }
 }
 
-<<<<<<< HEAD
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Foo {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -179,8 +177,6 @@ impl<'a> Arbitrary<'a> for Foo {
     }
 }
 
-=======
->>>>>>> 2d707cc (Fix big endian packing)
 /// Bar
 ///
 /// - ID: 512 (0x200)
@@ -688,6 +684,18 @@ impl core::convert::TryFrom<&[u8]> for Amet {
         let mut raw = [0u8; 8];
         raw.copy_from_slice(&payload[..8]);
         Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for Amet {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let one = u.int_in_range(0..=3)?;
+        let two = 0_f32;
+        let three = u.int_in_range(0..=7)?;
+        let four = u.int_in_range(0..=3)?;
+        let five = u.int_in_range(0..=1)? == 1;
+        Amet::new(one, two, three, four, five).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 

@@ -429,7 +429,7 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
     if *signal.value_type() == can_dbc::ValueType::Signed {
         writeln!(
             &mut w,
-            "let signal: {} = unsafe {{ core::mem::transmute(signal) }};",
+            "let signal  = {}::from_ne_bytes(signal.to_ne_bytes());",
             signal_to_rust_int(signal)
         )?;
     };
@@ -466,7 +466,7 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
     if *signal.value_type() == can_dbc::ValueType::Signed {
         writeln!(
             &mut w,
-            "let value: {} = unsafe {{ core::mem::transmute(value) }};",
+            "let value = {}::from_ne_bytes(value.to_ne_bytes());",
             signal_to_rust_uint(signal)
         )?;
     };
