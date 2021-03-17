@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 arbitrary = { version = "1.0", optional = true }
-bitsh = { git = "https://github.com/bitbleep/bitsh/" }
+bitvec = { version = "0.21", default-features = false }
 
 [features]
 default = ["debug", "arb"]
