@@ -1,3 +1,5 @@
+#![allow(clippy::float_cmp)]
+
 mod messages;
 pub use messages::*;
 
