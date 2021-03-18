@@ -3,39 +3,26 @@ use can_dbc::{Message, Signal, ValDescription, ValueDescription, DBC};
 use heck::{CamelCase, SnakeCase};
 use pad::PadAdapter;
 use std::{fs::File, io::BufWriter, io::Write, path::PathBuf};
-use structopt::StructOpt;
 
 mod includes;
 mod keywords;
 mod pad;
 
-#[derive(Debug, StructOpt)]
-struct Cli {
-    /// Path to a `.dbc` file
-    dbc_path: PathBuf,
-    /// Target directory to write Rust source file(s) to
-    out_path: PathBuf,
-    /// Enable debug printing
-    #[structopt(long)]
-    debug: bool,
-}
-
-fn main() -> Result<()> {
-    let args = Cli::from_args();
-    let dbc = std::fs::read(&args.dbc_path)
-        .with_context(|| format!("could not read `{}`", args.dbc_path.display()))?;
+pub fn codegen(dbc_path: PathBuf, out_path: PathBuf, debug: bool) -> Result<()> {
+    let dbc = std::fs::read(&dbc_path)
+        .with_context(|| format!("could not read `{}`", dbc_path.display()))?;
     let dbc = can_dbc::DBC::from_slice(&dbc)
         .map_err(|e| anyhow!("Could not parse dbc file: {:#?}", e))?;
-    if args.debug {
+    if debug {
         eprintln!("{:#?}", dbc);
     }
 
     ensure!(
-        args.out_path.is_dir(),
+        out_path.is_dir(),
         "Output path needs to point to a directory"
     );
 
-    let messages_path = args.out_path.join("messages.rs");
+    let messages_path = out_path.join("messages.rs");
     let messages_code =
         File::create(messages_path).context("Could not create `messages.rs` file")?;
     let mut w = BufWriter::new(messages_code);
@@ -47,10 +34,7 @@ fn main() -> Result<()> {
         "#![allow(unused, clippy::let_and_return, clippy::eq_op)]"
     )?;
     writeln!(&mut w)?;
-    let dbc_file_name = args
-        .dbc_path
-        .file_name()
-        .unwrap_or_else(|| args.dbc_path.as_ref());
+    let dbc_file_name = dbc_path.file_name().unwrap_or_else(|| dbc_path.as_ref());
     writeln!(
         &mut w,
         "//! Message definitions from file `{:?}`",
