@@ -9,7 +9,7 @@ Generates Rust messages from a `dbc` file.
 With cargo:
 
 ```bash
-cargo install dbc-codegen --git https://github.com/technocreatives/dbc-codegen --branch main
+cargo install dbc-codegen-cli --git https://github.com/technocreatives/dbc-codegen --branch main
 ```
 
 ## Usage
