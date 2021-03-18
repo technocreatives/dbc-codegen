@@ -2,6 +2,7 @@ use anyhow::Result;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+/// Generate Rust structs from a `dbc` file.
 #[derive(Debug, StructOpt)]
 struct Cli {
     /// Path to a `.dbc` file

@@ -1,21 +1,25 @@
 [package]
 name = "dbc-codegen"
 version = "0.1.0"
-authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
+authors = [
+    "Pascal Hertleif <pascal@technocreatives.com>",
+    "Marcel Buesing <buesing.marcel@googlemail.com>",
+    "Andres Vahter <andres@vahter.me>",
+]
 edition = "2018"
 description = "CAN DBC code-gen for embedded Rust"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies]
-anyhow = "1.0.33"
 can-dbc = "3.0.2"
+anyhow = "1.0.33"
 heck = "0.3.1"
-structopt = "0.3.20"
 
 [workspace]
 members = [
     ".",
+    "dbc-codegen-cli",
     "testing/rust-integration",
     "testing/can-messages",
     "testing/cantools-messages",
