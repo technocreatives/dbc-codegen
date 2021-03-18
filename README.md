@@ -6,7 +6,15 @@ Generates Rust messages from a `dbc` file.
 
 ## Installation
 
-With cargo:
+Install published version using cargo
+(assumes working installation of `cargo` and `rustc`):
+
+```bash
+cargo install dbc-codegen-cli
+```
+
+Install latest version from the repository,
+also using cargo:
 
 ```bash
 cargo install dbc-codegen-cli --git https://github.com/technocreatives/dbc-codegen --branch main
