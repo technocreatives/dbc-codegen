@@ -20,13 +20,47 @@ also using cargo:
 cargo install dbc-codegen-cli --git https://github.com/technocreatives/dbc-codegen --branch main
 ```
 
-## Usage
+## Using dbc-codegen
 
-Generate `messages.rs` from `example.dbc`:
+Generate `messages.rs` from `example.dbc` using the CLI:
 
 ```bash
 dbc-codegen testing/dbc-examples/example.dbc dir/where/messages_rs/file/is/written
 ```
+
+Or put something like this into your `build.rs` file:
+
+```rust
+
+```
+
+## Using resulting Rust code
+
+dbc-codegen generates Rust code,
+that is expected to be in a cargo project.
+
+All you need to add is a dependency on bitvec,
+e.g. by adding this to your `Cargo.toml`:
+`bitvec = { version = "0.21", default-features = false }`.
+
+To use the code, add `mod messages` to your `lib.rs` (or `main.rs`).
+You will most likely want to interact with the generated
+`Messages` enum, and call `Messages::from_can_message(id, &payload)`.
+
+Note: The generated code contains a lot of documentation!
+Give `cargo doc --open` a try.
+
+### Feature flags
+
+The following (optional) features to be specified:
+
+- `debug`: enables `Debug` derive
+- `range_checked`: adds range checks in setters
+- `arb`: Enables implementation of [`Arbitrary`] trait.
+  Also requires you add `arbitrary` crate (version 1.x) as a dependency of the feature,
+  using `arb = ["arbitrary"]`.
+
+[`Arbitrary`]: https://docs.rs/arbitrary/1.0.0/arbitrary/trait.Arbitrary.html
 
 ### Field/variant rename rules
 
