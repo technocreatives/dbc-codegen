@@ -113,8 +113,10 @@ dependencies = [
 name = "can-messages"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "arbitrary",
  "bitvec",
+ "dbc-codegen",
 ]
 
 [[package]]
