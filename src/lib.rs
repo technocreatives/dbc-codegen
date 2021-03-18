@@ -1,3 +1,11 @@
+//! CAN DBC code generator for Rust
+//!
+//! DBC files are descriptions of CAN frames.
+//! See [this post](https://www.kvaser.com/developer-blog/an-introduction-j1939-and-dbc-files/)
+//! for an introduction.
+
+#![deny(missing_docs)]
+
 use anyhow::{anyhow, Context, Result};
 use can_dbc::{Message, Signal, ValDescription, ValueDescription, DBC};
 use heck::{CamelCase, SnakeCase};
@@ -8,6 +16,7 @@ mod includes;
 mod keywords;
 mod pad;
 
+/// Write Rust structs matching DBC input description to `out` buffer
 pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool) -> Result<()> {
     let dbc = can_dbc::DBC::from_slice(dbc_content).map_err(|e| {
         let msg = "Could not parse dbc file";
