@@ -1,14 +1,23 @@
 [package]
 name = "dbc-codegen-cli"
 version = "0.1.0"
-authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
+authors = [
+    "Pascal Hertleif <pascal@technocreatives.com>",
+    "Marcel Buesing <buesing.marcel@googlemail.com>",
+    "Andres Vahter <andres@vahter.me>",
+]
 edition = "2018"
+description = "CLI for CAN DBC codegen"
+license = "MIT OR Apache-2.0"
+readme = "../README.md"
+repository = "https://github.com/technocreatives/dbc-codegen"
+homepage = "https://github.com/technocreatives/dbc-codegen"
 
 [dependencies]
 heck = "0.3.1"
 structopt = "0.3.20"
 exitcode = "1.1.2"
-dbc-codegen = { path = ".." }
+dbc-codegen = { version = "0.1", path = ".." }
 
 [[bin]]
 name = "dbc-codegen"
