@@ -47,16 +47,19 @@ extern "C" {
 #define EXAMPLE_FOO_FRAME_ID (0x100u)
 #define EXAMPLE_BAR_FRAME_ID (0x200u)
 #define EXAMPLE_AMET_FRAME_ID (0x400u)
+#define EXAMPLE_DOLOR_FRAME_ID (0x404u)
 
 /* Frame lengths in bytes. */
 #define EXAMPLE_FOO_LENGTH (4u)
 #define EXAMPLE_BAR_LENGTH (8u)
 #define EXAMPLE_AMET_LENGTH (8u)
+#define EXAMPLE_DOLOR_LENGTH (8u)
 
 /* Extended or standard frame types. */
 #define EXAMPLE_FOO_IS_EXTENDED (0)
 #define EXAMPLE_BAR_IS_EXTENDED (0)
 #define EXAMPLE_AMET_IS_EXTENDED (0)
+#define EXAMPLE_DOLOR_IS_EXTENDED (0)
 
 /* Frame cycle times in milliseconds. */
 
@@ -178,6 +181,20 @@ struct example_amet_t {
      * Offset: 0
      */
     uint8_t five;
+};
+
+/**
+ * Signals in message Dolor.
+ *
+ * All signal values are as on the CAN bus.
+ */
+struct example_dolor_t {
+    /**
+     * Range: 0..130 (0.00..130.00 -)
+     * Scale: 1
+     * Offset: 0
+     */
+    uint16_t one_float;
 };
 
 /**
@@ -587,6 +604,61 @@ double example_amet_five_decode(uint8_t value);
  * @return true if in range, false otherwise.
  */
 bool example_amet_five_is_in_range(uint8_t value);
+
+/**
+ * Pack message Dolor.
+ *
+ * @param[out] dst_p Buffer to pack the message into.
+ * @param[in] src_p Data to pack.
+ * @param[in] size Size of dst_p.
+ *
+ * @return Size of packed data, or negative error code.
+ */
+int example_dolor_pack(
+    uint8_t *dst_p,
+    const struct example_dolor_t *src_p,
+    size_t size);
+
+/**
+ * Unpack message Dolor.
+ *
+ * @param[out] dst_p Object to unpack the message into.
+ * @param[in] src_p Message to unpack.
+ * @param[in] size Size of src_p.
+ *
+ * @return zero(0) or negative error code.
+ */
+int example_dolor_unpack(
+    struct example_dolor_t *dst_p,
+    const uint8_t *src_p,
+    size_t size);
+
+/**
+ * Encode given signal by applying scaling and offset.
+ *
+ * @param[in] value Signal to encode.
+ *
+ * @return Encoded signal.
+ */
+uint16_t example_dolor_one_float_encode(double value);
+
+/**
+ * Decode given signal by applying scaling and offset.
+ *
+ * @param[in] value Signal to decode.
+ *
+ * @return Decoded signal.
+ */
+double example_dolor_one_float_decode(uint16_t value);
+
+/**
+ * Check that given signal is in allowed range.
+ *
+ * @param[in] value Signal to check.
+ *
+ * @return true if in range, false otherwise.
+ */
+bool example_dolor_one_float_is_in_range(uint16_t value);
 
 
 #ifdef __cplusplus

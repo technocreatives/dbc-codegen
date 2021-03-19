@@ -385,3 +385,52 @@ bool example_amet_five_is_in_range(uint8_t value)
 {
     return (value <= 1u);
 }
+
+int example_dolor_pack(
+    uint8_t *dst_p,
+    const struct example_dolor_t *src_p,
+    size_t size)
+{
+    if (size < 8u) {
+        return (-EINVAL);
+    }
+
+    memset(&dst_p[0], 0, 8);
+
+    dst_p[0] |= pack_right_shift_u16(src_p->one_float, 11u, 0x01u);
+    dst_p[1] |= pack_right_shift_u16(src_p->one_float, 3u, 0xffu);
+    dst_p[2] |= pack_left_shift_u16(src_p->one_float, 5u, 0xe0u);
+
+    return (8);
+}
+
+int example_dolor_unpack(
+    struct example_dolor_t *dst_p,
+    const uint8_t *src_p,
+    size_t size)
+{
+    if (size < 8u) {
+        return (-EINVAL);
+    }
+
+    dst_p->one_float = unpack_left_shift_u16(src_p[0], 11u, 0x01u);
+    dst_p->one_float |= unpack_left_shift_u16(src_p[1], 3u, 0xffu);
+    dst_p->one_float |= unpack_right_shift_u16(src_p[2], 5u, 0xe0u);
+
+    return (0);
+}
+
+uint16_t example_dolor_one_float_encode(double value)
+{
+    return (uint16_t)(value);
+}
+
+double example_dolor_one_float_decode(uint16_t value)
+{
+    return ((double)value);
+}
+
+bool example_dolor_one_float_is_in_range(uint16_t value)
+{
+    return (value <= 130u);
+}

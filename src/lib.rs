@@ -44,7 +44,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     writeln!(&mut w)?;
     writeln!(
         &mut w,
-        "use bitvec::prelude::{{BitField, BitStore, BitView, LocalBits}};"
+        "use bitvec::prelude::{{BitField, BitStore, BitView, Lsb0, Msb0}};"
     )?;
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
@@ -393,17 +393,20 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
 fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
     let read_fn = match signal.byte_order() {
         can_dbc::ByteOrder::LittleEndian => format!(
-            "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_le::<{typ}>()",
+            "self.raw.view_bits::<Lsb0>()[{start}..{end}].load_le::<{typ}>()",
             typ = signal_to_rust_uint(signal),
             start = signal.start_bit,
             end = signal.start_bit + signal.signal_size
         ),
-        can_dbc::ByteOrder::BigEndian => format!(
-            "self.raw.view_bits::<LocalBits>()[{start}..{end}].load_be::<{typ}>()",
-            typ = signal_to_rust_uint(signal),
-            start = signal.start_bit + 1 - signal.signal_size,
-            end = signal.start_bit + 1,
-        ),
+        can_dbc::ByteOrder::BigEndian => {
+            let start_bit = 8 * (signal.start_bit / 8) + (7 - (signal.start_bit % 8));
+            format!(
+                "self.raw.view_bits::<Msb0>()[{start}..{end}].load_be::<{typ}>()",
+                typ = signal_to_rust_uint(signal),
+                start = start_bit,
+                end = start_bit + signal.signal_size
+            )
+        }
     };
 
     writeln!(&mut w, r#"let signal = {};"#, read_fn)?;
@@ -458,17 +461,18 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
         can_dbc::ByteOrder::LittleEndian => {
             writeln!(
                 &mut w,
-                r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_le(value);"#,
+                r#"self.raw.view_bits_mut::<Lsb0>()[{start_bit}..{end_bit}].store_le(value);"#,
                 start_bit = signal.start_bit,
                 end_bit = signal.start_bit + signal.signal_size,
             )?;
         }
         can_dbc::ByteOrder::BigEndian => {
+            let start_bit = 8 * (signal.start_bit / 8) + (7 - (signal.start_bit % 8));
             writeln!(
                 &mut w,
-                r#"self.raw.view_bits_mut::<LocalBits>()[{start_bit}..{end_bit}].store_be(value);"#,
-                start_bit = signal.start_bit + 1 - signal.signal_size,
-                end_bit = signal.start_bit + 1,
+                r#"self.raw.view_bits_mut::<Msb0>()[{start_bit}..{end_bit}].store_be(value);"#,
+                start_bit = start_bit,
+                end_bit = start_bit + signal.signal_size,
             )?;
         }
     };
