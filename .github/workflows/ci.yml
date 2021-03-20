@@ -7,7 +7,6 @@ on:
     - main
 
 env:
-  RUST_VERSION: 1.50.0
   CARGO_INCREMENTAL: 0
   RUSTUP_MAX_RETRIES: 10
   CARGO_NET_RETRY: 10
@@ -23,6 +22,7 @@ jobs:
       with:
         profile: minimal
         toolchain: ${{ env.RUST_VERSION }}
+        target: thumbv7em-none-eabihf
         override: true
     - run: rustup component add rustfmt
     - uses: actions-rs/cargo@v1
@@ -45,7 +45,6 @@ jobs:
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: ${{ env.RUST_VERSION }}
         profile: minimal
         override: true
         components: clippy
@@ -77,6 +76,12 @@ jobs:
       with:
         command: test
         args: --all
+    
+    - name: Build for Embedded
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: -p can-embedded --target=thumbv7em-none-eabihf
 
     - name: Annotate commit with clippy warnings
       if: startsWith(matrix.os, 'ubuntu')
