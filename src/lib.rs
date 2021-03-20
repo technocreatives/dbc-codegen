@@ -4,9 +4,9 @@
 //! See [this post](https://www.kvaser.com/developer-blog/an-introduction-j1939-and-dbc-files/)
 //! for an introduction.
 
-#![deny(missing_docs)]
+#![deny(missing_docs, clippy::integer_arithmetic)]
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use can_dbc::{Message, Signal, ValDescription, ValueDescription, DBC};
 use heck::{CamelCase, SnakeCase};
 use pad::PadAdapter;
@@ -37,6 +37,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
         &mut w,
         "#![allow(unused, clippy::let_and_return, clippy::eq_op)]"
     )?;
+    writeln!(&mut w, "#![deny(clippy::integer_arithmetic)]")?;
     writeln!(&mut w)?;
     writeln!(&mut w, "//! Message definitions from file `{:?}`", dbc_name)?;
     writeln!(&mut w, "//!")?;
@@ -355,7 +356,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     )?;
     {
         let mut w = PadAdapter::wrap(&mut w);
-        signal_from_payload(&mut w, signal)?;
+        signal_from_payload(&mut w, signal, msg).context("signal from payload")?;
     }
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
@@ -382,7 +383,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
                 max = signal.max(),
             )?;
         }
-        signal_to_payload(&mut w, signal)?;
+        signal_to_payload(&mut w, signal, msg).context("signal to payload")?;
     }
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
@@ -390,21 +391,80 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     Ok(())
 }
 
-fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
+fn be_start_end_bit(signal: &Signal, msg: &Message) -> Result<(u64, u64)> {
+    let err = "calculating start bit";
+
+    let x = signal.start_bit.checked_div(8).context(err)?;
+    let x = x.checked_mul(8).context(err)?;
+
+    let y = signal.start_bit.checked_rem(8).context(err)?;
+    let y = 7u64.checked_sub(y).context(err)?;
+
+    let start_bit = x.checked_add(y).context(err)?;
+    let end_bit = start_bit
+        .checked_add(signal.signal_size)
+        .context("calculating last bit position")?;
+
+    let msg_bits = msg.message_size().checked_mul(8).unwrap();
+
+    ensure!(
+        start_bit <= msg_bits,
+        "signal starts at {}, but message is only {} bits",
+        start_bit,
+        msg_bits
+    );
+    ensure!(
+        end_bit <= msg_bits,
+        "signal ends at {}, but message is only {} bits",
+        end_bit,
+        msg_bits
+    );
+    Ok((start_bit, end_bit))
+}
+
+fn le_start_end_bit(signal: &Signal, msg: &Message) -> Result<(u64, u64)> {
+    let msg_bits = msg.message_size().checked_mul(8).unwrap();
+    let start_bit = signal.start_bit;
+    ensure!(
+        start_bit <= msg_bits,
+        "signal starts at {}, but message is only {} bits",
+        start_bit,
+        msg_bits
+    );
+
+    let end_bit = signal
+        .start_bit
+        .checked_add(signal.signal_size)
+        .context("overflow calculating last bit position")?;
+    ensure!(
+        end_bit <= msg_bits,
+        "signal ends at {}, but message is only {} bits",
+        end_bit,
+        msg_bits
+    );
+    Ok((start_bit, end_bit))
+}
+
+fn signal_from_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
     let read_fn = match signal.byte_order() {
-        can_dbc::ByteOrder::LittleEndian => format!(
-            "self.raw.view_bits::<Lsb0>()[{start}..{end}].load_le::<{typ}>()",
-            typ = signal_to_rust_uint(signal),
-            start = signal.start_bit,
-            end = signal.start_bit + signal.signal_size
-        ),
+        can_dbc::ByteOrder::LittleEndian => {
+            let (start_bit, end_bit) = le_start_end_bit(signal, msg)?;
+
+            format!(
+                "self.raw.view_bits::<Lsb0>()[{start}..{end}].load_le::<{typ}>()",
+                typ = signal_to_rust_uint(signal),
+                start = start_bit,
+                end = end_bit,
+            )
+        }
         can_dbc::ByteOrder::BigEndian => {
-            let start_bit = 8 * (signal.start_bit / 8) + (7 - (signal.start_bit % 8));
+            let (start_bit, end_bit) = be_start_end_bit(signal, msg)?;
+
             format!(
                 "self.raw.view_bits::<Msb0>()[{start}..{end}].load_be::<{typ}>()",
                 typ = signal_to_rust_uint(signal),
                 start = start_bit,
-                end = start_bit + signal.signal_size
+                end = end_bit
             )
         }
     };
@@ -433,7 +493,7 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
     Ok(())
 }
 
-fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
+fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
     if signal.signal_size == 1 {
         // Map boolean to byte so we can pack it
         writeln!(&mut w, "let value = value as u8;")?;
@@ -459,20 +519,21 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal) -> Result<()> {
 
     match signal.byte_order() {
         can_dbc::ByteOrder::LittleEndian => {
+            let (start_bit, end_bit) = le_start_end_bit(signal, msg)?;
             writeln!(
                 &mut w,
                 r#"self.raw.view_bits_mut::<Lsb0>()[{start_bit}..{end_bit}].store_le(value);"#,
-                start_bit = signal.start_bit,
-                end_bit = signal.start_bit + signal.signal_size,
+                start_bit = start_bit,
+                end_bit = end_bit,
             )?;
         }
         can_dbc::ByteOrder::BigEndian => {
-            let start_bit = 8 * (signal.start_bit / 8) + (7 - (signal.start_bit % 8));
+            let (start_bit, end_bit) = be_start_end_bit(signal, msg)?;
             writeln!(
                 &mut w,
                 r#"self.raw.view_bits_mut::<Msb0>()[{start_bit}..{end_bit}].store_be(value);"#,
                 start_bit = start_bit,
-                end_bit = start_bit + signal.signal_size,
+                end_bit = end_bit,
             )?;
         }
     };

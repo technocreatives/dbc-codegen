@@ -1,6 +1,7 @@
 // Generated code!
 #![no_std]
 #![allow(unused, clippy::let_and_return, clippy::eq_op)]
+#![deny(clippy::integer_arithmetic)]
 
 //! Message definitions from file `"example.dbc"`
 //!
