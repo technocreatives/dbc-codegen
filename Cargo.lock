@@ -110,6 +110,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "can-embedded"
+version = "0.1.0"
+dependencies = [
+ "bitvec",
+]
+
+[[package]]
 name = "can-messages"
 version = "0.1.0"
 dependencies = [
