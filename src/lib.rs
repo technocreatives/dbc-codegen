@@ -58,6 +58,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     writeln!(&mut w, "fn main() {{}}")?;
     writeln!(&mut w)?;
     w.write_all(include_bytes!("./includes/errors.rs"))?;
+    w.write_all(include_bytes!("./includes/arbitrary_helpers.rs"))?;
     writeln!(&mut w)?;
 
     Ok(())
@@ -683,8 +684,11 @@ fn signal_to_arbitrary(signal: &Signal) -> String {
     if signal.signal_size == 1 {
         "u.int_in_range(0..=1)? == 1".to_string()
     } else if signal_is_float_in_rust(signal) {
-        // TODO generate arbitrary value for float
-        format!("{}_f32", signal.min())
+        format!(
+            "u.float_in_range({min}_f32..={max}_f32)?",
+            min = signal.min(),
+            max = signal.max()
+        )
     } else {
         format!(
             "u.int_in_range({min}..={max})?",
