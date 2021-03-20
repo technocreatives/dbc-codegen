@@ -1,4 +1,4 @@
-use can_messages::messages::Messages;
+use can_messages::Messages;
 
 fn main() {
     let input = std::env::args()

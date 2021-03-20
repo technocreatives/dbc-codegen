@@ -1,6 +1,6 @@
 #![allow(clippy::float_cmp)]
 
-use can_messages::messages;
+use can_messages as messages;
 
 #[test]
 #[cfg(feature = "range_checked")]

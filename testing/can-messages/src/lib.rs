@@ -1,3 +1,4 @@
 #![no_std]
 
-pub mod messages;
+mod messages;
+pub use messages::*;
