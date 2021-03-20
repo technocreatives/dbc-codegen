@@ -1,19 +1,12 @@
 [package]
-name = "can-messages"
+name = "can-embedded"
 version = "0.1.0"
 authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
 edition = "2018"
 
 [dependencies]
 bitvec = { version = "0.21", default-features = false }
-arbitrary = { version = "1.0", optional = true }
-
-[build-dependencies]
-anyhow = "1.0"
-dbc-codegen = { path = "../../" }
 
 [features]
-default = ["debug", "arb"]
-arb = ["arbitrary"]
 debug = []
 range_checked = []

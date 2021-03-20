@@ -23,6 +23,7 @@ members = [
     ".",
     "dbc-codegen-cli",
     "testing/rust-integration",
+    "testing/can-embedded",
     "testing/can-messages",
     "testing/cantools-messages",
 ]
