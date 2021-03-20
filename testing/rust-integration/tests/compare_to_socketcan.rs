@@ -1,4 +1,4 @@
-use can_messages as messages;
+use can_messages::messages;
 use std::convert::TryFrom;
 
 #[test]
