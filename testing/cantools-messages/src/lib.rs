@@ -48,3 +48,14 @@ fn pack_message_signed_positive() {
     unsafe { example_foo_pack(buffer.as_mut_ptr(), &foo, buffer.len() as u64) };
     assert_eq!(dbc_codegen_foo.raw(), buffer);
 }
+
+#[test]
+fn pack_big_endian_signal_with_start_bit_zero() {
+    let dbc_codegen_bar = can_messages::Dolor::new(1).unwrap();
+    let one_float = unsafe { example_dolor_one_float_encode(1.0) };
+
+    let dolor = example_dolor_t { one_float };
+    let mut buffer: [u8; 8] = [0; 8];
+    unsafe { example_dolor_pack(buffer.as_mut_ptr(), &dolor, buffer.len() as u64) };
+    assert_eq!(dbc_codegen_bar.raw(), buffer);
+}
