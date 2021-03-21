@@ -32,10 +32,14 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     let mut w = BufWriter::new(out);
 
     writeln!(&mut w, "// Generated code!")?;
-    writeln!(&mut w, "#![no_std]")?;
     writeln!(
         &mut w,
-        "#![allow(unused, clippy::let_and_return, clippy::eq_op)]"
+        "#![allow(unused_comparisons, unreachable_patterns)]"
+    )?;
+    writeln!(&mut w, "#![allow(clippy::let_and_return, clippy::eq_op)]")?;
+    writeln!(
+        &mut w,
+        "#![allow(clippy::excessive_precision, clippy::manual_range_contains, absurd_extreme_comparisons)]"
     )?;
     writeln!(&mut w, "#![deny(clippy::integer_arithmetic)]")?;
     writeln!(&mut w)?;
@@ -45,7 +49,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     writeln!(&mut w)?;
     writeln!(
         &mut w,
-        "use bitvec::prelude::{{BitField, BitStore, BitView, Lsb0, Msb0}};"
+        "use bitvec::prelude::{{BitField, BitView, Lsb0, Msb0}};"
     )?;
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
@@ -55,6 +59,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
 
     writeln!(&mut w)?;
     writeln!(&mut w, "/// This is just to make testing easier")?;
+    writeln!(&mut w, "#[allow(dead_code)]")?;
     writeln!(&mut w, "fn main() {{}}")?;
     writeln!(&mut w)?;
     w.write_all(include_bytes!("./includes/errors.rs"))?;
@@ -144,7 +149,6 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         }
     }
     writeln!(w, "#[derive(Clone, Copy)]")?;
-    writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
     writeln!(w, "pub struct {} {{", type_name(msg.message_name()))?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -250,6 +254,8 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
     }
     writeln!(w, "}}")?;
     writeln!(w)?;
+
+    render_debug_impl(&mut w, &msg)?;
 
     render_arbitrary(&mut w, &msg)?;
 
@@ -377,12 +383,20 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
             writeln!(w, r##"#[cfg(feature = "range_checked")]"##)?;
             writeln!(
                 w,
-                r##"if value < {min}_{typ} || {max}_{typ} < value {{ return Err(CanError::ParameterOutOfRange{{ message_id: {message_id} }}); }}"##,
+                r##"if value < {min}_{typ} || {max}_{typ} < value {{"##,
                 typ = signal_to_rust_type(&signal),
-                message_id = msg.message_id().0,
                 min = signal.min(),
                 max = signal.max(),
             )?;
+            {
+                let mut w = PadAdapter::wrap(&mut w);
+                writeln!(
+                    w,
+                    r##"return Err(CanError::ParameterOutOfRange {{ message_id: {message_id} }});"##,
+                    message_id = msg.message_id().0,
+                )?;
+            }
+            writeln!(w, r"}}")?;
         }
         signal_to_payload(&mut w, signal, msg).context("signal to payload")?;
     }
@@ -635,14 +649,55 @@ fn enum_variant_name(x: &str) -> String {
     }
 }
 
+fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
+    let typ = type_name(msg.message_name());
+    writeln!(w, r##"#[cfg(feature = "debug")]"##)?;
+    writeln!(w, r##"impl core::fmt::Debug for {} {{"##, typ)?;
+    {
+        let mut w = PadAdapter::wrap(&mut w);
+        writeln!(
+            w,
+            "fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {{"
+        )?;
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            writeln!(w, r#"if f.alternate() {{"#)?;
+            {
+                let mut w = PadAdapter::wrap(&mut w);
+                writeln!(w, r#"f.debug_struct("{}")"#, typ)?;
+                {
+                    let mut w = PadAdapter::wrap(&mut w);
+                    for signal in msg.signals() {
+                        writeln!(
+                            w,
+                            r#".field("{field_name}", &self.{field_name}())"#,
+                            field_name = field_name(signal.name()),
+                        )?;
+                    }
+                }
+                writeln!(w, r#".finish()"#)?;
+            }
+            writeln!(w, r#"}} else {{"#)?;
+            {
+                let mut w = PadAdapter::wrap(&mut w);
+                writeln!(w, r#"f.debug_tuple("{}").field(&self.raw).finish()"#, typ)?;
+            }
+            writeln!(w, "}}")?;
+        }
+        writeln!(w, "}}")?;
+    }
+    writeln!(w, "}}")?;
+    writeln!(w)?;
+    Ok(())
+}
+
 fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(
         w,
-        "impl<'a> Arbitrary<'a> for {typ}",
+        "impl<'a> Arbitrary<'a> for {typ} {{",
         typ = type_name(msg.message_name())
     )?;
-    writeln!(w, "{{")?;
     {
         let mut w = PadAdapter::wrap(&mut w);
         writeln!(
