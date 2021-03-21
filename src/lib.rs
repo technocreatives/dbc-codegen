@@ -39,7 +39,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     writeln!(&mut w, "#![allow(clippy::let_and_return, clippy::eq_op)]")?;
     writeln!(
         &mut w,
-        "#![allow(clippy::excessive_precision, clippy::manual_range_contains, absurd_extreme_comparisons)]"
+        "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons)]"
     )?;
     writeln!(&mut w, "#![deny(clippy::integer_arithmetic)]")?;
     writeln!(&mut w)?;
