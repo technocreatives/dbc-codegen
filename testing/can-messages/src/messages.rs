@@ -175,8 +175,8 @@ impl core::convert::TryFrom<&[u8]> for Foo {
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Foo {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
-        let voltage = 0_f32;
-        let current = -2048_f32;
+        let voltage = u.float_in_range(0_f32..=63.9990234375_f32)?;
+        let current = u.float_in_range(-2048_f32..=2047.9375_f32)?;
         Foo::new(voltage, current).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
@@ -434,7 +434,7 @@ impl core::convert::TryFrom<&[u8]> for Bar {
 impl<'a> Arbitrary<'a> for Bar {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
         let one = u.int_in_range(0..=3)?;
-        let two = 0_f32;
+        let two = u.float_in_range(0_f32..=100_f32)?;
         let three = u.int_in_range(0..=7)?;
         let four = u.int_in_range(0..=3)?;
         let xtype = u.int_in_range(0..=1)? == 1;
@@ -707,7 +707,7 @@ impl core::convert::TryFrom<&[u8]> for Amet {
 impl<'a> Arbitrary<'a> for Amet {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
         let one = u.int_in_range(0..=3)?;
-        let two = 0_f32;
+        let two = u.float_in_range(0_f32..=100_f32)?;
         let three = u.int_in_range(0..=7)?;
         let four = u.int_in_range(0..=3)?;
         let five = u.int_in_range(0..=1)? == 1;
@@ -815,4 +815,21 @@ pub enum CanError {
         message_id: u32,
     },
     InvalidPayloadSize,
+}
+#[cfg(feature = "arb")]
+trait UnstructuredFloatExt {
+    fn float_in_range(&mut self, range: core::ops::RangeInclusive<f32>) -> arbitrary::Result<f32>;
+}
+
+#[cfg(feature = "arb")]
+impl UnstructuredFloatExt for arbitrary::Unstructured<'_> {
+    fn float_in_range(&mut self, range: core::ops::RangeInclusive<f32>) -> arbitrary::Result<f32> {
+        let min = range.start();
+        let max = range.end();
+        let steps = u32::MAX;
+        let factor = (max - min) / (steps as f32);
+        let random_int: u32 = self.int_in_range(0..=steps)?;
+        let random = min + factor * (random_int as f32);
+        Ok(random)
+    }
 }
