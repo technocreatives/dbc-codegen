@@ -1,6 +1,11 @@
 // Generated code!
-#![no_std]
-#![allow(unused, clippy::let_and_return, clippy::eq_op)]
+#![allow(unused_comparisons, unreachable_patterns)]
+#![allow(clippy::let_and_return, clippy::eq_op)]
+#![allow(
+    clippy::excessive_precision,
+    clippy::manual_range_contains,
+    clippy::absurd_extreme_comparisons
+)]
 #![deny(clippy::integer_arithmetic)]
 
 //! Message definitions from file `"example.dbc"`
@@ -9,7 +14,7 @@
 
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitvec::prelude::{BitField, BitStore, BitView, Lsb0, Msb0};
+use bitvec::prelude::{BitField, BitView, Lsb0, Msb0};
 
 /// All messages
 #[derive(Clone)]
@@ -48,7 +53,6 @@ impl Messages {
 /// - Size: 4 bytes
 /// - Transmitter: Lorem
 #[derive(Clone, Copy)]
-#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Foo {
     raw: [u8; 4],
 }
@@ -172,6 +176,20 @@ impl core::convert::TryFrom<&[u8]> for Foo {
     }
 }
 
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for Foo {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("Foo")
+                .field("voltage", &self.voltage())
+                .field("current", &self.current())
+                .finish()
+        } else {
+            f.debug_tuple("Foo").field(&self.raw).finish()
+        }
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Foo {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -187,7 +205,6 @@ impl<'a> Arbitrary<'a> for Foo {
 /// - Size: 8 bytes
 /// - Transmitter: Ipsum
 #[derive(Clone, Copy)]
-#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Bar {
     raw: [u8; 8],
 }
@@ -430,6 +447,23 @@ impl core::convert::TryFrom<&[u8]> for Bar {
     }
 }
 
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for Bar {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("Bar")
+                .field("one", &self.one())
+                .field("two", &self.two())
+                .field("three", &self.three())
+                .field("four", &self.four())
+                .field("xtype", &self.xtype())
+                .finish()
+        } else {
+            f.debug_tuple("Bar").field(&self.raw).finish()
+        }
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Bar {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -476,7 +510,6 @@ pub enum BarType {
 /// - Size: 8 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
-#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Amet {
     raw: [u8; 8],
 }
@@ -703,6 +736,23 @@ impl core::convert::TryFrom<&[u8]> for Amet {
     }
 }
 
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for Amet {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("Amet")
+                .field("one", &self.one())
+                .field("two", &self.two())
+                .field("three", &self.three())
+                .field("four", &self.four())
+                .field("five", &self.five())
+                .finish()
+        } else {
+            f.debug_tuple("Amet").field(&self.raw).finish()
+        }
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Amet {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -721,7 +771,6 @@ impl<'a> Arbitrary<'a> for Amet {
 /// - Size: 8 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
-#[cfg_attr(feature = "debug", derive(Debug))]
 pub struct Dolor {
     raw: [u8; 8],
 }
@@ -793,6 +842,19 @@ impl core::convert::TryFrom<&[u8]> for Dolor {
     }
 }
 
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for Dolor {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("Dolor")
+                .field("one_float", &self.one_float())
+                .finish()
+        } else {
+            f.debug_tuple("Dolor").field(&self.raw).finish()
+        }
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Dolor {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -802,6 +864,7 @@ impl<'a> Arbitrary<'a> for Dolor {
 }
 
 /// This is just to make testing easier
+#[allow(dead_code)]
 fn main() {}
 
 #[derive(Clone, Copy, PartialEq)]

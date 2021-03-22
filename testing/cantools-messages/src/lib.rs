@@ -6,11 +6,11 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[test]
 fn pack_message() {
-    let dbc_codegen_bar = can_messages::Bar::new(3, 2.0, 4, 5, false).unwrap();
+    let dbc_codegen_bar = can_messages::Bar::new(3, 2.0, 4, 2, false).unwrap();
     let one = unsafe { example_bar_one_encode(3.0) };
     let two = unsafe { example_bar_two_encode(2.0) };
     let three = unsafe { example_bar_three_encode(4.0) };
-    let four = unsafe { example_bar_four_encode(5.0) };
+    let four = unsafe { example_bar_four_encode(2.0) };
     let type_ = unsafe { example_bar_type_encode(0.0) };
 
     let bar = example_bar_t {
