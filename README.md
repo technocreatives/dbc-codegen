@@ -46,9 +46,16 @@ fn main() {
 dbc-codegen generates Rust code,
 that is expected to be in a cargo project.
 
-All you need to add is a dependency on bitvec,
+All you need to add is the following dependencies:
 e.g. by adding this to your `Cargo.toml`:
-`bitvec = { version = "0.21", default-features = false }`.
+
+```toml
+bitvec = { version = "0.21", default-features = false }
+float-cmp = "0.8"
+# Optional dependency, required only if you want to use arbitrary
+# message implementations using the `arb` feature.
+arbitrary = "1.0"
+```
 
 To use the code, add `mod messages` to your `lib.rs` (or `main.rs`).
 You will most likely want to interact with the generated
