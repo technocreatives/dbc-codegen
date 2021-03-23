@@ -316,13 +316,7 @@ impl Bar {
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn three(&self) -> BarThree {
-        match self.three_raw() {
-            0 => BarThree::Off,
-            1 => BarThree::On,
-            2 => BarThree::Oner,
-            3 => BarThree::Onest,
-            x => BarThree::Other(x),
-        }
+        self.three_raw().into()
     }
 
     /// Get raw value of Three
@@ -359,13 +353,7 @@ impl Bar {
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn four(&self) -> BarFour {
-        match self.four_raw() {
-            0 => BarFour::Off,
-            1 => BarFour::On,
-            2 => BarFour::Oner,
-            3 => BarFour::Onest,
-            x => BarFour::Other(x),
-        }
+        self.four_raw().into()
     }
 
     /// Get raw value of Four
@@ -402,11 +390,7 @@ impl Bar {
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn xtype(&self) -> BarType {
-        match self.xtype_raw() {
-            false => BarType::X0off,
-            true => BarType::X1on,
-            x => BarType::Other(x),
-        }
+        self.xtype_raw().into()
     }
 
     /// Get raw value of Type
@@ -485,6 +469,31 @@ pub enum BarThree {
     Onest,
     Other(u8),
 }
+
+impl From<u8> for BarThree {
+    fn from(raw: u8) -> Self {
+        match raw {
+            0 => BarThree::Off,
+            1 => BarThree::On,
+            2 => BarThree::Oner,
+            3 => BarThree::Onest,
+            x => BarThree::Other(x),
+        }
+    }
+}
+
+impl Into<u8> for BarThree {
+    fn into(self) -> u8 {
+        match self {
+            BarThree::Off => 0,
+            BarThree::On => 1,
+            BarThree::Oner => 2,
+            BarThree::Onest => 3,
+            BarThree::Other(x) => x,
+        }
+    }
+}
+
 /// Defined values for Four
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
@@ -495,6 +504,31 @@ pub enum BarFour {
     Onest,
     Other(u8),
 }
+
+impl From<u8> for BarFour {
+    fn from(raw: u8) -> Self {
+        match raw {
+            0 => BarFour::Off,
+            1 => BarFour::On,
+            2 => BarFour::Oner,
+            3 => BarFour::Onest,
+            x => BarFour::Other(x),
+        }
+    }
+}
+
+impl Into<u8> for BarFour {
+    fn into(self) -> u8 {
+        match self {
+            BarFour::Off => 0,
+            BarFour::On => 1,
+            BarFour::Oner => 2,
+            BarFour::Onest => 3,
+            BarFour::Other(x) => x,
+        }
+    }
+}
+
 /// Defined values for Type
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
@@ -502,6 +536,26 @@ pub enum BarType {
     X0off,
     X1on,
     Other(bool),
+}
+
+impl From<bool> for BarType {
+    fn from(raw: bool) -> Self {
+        match raw {
+            false => BarType::X0off,
+            true => BarType::X1on,
+            x => BarType::Other(x),
+        }
+    }
+}
+
+impl Into<bool> for BarType {
+    fn into(self) -> bool {
+        match self {
+            BarType::X0off => false,
+            BarType::X1on => true,
+            BarType::Other(x) => x,
+        }
+    }
 }
 
 /// Amet

@@ -1,6 +1,6 @@
 #![allow(clippy::float_cmp)]
 
-use can_messages::{Amet, Bar, CanError, Foo};
+use can_messages::{Amet, Bar, BarThree, CanError, Foo};
 
 #[test]
 #[cfg(feature = "range_checked")]
@@ -60,4 +60,15 @@ fn debug_alternative_impl() {
         &dbg,
         "Bar {\n    one: 1,\n    two: 1.9499999,\n    three: Onest,\n    four: Onest,\n    xtype: X1on,\n}"
     );
+}
+
+#[test]
+fn from_raw_to_enum() {
+    assert_eq!(BarThree::from(3u8), BarThree::Onest);
+}
+
+#[test]
+fn from_enum_into_raw() {
+    let raw: u8 = BarThree::Onest.into();
+    assert_eq!(raw, 3);
 }
