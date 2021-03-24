@@ -43,18 +43,21 @@ fn main() {
 
 ## Using resulting Rust code
 
-dbc-codegen generates Rust code,
+dbc-codegen generates Rust code
 that is expected to be in a cargo project.
 
-All you need to add is the following dependencies:
-e.g. by adding this to your `Cargo.toml`:
+For example of all of this,
+have a look at [`testing/can-messages/Cargo.toml`](testing/can-messages/Cargo.toml).
+
+### Project setup
+
+For this to work you need to the add the following dependencies
+(e.g. by adding this to your `Cargo.toml`):
 
 ```toml
 bitvec = { version = "0.21", default-features = false }
 float-cmp = "0.8"
-# Optional dependency, required only if you want to use arbitrary
-# message implementations using the `arb` feature.
-arbitrary = "1.0"
+arbitrary = { version = "1.0", optional = true } # Enable with `arb` feature
 ```
 
 To use the code, add `mod messages` to your `lib.rs` (or `main.rs`).
@@ -66,7 +69,7 @@ Give `cargo doc --open` a try.
 
 ### Feature flags
 
-The following (optional) features to be specified:
+The following (optional) features can be specified:
 
 - `debug`: enables `Debug` derive
 - `range_checked`: adds range checks in setters
