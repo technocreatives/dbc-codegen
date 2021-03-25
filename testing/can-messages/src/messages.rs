@@ -468,7 +468,7 @@ pub enum BarThree {
     On,
     Oner,
     Onest,
-    XOther(u8),
+    Other(u8),
 }
 
 impl From<u8> for BarThree {
@@ -478,7 +478,7 @@ impl From<u8> for BarThree {
             1 => BarThree::On,
             2 => BarThree::Oner,
             3 => BarThree::Onest,
-            x => BarThree::XOther(x),
+            x => BarThree::Other(x),
         }
     }
 }
@@ -490,7 +490,7 @@ impl Into<u8> for BarThree {
             BarThree::On => 1,
             BarThree::Oner => 2,
             BarThree::Onest => 3,
-            BarThree::XOther(x) => x,
+            BarThree::Other(x) => x,
         }
     }
 }
@@ -503,7 +503,7 @@ pub enum BarFour {
     On,
     Oner,
     Onest,
-    XOther(u8),
+    Other(u8),
 }
 
 impl From<u8> for BarFour {
@@ -513,7 +513,7 @@ impl From<u8> for BarFour {
             1 => BarFour::On,
             2 => BarFour::Oner,
             3 => BarFour::Onest,
-            x => BarFour::XOther(x),
+            x => BarFour::Other(x),
         }
     }
 }
@@ -525,7 +525,7 @@ impl Into<u8> for BarFour {
             BarFour::On => 1,
             BarFour::Oner => 2,
             BarFour::Onest => 3,
-            BarFour::XOther(x) => x,
+            BarFour::Other(x) => x,
         }
     }
 }
@@ -536,7 +536,7 @@ impl Into<u8> for BarFour {
 pub enum BarType {
     X0off,
     X1on,
-    XOther(bool),
+    Other(bool),
 }
 
 impl From<bool> for BarType {
@@ -544,7 +544,7 @@ impl From<bool> for BarType {
         match raw {
             false => BarType::X0off,
             true => BarType::X1on,
-            x => BarType::XOther(x),
+            x => BarType::Other(x),
         }
     }
 }
@@ -554,7 +554,7 @@ impl Into<bool> for BarType {
         match self {
             BarType::X0off => false,
             BarType::X1on => true,
-            BarType::XOther(x) => x,
+            BarType::Other(x) => x,
         }
     }
 }
@@ -928,14 +928,16 @@ impl<'a> Arbitrary<'a> for Dolor {
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum DolorOneFloat {
     Dolor,
-    XOther(f32),
+    XOther,
+    Other(f32),
 }
 
 impl From<f32> for DolorOneFloat {
     fn from(raw: f32) -> Self {
         match raw {
             x if approx_eq!(f32, x, 3_f32, ulps = 2) => DolorOneFloat::Dolor,
-            x => DolorOneFloat::XOther(x),
+            x if approx_eq!(f32, x, 5_f32, ulps = 2) => DolorOneFloat::XOther,
+            x => DolorOneFloat::Other(x),
         }
     }
 }
@@ -944,7 +946,8 @@ impl Into<f32> for DolorOneFloat {
     fn into(self) -> f32 {
         match self {
             DolorOneFloat::Dolor => 3_f32,
-            DolorOneFloat::XOther(x) => x,
+            DolorOneFloat::XOther => 5_f32,
+            DolorOneFloat::Other(x) => x,
         }
     }
 }

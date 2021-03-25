@@ -33,4 +33,4 @@ BO_ 1028 Dolor: 8 Sit
 VAL_ 512 Three 0 "OFF" 1 "ON" 2 "ONER" 3 "ONEST";
 VAL_ 512 Four 0 "Off" 1 "On" 2 "Oner" 3 "Onest";
 VAL_ 512 Type 0 "0Off" 1 "1On";
-VAL_ 1028 OneFloat 3 "Dolor";
+VAL_ 1028 OneFloat 3 "Dolor" 5 "Other";

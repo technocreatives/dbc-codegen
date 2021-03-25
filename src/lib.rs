@@ -556,7 +556,7 @@ fn write_enum(
         for variant in variants {
             writeln!(w, "{},", enum_variant_name(variant.b()))?;
         }
-        writeln!(w, "XOther({}),", signal_rust_type)?;
+        writeln!(w, "Other({}),", signal_rust_type)?;
     }
     writeln!(w, "}}")?;
     writeln!(w)?;
@@ -586,7 +586,7 @@ fn write_enum(
                         enum_variant_name(variant.b())
                     )?;
                 }
-                writeln!(&mut w, "x => {}::XOther(x),", type_name,)?;
+                writeln!(&mut w, "x => {}::Other(x),", type_name,)?;
             }
             writeln!(w, "}}")?;
         }
@@ -621,7 +621,7 @@ fn write_enum(
                         literal,
                     )?;
                 }
-                writeln!(&mut w, "{}::XOther(x) => x,", type_name,)?;
+                writeln!(&mut w, "{}::Other(x) => x,", type_name,)?;
             }
             writeln!(w, "}}")?;
         }
@@ -696,7 +696,7 @@ fn enum_name(msg: &Message, signal: &Signal) -> String {
 }
 
 fn enum_variant_name(x: &str) -> String {
-    if !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
+    if keywords::is_keyword(x) || !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
         format!("X{}", x.to_camel_case())
     } else {
         x.to_camel_case()
