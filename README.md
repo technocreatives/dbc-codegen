@@ -97,7 +97,7 @@ pub enum BarFive {
     X1on,
     X2oner,
     X3onest,
-    Other(bool),
+    _Other(bool),
 }
 ```
 
@@ -114,7 +114,7 @@ pub fn xtype(&self) -> BarType {
     match self.xtype_raw() {
         false => BarType::X0off,
         true => BarType::X1on,
-        x => BarType::Other(x),
+        x => BarType::_Other(x),
     }
 }
 ```
