@@ -7,10 +7,13 @@
 #![deny(missing_docs, clippy::integer_arithmetic)]
 
 use anyhow::{anyhow, ensure, Context, Result};
-use can_dbc::{Message, Signal, ValDescription, ValueDescription, DBC};
+use can_dbc::{Message, MultiplexIndicator, Signal, ValDescription, ValueDescription, DBC};
 use heck::{CamelCase, SnakeCase};
 use pad::PadAdapter;
-use std::io::{BufWriter, Write};
+use std::{
+    collections::{HashMap, HashSet},
+    io::{BufWriter, Write},
+};
 
 mod includes;
 mod keywords;
@@ -239,10 +242,78 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         writeln!(w)?;
 
         for signal in msg.signals().iter() {
-            render_signal(&mut w, signal, dbc, msg)
-                .with_context(|| format!("write signal impl `{}`", signal.name()))?;
+            match signal.multiplexer_indicator() {
+                MultiplexIndicator::Plain => render_plain_signal(&mut w, signal, dbc, msg)
+                    .with_context(|| format!("write signal impl `{}`", signal.name()))?,
+                MultiplexIndicator::Multiplexor => {
+                    writeln!(w, "/// Get raw value of {}", signal.name())?;
+                    writeln!(w, "///")?;
+                    writeln!(w, "/// - Start bit: {}", signal.start_bit)?;
+                    writeln!(w, "/// - Signal size: {} bits", signal.signal_size)?;
+                    writeln!(w, "/// - Factor: {}", signal.factor)?;
+                    writeln!(w, "/// - Offset: {}", signal.offset)?;
+                    writeln!(w, "/// - Byte order: {:?}", signal.byte_order())?;
+                    writeln!(w, "/// - Value type: {:?}", signal.value_type())?;
+                    writeln!(w, "#[inline(always)]")?;
+                    writeln!(
+                        w,
+                        "pub fn {}_raw(&self) -> {} {{",
+                        field_name(signal.name()),
+                        signal_to_rust_type(&signal)
+                    )?;
+                    {
+                        let mut w = PadAdapter::wrap(&mut w);
+                        signal_from_payload(&mut w, signal, msg).context("signal from payload")?;
+                    }
+                    writeln!(&mut w, "}}")?;
+                    writeln!(w)?;
+
+                    writeln!(
+                        w,
+                        "pub fn {}(&self) -> {} {{",
+                        field_name(signal.name()),
+                        multiplex_enum_name(msg, signal)?
+                    )?;
+                    {
+                        let mut w = PadAdapter::wrap(&mut w);
+                        writeln!(&mut w, "match self.{}_raw() {{", field_name(signal.name()))?;
+
+                        let multiplexer_indexes: HashSet<u64> = msg
+                            .signals()
+                            .iter()
+                            .filter_map(|s| {
+                                if let MultiplexIndicator::MultiplexedSignal(index) =
+                                    s.multiplexer_indicator()
+                                {
+                                    Some(index)
+                                } else {
+                                    None
+                                }
+                            })
+                            .cloned()
+                            .collect();
+
+                        {
+                            let mut w = PadAdapter::wrap(&mut w);
+                            for multiplexer_index in multiplexer_indexes {
+                                writeln!(
+                                    &mut w,
+                                    "{idx} => {signal_name}M{idx}{{ raw: &self.raw }},",
+                                    signal_name = signal.name().to_camel_case(),
+                                    idx = multiplexer_index
+                                )?;
+                            }
+                        }
+
+                        writeln!(w, "}}")?;
+                    }
+                    writeln!(w, "}}")?;
+                }
+                MultiplexIndicator::MultiplexedSignal(_) => {}
+            }
         }
     }
+
     writeln!(w, "}}")?;
     writeln!(w)?;
 
@@ -304,10 +375,19 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         write_enum(&mut w, signal, msg, variants.as_slice())?;
     }
 
+    let multiplexor_signal = msg
+        .signals()
+        .iter()
+        .find(|s| *s.multiplexer_indicator() == MultiplexIndicator::Multiplexor);
+
+    if let Some(multiplexor_signal) = multiplexor_signal {
+        render_multiplexor_enums(w, msg, multiplexor_signal)?;
+    }
+
     Ok(())
 }
 
-fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -> Result<()> {
+fn render_plain_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -> Result<()> {
     writeln!(w, "/// {}", signal.name())?;
     if let Some(comment) = dbc.signal_comment(*msg.message_id(), &signal.name()) {
         writeln!(w, "///")?;
@@ -727,6 +807,26 @@ fn enum_variant_name(x: &str) -> String {
     }
 }
 
+fn multiplex_enum_name(msg: &Message, multiplexor: &Signal) -> Result<String> {
+    ensure!(
+        matches!(
+            multiplexor.multiplexer_indicator(),
+            MultiplexIndicator::Multiplexor
+        ),
+        "signal {:?} is not the multiplexor",
+        multiplexor
+    );
+    Ok(format!(
+        "{}{}",
+        msg.message_name().to_camel_case(),
+        multiplexor.name().to_camel_case()
+    ))
+}
+
+fn multiplex_enum_variant_name(switch_index: u64) -> String {
+    format!("M{}", switch_index)
+}
+
 fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
     let typ = type_name(msg.message_name());
     writeln!(w, r##"#[cfg(feature = "debug")]"##)?;
@@ -766,6 +866,71 @@ fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
     }
     writeln!(w, "}}")?;
     writeln!(w)?;
+    Ok(())
+}
+
+fn render_multiplexor_enums(
+    mut w: impl Write,
+    msg: &Message,
+    multiplexor_signal: &Signal,
+) -> Result<()> {
+    ensure!(
+        *multiplexor_signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor,
+        "signal {} is not the multiplexor",
+        multiplexor_signal.name(),
+    );
+
+    let mut multiplexed_signals = HashMap::new();
+    for signal in msg.signals() {
+        if let MultiplexIndicator::MultiplexedSignal(switch_index) = signal.multiplexer_indicator()
+        {
+            multiplexed_signals
+                .entry(switch_index)
+                .and_modify(|v: &mut Vec<&Signal>| v.push(&signal))
+                .or_insert(vec![&signal]);
+        }
+    }
+
+    writeln!(
+        w,
+        "/// Defined values for multiplexed signal {}",
+        msg.message_name()
+    )?;
+    writeln!(w, "#[derive(Clone, Copy)]")?;
+    writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
+
+    writeln!(
+        w,
+        "pub enum {} {{",
+        multiplex_enum_name(msg, multiplexor_signal)?
+    )?;
+
+    {
+        let mut w = PadAdapter::wrap(&mut w);
+        for (switch_index, _multiplexed_signals) in multiplexed_signals.iter() {
+            let multiplexed_name = multiplexor_signal.name().to_camel_case();
+            writeln!(
+                w,
+                "{multiplexed_name}M{idx}({multiplexed_name}M{idx}),",
+                idx = switch_index,
+                multiplexed_name = multiplexed_name
+            )?;
+        }
+    }
+    writeln!(w, "}}")?;
+
+    for (switch_index, _multiplexed_signals) in multiplexed_signals.iter() {
+        let multiplexed_name = multiplexor_signal.name().to_camel_case();
+        writeln!(w, "#[derive(Clone, Copy)]")?;
+        writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
+        writeln!(
+            w,
+            "struct {multiplexed_name}M{idx} {{ raw: &[u8] }}",
+            idx = switch_index,
+            multiplexed_name = multiplexed_name
+        )?;
+    }
+
     Ok(())
 }
 

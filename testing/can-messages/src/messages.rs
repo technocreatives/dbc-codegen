@@ -29,6 +29,8 @@ pub enum Messages {
     Amet(Amet),
     /// Dolor
     Dolor(Dolor),
+    /// SENSOR_SONARS
+    SensorSonars(SensorSonars),
 }
 
 impl Messages {
@@ -42,6 +44,7 @@ impl Messages {
             512 => Messages::Bar(Bar::try_from(payload)?),
             1024 => Messages::Amet(Amet::try_from(payload)?),
             1028 => Messages::Dolor(Dolor::try_from(payload)?),
+            200 => Messages::SensorSonars(SensorSonars::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -976,6 +979,204 @@ impl Into<f32> for DolorOneFloat {
             DolorOneFloat::_Other(x) => x,
         }
     }
+}
+
+/// SENSOR_SONARS
+///
+/// - ID: 200 (0xc8)
+/// - Size: 8 bytes
+/// - Transmitter: SENSOR
+#[derive(Clone, Copy)]
+pub struct SensorSonars {
+    raw: [u8; 8],
+}
+
+impl SensorSonars {
+    pub const MESSAGE_ID: u32 = 200;
+
+    /// Construct new SENSOR_SONARS from values
+    pub fn new(
+        sensor_sonars_mux: u8,
+        sensor_sonars_err_count: u16,
+        sensor_sonars_left: f32,
+        sensor_sonars_middle: f32,
+        sensor_sonars_right: f32,
+        sensor_sonars_rear: f32,
+        sensor_sonars_no_filt_left: f32,
+        sensor_sonars_no_filt_middle: f32,
+        sensor_sonars_no_filt_right: f32,
+        sensor_sonars_no_filt_rear: f32,
+    ) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_sensor_sonars_mux(sensor_sonars_mux)?;
+        res.set_sensor_sonars_err_count(sensor_sonars_err_count)?;
+        res.set_sensor_sonars_left(sensor_sonars_left)?;
+        res.set_sensor_sonars_middle(sensor_sonars_middle)?;
+        res.set_sensor_sonars_right(sensor_sonars_right)?;
+        res.set_sensor_sonars_rear(sensor_sonars_rear)?;
+        res.set_sensor_sonars_no_filt_left(sensor_sonars_no_filt_left)?;
+        res.set_sensor_sonars_no_filt_middle(sensor_sonars_no_filt_middle)?;
+        res.set_sensor_sonars_no_filt_right(sensor_sonars_no_filt_right)?;
+        res.set_sensor_sonars_no_filt_rear(sensor_sonars_no_filt_rear)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+
+    /// Get raw value of SENSOR_SONARS_mux
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 4 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_mux_raw(&self) -> u8 {
+        let signal = self.raw.view_bits::<Lsb0>()[0..4].load_le::<u8>();
+
+        signal
+    }
+
+    pub fn sensor_sonars_mux(&self) -> SensorSonarsSensorSonarsMux {
+        match self.sensor_sonars_mux_raw() {
+            1 => SensorSonarsMuxM1 { raw: &self.raw },
+            0 => SensorSonarsMuxM0 { raw: &self.raw },
+        }
+    }
+    /// SENSOR_SONARS_err_count
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DRIVER, IO
+    #[inline(always)]
+    pub fn sensor_sonars_err_count(&self) -> u16 {
+        self.sensor_sonars_err_count_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_err_count
+    ///
+    /// - Start bit: 4
+    /// - Signal size: 12 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_err_count_raw(&self) -> u16 {
+        let signal = self.raw.view_bits::<Lsb0>()[4..16].load_le::<u16>();
+
+        signal
+    }
+
+    /// Set value of SENSOR_SONARS_err_count
+    #[inline(always)]
+    pub fn set_sensor_sonars_err_count(&mut self, value: u16) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_u16 || 0_u16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        self.raw.view_bits_mut::<Lsb0>()[4..16].store_le(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for SensorSonars {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for SensorSonars {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("SensorSonars")
+                .field("sensor_sonars_mux", &self.sensor_sonars_mux())
+                .field("sensor_sonars_err_count", &self.sensor_sonars_err_count())
+                .field("sensor_sonars_left", &self.sensor_sonars_left())
+                .field("sensor_sonars_middle", &self.sensor_sonars_middle())
+                .field("sensor_sonars_right", &self.sensor_sonars_right())
+                .field("sensor_sonars_rear", &self.sensor_sonars_rear())
+                .field(
+                    "sensor_sonars_no_filt_left",
+                    &self.sensor_sonars_no_filt_left(),
+                )
+                .field(
+                    "sensor_sonars_no_filt_middle",
+                    &self.sensor_sonars_no_filt_middle(),
+                )
+                .field(
+                    "sensor_sonars_no_filt_right",
+                    &self.sensor_sonars_no_filt_right(),
+                )
+                .field(
+                    "sensor_sonars_no_filt_rear",
+                    &self.sensor_sonars_no_filt_rear(),
+                )
+                .finish()
+        } else {
+            f.debug_tuple("SensorSonars").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for SensorSonars {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let sensor_sonars_mux = u.int_in_range(0..=0)?;
+        let sensor_sonars_err_count = u.int_in_range(0..=0)?;
+        let sensor_sonars_left = u.float_in_range(0_f32..=0_f32)?;
+        let sensor_sonars_middle = u.float_in_range(0_f32..=0_f32)?;
+        let sensor_sonars_right = u.float_in_range(0_f32..=0_f32)?;
+        let sensor_sonars_rear = u.float_in_range(0_f32..=0_f32)?;
+        let sensor_sonars_no_filt_left = u.float_in_range(0_f32..=0_f32)?;
+        let sensor_sonars_no_filt_middle = u.float_in_range(0_f32..=0_f32)?;
+        let sensor_sonars_no_filt_right = u.float_in_range(0_f32..=0_f32)?;
+        let sensor_sonars_no_filt_rear = u.float_in_range(0_f32..=0_f32)?;
+        SensorSonars::new(
+            sensor_sonars_mux,
+            sensor_sonars_err_count,
+            sensor_sonars_left,
+            sensor_sonars_middle,
+            sensor_sonars_right,
+            sensor_sonars_rear,
+            sensor_sonars_no_filt_left,
+            sensor_sonars_no_filt_middle,
+            sensor_sonars_no_filt_right,
+            sensor_sonars_no_filt_rear,
+        )
+        .map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+/// Defined values for multiplexed signal SENSOR_SONARS
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum SensorSonarsSensorSonarsMux {
+    SensorSonarsMuxM1(SensorSonarsMuxM1),
+    SensorSonarsMuxM0(SensorSonarsMuxM0),
+}
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+struct SensorSonarsMuxM1 {
+    raw: &[u8],
+}
+#[derive(Clone, Copy)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+struct SensorSonarsMuxM0 {
+    raw: &[u8],
 }
 
 /// This is just to make testing easier
