@@ -270,7 +270,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
 
                     writeln!(
                         w,
-                        "pub fn {}(&self) -> {} {{",
+                        "pub fn {}(&'a self) -> {} {{",
                         field_name(signal.name()),
                         multiplex_enum_name(msg, signal)?
                     )?;
@@ -298,7 +298,8 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                             for multiplexer_index in multiplexer_indexes {
                                 writeln!(
                                     &mut w,
-                                    "{idx} => {signal_name}M{idx}{{ raw: &self.raw }},",
+                                    "{idx} => {enum_name}::{signal_name}M{idx}({signal_name}M{idx} {{ raw: &self.raw }}),",
+                                    enum_name = multiplex_enum_name(msg, signal)?,
                                     signal_name = signal.name().to_camel_case(),
                                     idx = multiplexer_index
                                 )?;
@@ -847,7 +848,8 @@ fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
                     let mut w = PadAdapter::wrap(&mut w);
                     for signal in msg.signals() {
                         if *signal.multiplexer_indicator() == MultiplexIndicator::Plain
-                            || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
+                        // TODO fix lifetime
+                        // || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
                         {
                             writeln!(
                                 w,
@@ -929,7 +931,7 @@ fn render_multiplexor_enums(
         writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
         writeln!(
             w,
-            "struct {multiplexed_name}M{idx} {{ raw: &[u8] }}",
+            "struct {multiplexed_name}M{idx}<'a> {{ raw: &'a [u8] }}",
             idx = switch_index,
             multiplexed_name = multiplexed_name
         )?;

@@ -1041,10 +1041,14 @@ impl SensorSonars {
         signal
     }
 
-    pub fn sensor_sonars_mux(&self) -> SensorSonarsSensorSonarsMux {
+    pub fn sensor_sonars_mux(&'a self) -> SensorSonarsSensorSonarsMux {
         match self.sensor_sonars_mux_raw() {
-            1 => SensorSonarsMuxM1 { raw: &self.raw },
-            0 => SensorSonarsMuxM0 { raw: &self.raw },
+            1 => {
+                SensorSonarsSensorSonarsMux::SensorSonarsMuxM1(SensorSonarsMuxM1 { raw: &self.raw })
+            }
+            0 => {
+                SensorSonarsSensorSonarsMux::SensorSonarsMuxM0(SensorSonarsMuxM0 { raw: &self.raw })
+            }
         }
     }
     /// SENSOR_SONARS_err_count
@@ -1104,7 +1108,6 @@ impl core::fmt::Debug for SensorSonars {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
             f.debug_struct("SensorSonars")
-                .field("sensor_sonars_mux", &self.sensor_sonars_mux())
                 .field("sensor_sonars_err_count", &self.sensor_sonars_err_count())
                 .finish()
         } else {
@@ -1150,13 +1153,13 @@ pub enum SensorSonarsSensorSonarsMux {
 }
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-struct SensorSonarsMuxM1 {
-    raw: &[u8],
+struct SensorSonarsMuxM1<'a> {
+    raw: &'a [u8],
 }
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-struct SensorSonarsMuxM0 {
-    raw: &[u8],
+struct SensorSonarsMuxM0<'a> {
+    raw: &'a [u8],
 }
 
 /// This is just to make testing easier
