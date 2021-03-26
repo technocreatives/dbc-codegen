@@ -225,7 +225,10 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                 msg.message_size()
             )?;
             for signal in msg.signals().iter() {
-                writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
+                // TODO add multiplexor
+                if *signal.multiplexer_indicator() == MultiplexIndicator::Plain {
+                    writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
+                }
             }
             writeln!(&mut w, "Ok(res)")?;
         }
@@ -270,7 +273,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
 
                     writeln!(
                         w,
-                        "pub fn {}(&'a self) -> {} {{",
+                        "pub fn {}<'a> (&'a self) -> {}<'a> {{",
                         field_name(signal.name()),
                         multiplex_enum_name(msg, signal)?
                     )?;
@@ -304,6 +307,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                                     idx = multiplexer_index
                                 )?;
                             }
+                            writeln!(&mut w, "_ => unreachable!(),")?;
                         }
 
                         writeln!(w, "}}")?;
@@ -907,7 +911,7 @@ fn render_multiplexor_enums(
 
     writeln!(
         w,
-        "pub enum {} {{",
+        "pub enum {}<'a> {{",
         multiplex_enum_name(msg, multiplexor_signal)?
     )?;
 
@@ -917,7 +921,7 @@ fn render_multiplexor_enums(
             let multiplexed_name = multiplexor_signal.name().to_camel_case();
             writeln!(
                 w,
-                "{multiplexed_name}M{idx}({multiplexed_name}M{idx}),",
+                "{multiplexed_name}M{idx}({multiplexed_name}M{idx}<'a>),",
                 idx = switch_index,
                 multiplexed_name = multiplexed_name
             )?;
@@ -931,7 +935,7 @@ fn render_multiplexor_enums(
         writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
         writeln!(
             w,
-            "struct {multiplexed_name}M{idx}<'a> {{ raw: &'a [u8] }}",
+            "pub struct {multiplexed_name}M{idx}<'a> {{ raw: &'a [u8] }}",
             idx = switch_index,
             multiplexed_name = multiplexed_name
         )?;

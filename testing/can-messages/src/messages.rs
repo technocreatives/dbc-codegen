@@ -1008,16 +1008,7 @@ impl SensorSonars {
         sensor_sonars_no_filt_rear: f32,
     ) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
-        res.set_sensor_sonars_mux(sensor_sonars_mux)?;
         res.set_sensor_sonars_err_count(sensor_sonars_err_count)?;
-        res.set_sensor_sonars_left(sensor_sonars_left)?;
-        res.set_sensor_sonars_middle(sensor_sonars_middle)?;
-        res.set_sensor_sonars_right(sensor_sonars_right)?;
-        res.set_sensor_sonars_rear(sensor_sonars_rear)?;
-        res.set_sensor_sonars_no_filt_left(sensor_sonars_no_filt_left)?;
-        res.set_sensor_sonars_no_filt_middle(sensor_sonars_no_filt_middle)?;
-        res.set_sensor_sonars_no_filt_right(sensor_sonars_no_filt_right)?;
-        res.set_sensor_sonars_no_filt_rear(sensor_sonars_no_filt_rear)?;
         Ok(res)
     }
 
@@ -1041,14 +1032,15 @@ impl SensorSonars {
         signal
     }
 
-    pub fn sensor_sonars_mux(&'a self) -> SensorSonarsSensorSonarsMux {
+    pub fn sensor_sonars_mux<'a>(&'a self) -> SensorSonarsSensorSonarsMux<'a> {
         match self.sensor_sonars_mux_raw() {
-            1 => {
-                SensorSonarsSensorSonarsMux::SensorSonarsMuxM1(SensorSonarsMuxM1 { raw: &self.raw })
-            }
             0 => {
                 SensorSonarsSensorSonarsMux::SensorSonarsMuxM0(SensorSonarsMuxM0 { raw: &self.raw })
             }
+            1 => {
+                SensorSonarsSensorSonarsMux::SensorSonarsMuxM1(SensorSonarsMuxM1 { raw: &self.raw })
+            }
+            _ => unreachable!(),
         }
     }
     /// SENSOR_SONARS_err_count
@@ -1147,18 +1139,18 @@ impl<'a> Arbitrary<'a> for SensorSonars {
 /// Defined values for multiplexed signal SENSOR_SONARS
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub enum SensorSonarsSensorSonarsMux {
-    SensorSonarsMuxM1(SensorSonarsMuxM1),
-    SensorSonarsMuxM0(SensorSonarsMuxM0),
+pub enum SensorSonarsSensorSonarsMux<'a> {
+    SensorSonarsMuxM0(SensorSonarsMuxM0<'a>),
+    SensorSonarsMuxM1(SensorSonarsMuxM1<'a>),
 }
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-struct SensorSonarsMuxM1<'a> {
+pub struct SensorSonarsMuxM0<'a> {
     raw: &'a [u8],
 }
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-struct SensorSonarsMuxM0<'a> {
+pub struct SensorSonarsMuxM1<'a> {
     raw: &'a [u8],
 }
 
