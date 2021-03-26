@@ -1106,26 +1106,6 @@ impl core::fmt::Debug for SensorSonars {
             f.debug_struct("SensorSonars")
                 .field("sensor_sonars_mux", &self.sensor_sonars_mux())
                 .field("sensor_sonars_err_count", &self.sensor_sonars_err_count())
-                .field("sensor_sonars_left", &self.sensor_sonars_left())
-                .field("sensor_sonars_middle", &self.sensor_sonars_middle())
-                .field("sensor_sonars_right", &self.sensor_sonars_right())
-                .field("sensor_sonars_rear", &self.sensor_sonars_rear())
-                .field(
-                    "sensor_sonars_no_filt_left",
-                    &self.sensor_sonars_no_filt_left(),
-                )
-                .field(
-                    "sensor_sonars_no_filt_middle",
-                    &self.sensor_sonars_no_filt_middle(),
-                )
-                .field(
-                    "sensor_sonars_no_filt_right",
-                    &self.sensor_sonars_no_filt_right(),
-                )
-                .field(
-                    "sensor_sonars_no_filt_rear",
-                    &self.sensor_sonars_no_filt_rear(),
-                )
                 .finish()
         } else {
             f.debug_tuple("SensorSonars").field(&self.raw).finish()

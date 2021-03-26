@@ -846,11 +846,15 @@ fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
                 {
                     let mut w = PadAdapter::wrap(&mut w);
                     for signal in msg.signals() {
-                        writeln!(
-                            w,
-                            r#".field("{field_name}", &self.{field_name}())"#,
-                            field_name = field_name(signal.name()),
-                        )?;
+                        if *signal.multiplexer_indicator() == MultiplexIndicator::Plain
+                            || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
+                        {
+                            writeln!(
+                                w,
+                                r#".field("{field_name}", &self.{field_name}())"#,
+                                field_name = field_name(signal.name()),
+                            )?;
+                        }
                     }
                 }
                 writeln!(w, r#".finish()"#)?;
