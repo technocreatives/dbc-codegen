@@ -301,10 +301,11 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                             for multiplexer_index in multiplexer_indexes {
                                 writeln!(
                                     &mut w,
-                                    "{idx} => {enum_name}::{signal_name}M{idx}({signal_name}M{idx} {{ raw: &self.raw }}),",
+                                    "{idx} => {enum_name}::{multiplexed_name}({multiplexed_name}{{ raw: &self.raw }}),",
+                                    idx = multiplexer_index,
                                     enum_name = multiplex_enum_name(msg, signal)?,
-                                    signal_name = signal.name().to_camel_case(),
-                                    idx = multiplexer_index
+                                    multiplexed_name =
+                                        multiplexed_enum_variant_name(msg, signal, multiplexer_index)?
                                 )?;
                             }
                             writeln!(&mut w, "_ => unreachable!(),")?;
@@ -828,8 +829,26 @@ fn multiplex_enum_name(msg: &Message, multiplexor: &Signal) -> Result<String> {
     ))
 }
 
-fn multiplex_enum_variant_name(switch_index: u64) -> String {
-    format!("M{}", switch_index)
+fn multiplexed_enum_variant_name(
+    msg: &Message,
+    multiplexor: &Signal,
+    switch_index: u64,
+) -> Result<String> {
+    ensure!(
+        matches!(
+            multiplexor.multiplexer_indicator(),
+            MultiplexIndicator::Multiplexor
+        ),
+        "signal {:?} is not the multiplexor",
+        multiplexor
+    );
+
+    Ok(format!(
+        "{}{}M{}",
+        msg.message_name().to_camel_case(),
+        multiplexor.name().to_camel_case(),
+        switch_index
+    ))
 }
 
 fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
@@ -918,12 +937,11 @@ fn render_multiplexor_enums(
     {
         let mut w = PadAdapter::wrap(&mut w);
         for (switch_index, _multiplexed_signals) in multiplexed_signals.iter() {
-            let multiplexed_name = multiplexor_signal.name().to_camel_case();
             writeln!(
                 w,
-                "{multiplexed_name}M{idx}({multiplexed_name}M{idx}<'a>),",
-                idx = switch_index,
-                multiplexed_name = multiplexed_name
+                "{multiplexed_name}({multiplexed_name}<'a>),",
+                multiplexed_name =
+                    multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?
             )?;
         }
     }
@@ -935,9 +953,8 @@ fn render_multiplexor_enums(
         writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
         writeln!(
             w,
-            "pub struct {multiplexed_name}M{idx}<'a> {{ raw: &'a [u8] }}",
-            idx = switch_index,
-            multiplexed_name = multiplexed_name
+            "pub struct {}<'a> {{ raw: &'a [u8] }}",
+            multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?
         )?;
     }
 

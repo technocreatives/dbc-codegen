@@ -1034,12 +1034,12 @@ impl SensorSonars {
 
     pub fn sensor_sonars_mux<'a>(&'a self) -> SensorSonarsSensorSonarsMux<'a> {
         match self.sensor_sonars_mux_raw() {
-            0 => {
-                SensorSonarsSensorSonarsMux::SensorSonarsMuxM0(SensorSonarsMuxM0 { raw: &self.raw })
-            }
-            1 => {
-                SensorSonarsSensorSonarsMux::SensorSonarsMuxM1(SensorSonarsMuxM1 { raw: &self.raw })
-            }
+            0 => SensorSonarsSensorSonarsMux::SensorSonarsSensorSonarsMuxM0(
+                SensorSonarsSensorSonarsMuxM0 { raw: &self.raw },
+            ),
+            1 => SensorSonarsSensorSonarsMux::SensorSonarsSensorSonarsMuxM1(
+                SensorSonarsSensorSonarsMuxM1 { raw: &self.raw },
+            ),
             _ => unreachable!(),
         }
     }
@@ -1140,17 +1140,17 @@ impl<'a> Arbitrary<'a> for SensorSonars {
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum SensorSonarsSensorSonarsMux<'a> {
-    SensorSonarsMuxM0(SensorSonarsMuxM0<'a>),
-    SensorSonarsMuxM1(SensorSonarsMuxM1<'a>),
+    SensorSonarsSensorSonarsMuxM0(SensorSonarsSensorSonarsMuxM0<'a>),
+    SensorSonarsSensorSonarsMuxM1(SensorSonarsSensorSonarsMuxM1<'a>),
 }
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct SensorSonarsMuxM0<'a> {
+pub struct SensorSonarsSensorSonarsMuxM0<'a> {
     raw: &'a [u8],
 }
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct SensorSonarsMuxM1<'a> {
+pub struct SensorSonarsSensorSonarsMuxM1<'a> {
     raw: &'a [u8],
 }
 
