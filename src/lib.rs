@@ -246,7 +246,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
 
         for signal in msg.signals().iter() {
             match signal.multiplexer_indicator() {
-                MultiplexIndicator::Plain => render_plain_signal(&mut w, signal, dbc, msg)
+                MultiplexIndicator::Plain => render_signal(&mut w, signal, dbc, msg)
                     .with_context(|| format!("write signal impl `{}`", signal.name()))?,
                 MultiplexIndicator::Multiplexor => {
                     writeln!(w, "/// Get raw value of {}", signal.name())?;
@@ -273,7 +273,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
 
                     writeln!(
                         w,
-                        "pub fn {}<'a> (&'a self) -> {}<'a> {{",
+                        "pub fn {}<'a> (&'a mut self) -> {}<'a> {{",
                         field_name(signal.name()),
                         multiplex_enum_name(msg, signal)?
                     )?;
@@ -301,7 +301,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                             for multiplexer_index in multiplexer_indexes {
                                 writeln!(
                                     &mut w,
-                                    "{idx} => {enum_name}::{multiplexed_name}({multiplexed_name}{{ raw: &self.raw }}),",
+                                    "{idx} => {enum_name}::{multiplexed_name}({multiplexed_name}{{ raw: &mut self.raw }}),",
                                     idx = multiplexer_index,
                                     enum_name = multiplex_enum_name(msg, signal)?,
                                     multiplexed_name =
@@ -387,13 +387,13 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         .find(|s| *s.multiplexer_indicator() == MultiplexIndicator::Multiplexor);
 
     if let Some(multiplexor_signal) = multiplexor_signal {
-        render_multiplexor_enums(w, msg, multiplexor_signal)?;
+        render_multiplexor_enums(w, dbc, msg, multiplexor_signal)?;
     }
 
     Ok(())
 }
 
-fn render_plain_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -> Result<()> {
+fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -> Result<()> {
     writeln!(w, "/// {}", signal.name())?;
     if let Some(comment) = dbc.signal_comment(*msg.message_id(), &signal.name()) {
         writeln!(w, "///")?;
@@ -900,6 +900,7 @@ fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
 
 fn render_multiplexor_enums(
     mut w: impl Write,
+    dbc: &DBC,
     msg: &Message,
     multiplexor_signal: &Signal,
 ) -> Result<()> {
@@ -925,7 +926,6 @@ fn render_multiplexor_enums(
         "/// Defined values for multiplexed signal {}",
         msg.message_name()
     )?;
-    writeln!(w, "#[derive(Clone, Copy)]")?;
     writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
 
     writeln!(
@@ -947,15 +947,18 @@ fn render_multiplexor_enums(
     }
     writeln!(w, "}}")?;
 
-    for (switch_index, _multiplexed_signals) in multiplexed_signals.iter() {
-        let multiplexed_name = multiplexor_signal.name().to_camel_case();
-        writeln!(w, "#[derive(Clone, Copy)]")?;
+    for (switch_index, multiplexed_signals) in multiplexed_signals.iter() {
         writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
-        writeln!(
-            w,
-            "pub struct {}<'a> {{ raw: &'a [u8] }}",
-            multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?
-        )?;
+        let struct_name = multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?;
+        writeln!(w, "pub struct {}<'a> {{ raw: &'a mut [u8] }}", struct_name)?;
+
+        writeln!(w, "impl<'a> {}<'a> {{", struct_name)?;
+
+        for signal in multiplexed_signals {
+            render_signal(&mut w, signal, dbc, msg)?;
+        }
+
+        writeln!(w, "}}")?;
     }
 
     Ok(())

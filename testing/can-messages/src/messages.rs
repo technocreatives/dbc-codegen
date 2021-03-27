@@ -1032,13 +1032,13 @@ impl SensorSonars {
         signal
     }
 
-    pub fn sensor_sonars_mux<'a>(&'a self) -> SensorSonarsSensorSonarsMux<'a> {
+    pub fn sensor_sonars_mux<'a>(&'a mut self) -> SensorSonarsSensorSonarsMux<'a> {
         match self.sensor_sonars_mux_raw() {
             0 => SensorSonarsSensorSonarsMux::SensorSonarsSensorSonarsMuxM0(
-                SensorSonarsSensorSonarsMuxM0 { raw: &self.raw },
+                SensorSonarsSensorSonarsMuxM0 { raw: &mut self.raw },
             ),
             1 => SensorSonarsSensorSonarsMux::SensorSonarsSensorSonarsMuxM1(
-                SensorSonarsSensorSonarsMuxM1 { raw: &self.raw },
+                SensorSonarsSensorSonarsMuxM1 { raw: &mut self.raw },
             ),
             _ => unreachable!(),
         }
@@ -1137,21 +1137,364 @@ impl<'a> Arbitrary<'a> for SensorSonars {
     }
 }
 /// Defined values for multiplexed signal SENSOR_SONARS
-#[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum SensorSonarsSensorSonarsMux<'a> {
     SensorSonarsSensorSonarsMuxM0(SensorSonarsSensorSonarsMuxM0<'a>),
     SensorSonarsSensorSonarsMuxM1(SensorSonarsSensorSonarsMuxM1<'a>),
 }
-#[derive(Clone, Copy)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SensorSonarsSensorSonarsMuxM0<'a> {
-    raw: &'a [u8],
+    raw: &'a mut [u8],
 }
-#[derive(Clone, Copy)]
+impl<'a> SensorSonarsSensorSonarsMuxM0<'a> {
+    /// SENSOR_SONARS_left
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DRIVER, IO
+    #[inline(always)]
+    pub fn sensor_sonars_left(&self) -> f32 {
+        self.sensor_sonars_left_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_left
+    ///
+    /// - Start bit: 16
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_left_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[16..28].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_left
+    #[inline(always)]
+    pub fn set_sensor_sonars_left(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[16..28].store_le(value);
+        Ok(())
+    }
+
+    /// SENSOR_SONARS_middle
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DRIVER, IO
+    #[inline(always)]
+    pub fn sensor_sonars_middle(&self) -> f32 {
+        self.sensor_sonars_middle_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_middle
+    ///
+    /// - Start bit: 28
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_middle_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[28..40].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_middle
+    #[inline(always)]
+    pub fn set_sensor_sonars_middle(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[28..40].store_le(value);
+        Ok(())
+    }
+
+    /// SENSOR_SONARS_right
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DRIVER, IO
+    #[inline(always)]
+    pub fn sensor_sonars_right(&self) -> f32 {
+        self.sensor_sonars_right_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_right
+    ///
+    /// - Start bit: 40
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_right_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[40..52].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_right
+    #[inline(always)]
+    pub fn set_sensor_sonars_right(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[40..52].store_le(value);
+        Ok(())
+    }
+
+    /// SENSOR_SONARS_rear
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DRIVER, IO
+    #[inline(always)]
+    pub fn sensor_sonars_rear(&self) -> f32 {
+        self.sensor_sonars_rear_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_rear
+    ///
+    /// - Start bit: 52
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_rear_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[52..64].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_rear
+    #[inline(always)]
+    pub fn set_sensor_sonars_rear(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[52..64].store_le(value);
+        Ok(())
+    }
+}
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct SensorSonarsSensorSonarsMuxM1<'a> {
-    raw: &'a [u8],
+    raw: &'a mut [u8],
+}
+impl<'a> SensorSonarsSensorSonarsMuxM1<'a> {
+    /// SENSOR_SONARS_no_filt_left
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DBG
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_left(&self) -> f32 {
+        self.sensor_sonars_no_filt_left_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_no_filt_left
+    ///
+    /// - Start bit: 16
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_left_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[16..28].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_no_filt_left
+    #[inline(always)]
+    pub fn set_sensor_sonars_no_filt_left(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[16..28].store_le(value);
+        Ok(())
+    }
+
+    /// SENSOR_SONARS_no_filt_middle
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DBG
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_middle(&self) -> f32 {
+        self.sensor_sonars_no_filt_middle_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_no_filt_middle
+    ///
+    /// - Start bit: 28
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_middle_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[28..40].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_no_filt_middle
+    #[inline(always)]
+    pub fn set_sensor_sonars_no_filt_middle(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[28..40].store_le(value);
+        Ok(())
+    }
+
+    /// SENSOR_SONARS_no_filt_right
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DBG
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_right(&self) -> f32 {
+        self.sensor_sonars_no_filt_right_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_no_filt_right
+    ///
+    /// - Start bit: 40
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_right_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[40..52].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_no_filt_right
+    #[inline(always)]
+    pub fn set_sensor_sonars_no_filt_right(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[40..52].store_le(value);
+        Ok(())
+    }
+
+    /// SENSOR_SONARS_no_filt_rear
+    ///
+    /// - Min: 0
+    /// - Max: 0
+    /// - Unit: ""
+    /// - Receivers: DBG
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_rear(&self) -> f32 {
+        self.sensor_sonars_no_filt_rear_raw()
+    }
+
+    /// Get raw value of SENSOR_SONARS_no_filt_rear
+    ///
+    /// - Start bit: 52
+    /// - Signal size: 12 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sensor_sonars_no_filt_rear_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[52..64].load_le::<u16>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of SENSOR_SONARS_no_filt_rear
+    #[inline(always)]
+    pub fn set_sensor_sonars_no_filt_rear(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 0_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[52..64].store_le(value);
+        Ok(())
+    }
 }
 
 /// This is just to make testing easier
