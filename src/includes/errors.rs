@@ -1,5 +1,7 @@
-#[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+use std::error::Error;
+use std::fmt;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CanError {
     UnknownMessageId(u32),
     /// Signal parameter is not within the range
@@ -10,3 +12,11 @@ pub enum CanError {
     },
     InvalidPayloadSize,
 }
+
+impl fmt::Display for CanError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Error for CanError {}
