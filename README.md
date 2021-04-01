@@ -2,19 +2,16 @@
 
 Generates Rust messages from a `dbc` file.
 
-⚠️ This is experimental - use with caution. Breaking changes will happen when you least expect it. ⚠️
+⚠️ This is experimental - use with caution. ⚠️
 
 ## Installation
 
-Install published version using cargo
-(assumes working installation of `cargo` and `rustc`):
+Install published version using [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html):
 
 ```bash
 cargo install dbc-codegen-cli
 ```
-
-Install latest version from the repository,
-also using cargo:
+Install latest version from the git repository:
 
 ```bash
 cargo install dbc-codegen-cli --git https://github.com/technocreatives/dbc-codegen --branch main
@@ -35,24 +32,20 @@ fn main() {
     let dbc_path = "../dbc-examples/example.dbc";
     let dbc_file = std::fs::read(dbc_path).unwrap();
     println!("cargo:rerun-if-changed={}", dbc_path);
-    
+
     let mut out = std::io::BufWriter::new(std::fs::File::create("src/messages.rs").unwrap());
     dbc_codegen::codegen("example.dbc", &dbc_file, &mut out, true).unwrap();
 }
 ```
 
-## Using resulting Rust code
+## Using generated Rust code
 
-dbc-codegen generates Rust code
-that is expected to be in a cargo project.
-
-For example of all of this,
-have a look at [`testing/can-messages/Cargo.toml`](testing/can-messages/Cargo.toml).
+dbc-codegen generates a Rust file that is expected to be in a cargo project.
+Here is an example [`testing/can-messages/Cargo.toml`](testing/can-messages/Cargo.toml) which defines dependencies and features that are used in generated message file.
 
 ### Project setup
 
-For this to work you need to the add the following dependencies
-(e.g. by adding this to your `Cargo.toml`):
+For this to work you need to add following dependencies to `Cargo.toml`:
 
 ```toml
 bitvec = { version = "0.21", default-features = false }
@@ -61,23 +54,36 @@ arbitrary = { version = "1.0", optional = true } # Enable with `arb` feature
 ```
 
 To use the code, add `mod messages` to your `lib.rs` (or `main.rs`).
-You will most likely want to interact with the generated
-`Messages` enum, and call `Messages::from_can_message(id, &payload)`.
+You will most likely want to interact with the generated `Messages` enum, and call `Messages::from_can_message(id, &payload)`.
 
-Note: The generated code contains a lot of documentation!
-Give `cargo doc --open` a try.
+Note: The generated code contains a lot of documentation.
+Give it a try:
+```bash
+cargo doc --open
+```
 
 ### Feature flags
 
 The following (optional) features can be specified:
 
-- `debug`: enables `Debug` derive
+- `debug`: enables `#[derive(Debug)` for messages
 - `range_checked`: adds range checks in setters
-- `arb`: Enables implementation of [`Arbitrary`] trait.
-  Also requires you add `arbitrary` crate (version 1.x) as a dependency of the feature,
-  using `arb = ["arbitrary"]`.
+- `arb`: enables implementation of [`Arbitrary`] trait.
+  Also requires you to add `arbitrary` crate (version 1.x) as a dependency of the feature, using `arb = ["arbitrary"]`.
+  [`Arbitrary`]: https://docs.rs/arbitrary/1.0.0/arbitrary/trait.Arbitrary.html
+- `std`: Implements `std::error::Error` for `CanError`. This makes it easy to use `anyhow` for error handling.
 
-[`Arbitrary`]: https://docs.rs/arbitrary/1.0.0/arbitrary/trait.Arbitrary.html
+To enable all features add this to your `Cargo.toml`:
+
+```toml
+# features for dbc-codegen `messages.rs` file
+[features]
+default = ["debug", "arb", "range_checked", "std"]
+arb = ["arbitrary"]
+debug = []
+range_checked = []
+std = []
+```
 
 ### Field/variant rename rules
 
