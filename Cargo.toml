@@ -13,6 +13,9 @@ readme = "README.md"
 repository = "https://github.com/technocreatives/dbc-codegen"
 homepage = "https://github.com/technocreatives/dbc-codegen"
 
+[features]
+std = []
+
 [dependencies]
 can-dbc = "3.0.2"
 anyhow = "1.0.33"
@@ -26,4 +29,10 @@ members = [
     "testing/can-embedded",
     "testing/can-messages",
     "testing/cantools-messages",
+]
+
+# Indicates features that docs.rs should enable when building documentation.
+[package.metadata.docs.rs]
+features = [
+    "std",
 ]

@@ -956,9 +956,6 @@ impl Into<f32> for DolorOneFloat {
 #[allow(dead_code)]
 fn main() {}
 
-use std::error::Error;
-use std::fmt;
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CanError {
     UnknownMessageId(u32),
@@ -971,12 +968,19 @@ pub enum CanError {
     InvalidPayloadSize,
 }
 
+#[cfg(feature = "std")]
+use std::error::Error;
+#[cfg(feature = "std")]
+use std::fmt;
+
+#[cfg(feature = "std")]
 impl fmt::Display for CanError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
+#[cfg(feature = "std")]
 impl Error for CanError {}
 #[cfg(feature = "arb")]
 trait UnstructuredFloatExt {
