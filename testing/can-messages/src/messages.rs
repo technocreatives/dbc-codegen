@@ -956,7 +956,8 @@ impl Into<f32> for DolorOneFloat {
 #[allow(dead_code)]
 fn main() {}
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(any(feature = "debug", feature = "std"), derive(Debug))]
 pub enum CanError {
     UnknownMessageId(u32),
     /// Signal parameter is not within the range
