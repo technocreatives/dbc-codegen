@@ -957,7 +957,7 @@ impl Into<f32> for DolorOneFloat {
 fn main() {}
 
 #[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[cfg_attr(any(feature = "debug", feature = "std"), derive(Debug))]
 pub enum CanError {
     UnknownMessageId(u32),
     /// Signal parameter is not within the range
@@ -968,6 +968,21 @@ pub enum CanError {
     },
     InvalidPayloadSize,
 }
+
+#[cfg(feature = "std")]
+use std::error::Error;
+#[cfg(feature = "std")]
+use std::fmt;
+
+#[cfg(feature = "std")]
+impl fmt::Display for CanError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[cfg(feature = "std")]
+impl Error for CanError {}
 #[cfg(feature = "arb")]
 trait UnstructuredFloatExt {
     fn float_in_range(&mut self, range: core::ops::RangeInclusive<f32>) -> arbitrary::Result<f32>;
