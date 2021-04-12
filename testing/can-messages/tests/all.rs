@@ -1,6 +1,6 @@
 #![allow(clippy::float_cmp)]
 
-use can_messages::{Amet, Bar, BarThree, CanError, Foo};
+use can_messages::{Amet, Bar, BarThree, CanError, Foo, MultiplexTest, MultiplexTestMultiplexor};
 
 #[test]
 #[cfg(feature = "range_checked")]
@@ -53,6 +53,27 @@ fn pack_unpack_message2() {
     assert_eq!(result.three_raw(), 3);
     assert_eq!(result.four_raw(), 3);
     assert_eq!(result.five_raw(), true);
+}
+
+#[test]
+fn pack_unpack_message_containing_multiplexed_signals() {
+    let mut result = MultiplexTest::new(2).unwrap();
+    result
+        .set_M0()
+        .unwrap()
+        .set_multiplexed_signal_zero_a_raw(1.2)
+        .unwrap()
+        .set_multiplexed_signal_zero_b_raw(2.0)
+        .unwrap();
+    assert_eq!(result.unmultiplexed_signal(), 2);
+    assert_eq!(result.multiplexor_raw(), 0);
+    let multiplexor = result.multiplexor();
+    if let MultiplexTestMultiplexor::M0(m0) = multiplexor {
+        assert_eq!(m0.multiplexed_signal_zero_a(), 1.2);
+        assert_eq!(m0.multiplexed_signal_zero_b(), 2.0);
+    } else {
+        panic!("Invalid multiplexor value");
+    }
 }
 
 #[test]
