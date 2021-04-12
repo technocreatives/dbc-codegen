@@ -61,6 +61,11 @@ pub struct Foo {
 impl Foo {
     pub const MESSAGE_ID: u32 = 256;
 
+    pub const VOLTAGE_MIN: f32 = 0_f32;
+    pub const VOLTAGE_MAX: f32 = 63.9990234375_f32;
+    pub const CURRENT_MIN: f32 = -2048_f32;
+    pub const CURRENT_MAX: f32 = 2047.9375_f32;
+
     /// Construct new Foo from values
     pub fn new(voltage: f32, current: f32) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 4] };
@@ -212,6 +217,15 @@ pub struct Bar {
 
 impl Bar {
     pub const MESSAGE_ID: u32 = 512;
+
+    pub const ONE_MIN: u8 = 0_u8;
+    pub const ONE_MAX: u8 = 3_u8;
+    pub const TWO_MIN: f32 = 0_f32;
+    pub const TWO_MAX: f32 = 100_f32;
+    pub const THREE_MIN: u8 = 0_u8;
+    pub const THREE_MAX: u8 = 7_u8;
+    pub const FOUR_MIN: u8 = 0_u8;
+    pub const FOUR_MAX: u8 = 3_u8;
 
     /// Construct new Bar from values
     pub fn new(one: u8, two: f32, three: u8, four: u8, xtype: bool) -> Result<Self, CanError> {
@@ -572,6 +586,15 @@ pub struct Amet {
 impl Amet {
     pub const MESSAGE_ID: u32 = 1024;
 
+    pub const ONE_MIN: u8 = 0_u8;
+    pub const ONE_MAX: u8 = 3_u8;
+    pub const TWO_MIN: f32 = 0_f32;
+    pub const TWO_MAX: f32 = 100_f32;
+    pub const THREE_MIN: u8 = 0_u8;
+    pub const THREE_MAX: u8 = 7_u8;
+    pub const FOUR_MIN: u8 = 0_u8;
+    pub const FOUR_MAX: u8 = 3_u8;
+
     /// Construct new Amet from values
     pub fn new(one: u8, two: f32, three: u8, four: u8, five: bool) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
@@ -832,6 +855,9 @@ pub struct Dolor {
 
 impl Dolor {
     pub const MESSAGE_ID: u32 = 1028;
+
+    pub const ONE_FLOAT_MIN: f32 = 0_f32;
+    pub const ONE_FLOAT_MAX: f32 = 130_f32;
 
     /// Construct new Dolor from values
     pub fn new(one_float: f32) -> Result<Self, CanError> {
