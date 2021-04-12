@@ -11,7 +11,7 @@ use can_dbc::{Message, MultiplexIndicator, Signal, ValDescription, ValueDescript
 use heck::{CamelCase, SnakeCase};
 use pad::PadAdapter;
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     io::{BufWriter, Write},
 };
 
@@ -281,7 +281,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                         let mut w = PadAdapter::wrap(&mut w);
                         writeln!(&mut w, "match self.{}_raw() {{", field_name(signal.name()))?;
 
-                        let multiplexer_indexes: HashSet<u64> = msg
+                        let multiplexer_indexes: BTreeSet<u64> = msg
                             .signals()
                             .iter()
                             .filter_map(|s| {
@@ -910,7 +910,7 @@ fn render_multiplexor_enums(
         multiplexor_signal.name(),
     );
 
-    let mut multiplexed_signals = HashMap::new();
+    let mut multiplexed_signals = BTreeMap::new();
     for signal in msg.signals() {
         if let MultiplexIndicator::MultiplexedSignal(switch_index) = signal.multiplexer_indicator()
         {
