@@ -962,6 +962,14 @@ fn render_multiplexor_enums(
 
         writeln!(w, "impl<'a> {}<'a> {{", struct_name)?;
 
+        writeln!(w)?;
+        writeln!(
+            w,
+            "pub const MULTIPLEXED_SWITCH_INDEX: u64 = {};",
+            **switch_index
+        )?;
+        writeln!(w)?;
+
         for signal in multiplexed_signals {
             render_signal(&mut w, signal, dbc, msg)?;
         }

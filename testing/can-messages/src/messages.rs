@@ -1146,6 +1146,8 @@ pub struct MultiplexTestMultiplexorM0<'a> {
 }
 
 impl<'a> MultiplexTestMultiplexorM0<'a> {
+    pub const MULTIPLEXED_SWITCH_INDEX: u64 = 0;
+
     /// MultiplexedSignalZeroA
     ///
     /// - Min: 0
@@ -1239,6 +1241,8 @@ pub struct MultiplexTestMultiplexorM1<'a> {
 }
 
 impl<'a> MultiplexTestMultiplexorM1<'a> {
+    pub const MULTIPLEXED_SWITCH_INDEX: u64 = 1;
+
     /// MultiplexedSignalOneA
     ///
     /// - Min: 0
