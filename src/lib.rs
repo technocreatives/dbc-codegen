@@ -169,6 +169,28 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         )?;
         writeln!(w)?;
 
+        for signal in msg.signals().iter() {
+            let typ = signal_to_rust_type(&signal);
+            if typ != "bool" {
+                writeln!(
+                    &mut w,
+                    "pub const {sig}_MIN: {typ} = {min}_{typ};",
+                    sig = signal.name().to_snake_case().to_uppercase(),
+                    typ = typ,
+                    min = signal.min,
+                )?;
+
+                writeln!(
+                    &mut w,
+                    "pub const {sig}_MAX: {typ} = {max}_{typ};",
+                    sig = signal.name().to_snake_case().to_uppercase(),
+                    typ = typ,
+                    max = signal.max,
+                )?;
+            }
+        }
+        writeln!(w)?;
+
         writeln!(
             &mut w,
             "/// Construct new {} from values",
