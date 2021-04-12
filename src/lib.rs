@@ -248,74 +248,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
             match signal.multiplexer_indicator() {
                 MultiplexIndicator::Plain => render_signal(&mut w, signal, dbc, msg)
                     .with_context(|| format!("write signal impl `{}`", signal.name()))?,
-                MultiplexIndicator::Multiplexor => {
-                    writeln!(w, "/// Get raw value of {}", signal.name())?;
-                    writeln!(w, "///")?;
-                    writeln!(w, "/// - Start bit: {}", signal.start_bit)?;
-                    writeln!(w, "/// - Signal size: {} bits", signal.signal_size)?;
-                    writeln!(w, "/// - Factor: {}", signal.factor)?;
-                    writeln!(w, "/// - Offset: {}", signal.offset)?;
-                    writeln!(w, "/// - Byte order: {:?}", signal.byte_order())?;
-                    writeln!(w, "/// - Value type: {:?}", signal.value_type())?;
-                    writeln!(w, "#[inline(always)]")?;
-                    writeln!(
-                        w,
-                        "pub fn {}_raw(&self) -> {} {{",
-                        field_name(signal.name()),
-                        signal_to_rust_type(&signal)
-                    )?;
-                    {
-                        let mut w = PadAdapter::wrap(&mut w);
-                        signal_from_payload(&mut w, signal, msg).context("signal from payload")?;
-                    }
-                    writeln!(&mut w, "}}")?;
-                    writeln!(w)?;
-
-                    writeln!(
-                        w,
-                        "pub fn {}<'a> (&'a mut self) -> {}<'a> {{",
-                        field_name(signal.name()),
-                        multiplex_enum_name(msg, signal)?
-                    )?;
-                    {
-                        let mut w = PadAdapter::wrap(&mut w);
-                        writeln!(&mut w, "match self.{}_raw() {{", field_name(signal.name()))?;
-
-                        let multiplexer_indexes: BTreeSet<u64> = msg
-                            .signals()
-                            .iter()
-                            .filter_map(|s| {
-                                if let MultiplexIndicator::MultiplexedSignal(index) =
-                                    s.multiplexer_indicator()
-                                {
-                                    Some(index)
-                                } else {
-                                    None
-                                }
-                            })
-                            .cloned()
-                            .collect();
-
-                        {
-                            let mut w = PadAdapter::wrap(&mut w);
-                            for multiplexer_index in multiplexer_indexes {
-                                writeln!(
-                                    &mut w,
-                                    "{idx} => {enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: &mut self.raw }}),",
-                                    idx = multiplexer_index,
-                                    enum_name = multiplex_enum_name(msg, signal)?,
-                                    multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(multiplexer_index),
-                                    multiplexed_name =
-                                        multiplexed_enum_variant_name(msg, signal, multiplexer_index)?
-                                )?;
-                            }
-                            writeln!(&mut w, "_ => unreachable!(),")?;
-                        }
-
-                        writeln!(w, "}}")?;
-                    }
-                    writeln!(w, "}}")?;
-                }
+                MultiplexIndicator::Multiplexor => render_multiplexor_signal(&mut w, signal, msg)?,
                 MultiplexIndicator::MultiplexedSignal(_) => {}
             }
         }
@@ -494,6 +427,75 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     }
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
+
+    Ok(())
+}
+
+fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
+    writeln!(w, "/// Get raw value of {}", signal.name())?;
+    writeln!(w, "///")?;
+    writeln!(w, "/// - Start bit: {}", signal.start_bit)?;
+    writeln!(w, "/// - Signal size: {} bits", signal.signal_size)?;
+    writeln!(w, "/// - Factor: {}", signal.factor)?;
+    writeln!(w, "/// - Offset: {}", signal.offset)?;
+    writeln!(w, "/// - Byte order: {:?}", signal.byte_order())?;
+    writeln!(w, "/// - Value type: {:?}", signal.value_type())?;
+    writeln!(w, "#[inline(always)]")?;
+    writeln!(
+        w,
+        "pub fn {}_raw(&self) -> {} {{",
+        field_name(signal.name()),
+        signal_to_rust_type(&signal)
+    )?;
+    {
+        let mut w = PadAdapter::wrap(&mut w);
+        signal_from_payload(&mut w, signal, msg).context("signal from payload")?;
+    }
+    writeln!(&mut w, "}}")?;
+    writeln!(w)?;
+
+    writeln!(
+        w,
+        "pub fn {}<'a> (&'a mut self) -> {}<'a> {{",
+        field_name(signal.name()),
+        multiplex_enum_name(msg, signal)?
+    )?;
+    {
+        let mut w = PadAdapter::wrap(&mut w);
+        writeln!(&mut w, "match self.{}_raw() {{", field_name(signal.name()))?;
+
+        let multiplexer_indexes: BTreeSet<u64> = msg
+            .signals()
+            .iter()
+            .filter_map(|s| {
+                if let MultiplexIndicator::MultiplexedSignal(index) = s.multiplexer_indicator() {
+                    Some(index)
+                } else {
+                    None
+                }
+            })
+            .cloned()
+            .collect();
+
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            for multiplexer_index in multiplexer_indexes {
+                writeln!(
+                    &mut w,
+                    "{idx} => {enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: &mut self.raw }}),",
+                    idx = multiplexer_index,
+                    enum_name = multiplex_enum_name(msg, signal)?,
+                    multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(multiplexer_index),
+                    multiplexed_name =
+                        multiplexed_enum_variant_name(msg, signal, multiplexer_index)?
+                )?;
+            }
+            writeln!(&mut w, "_ => unreachable!(),")?;
+        }
+
+        writeln!(w, "}}")?;
+    }
+    writeln!(w, "}}")?;
 
     Ok(())
 }
