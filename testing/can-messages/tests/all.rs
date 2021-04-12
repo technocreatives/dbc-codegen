@@ -20,6 +20,18 @@ fn check_range_value_valid() {
 }
 
 #[test]
+fn check_min_max_values() {
+    // min/max copy-pasted from example.dbc:
+    // BO_ 256 Foo: 4 Lorem
+    //    SG_ Voltage : 16|16@1+ (0.000976562,0) [0E-009|63.9990234375] "V" Vector__XXX
+    //    SG_ Current : 0|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
+    assert_eq!(Foo::VOLTAGE_MIN, 0.0);
+    assert_eq!(Foo::VOLTAGE_MAX, 63.9990234375);
+    assert_eq!(Foo::CURRENT_MIN, -2048.0);
+    assert_eq!(Foo::CURRENT_MAX, 2047.9375);
+}
+
+#[test]
 fn pack_unpack_message() {
     let result = Foo::new(63.9990234375, 10.0).unwrap();
     assert_eq!(result.voltage_raw(), 63.99899);
