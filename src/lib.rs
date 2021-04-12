@@ -226,11 +226,11 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
             )?;
             for signal in msg.signals().iter() {
                 if *signal.multiplexer_indicator() == MultiplexIndicator::Plain {
-                    writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
+                    writeln!(&mut w, "res.set_{0}_raw({0})?;", field_name(signal.name()))?;
                 }
 
                 if *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor {
-                    writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
+                    writeln!(&mut w, "res.set_{0}_raw({0})?;", field_name(signal.name()))?;
                 }
             }
             writeln!(&mut w, "Ok(res)")?;
@@ -406,7 +406,7 @@ fn render_set_signal_raw(mut w: impl Write, signal: &Signal, msg: &Message) -> R
     writeln!(w, "#[inline(always)]")?;
     writeln!(
         w,
-        "pub fn set_{}(&mut self, value: {}) -> Result<(), CanError> {{",
+        "pub fn set_{}_raw(&mut self, value: {}) -> Result<(), CanError> {{",
         field_name(signal.name()),
         signal_to_rust_type(&signal)
     )?;
