@@ -952,11 +952,13 @@ fn render_multiplexor_enums(
         }
     }
     writeln!(w, "}}")?;
+    writeln!(w)?;
 
     for (switch_index, multiplexed_signals) in multiplexed_signals.iter() {
         writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
         let struct_name = multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?;
         writeln!(w, "pub struct {}<'a> {{ raw: &'a mut [u8] }}", struct_name)?;
+        writeln!(w)?;
 
         writeln!(w, "impl<'a> {}<'a> {{", struct_name)?;
 
@@ -965,6 +967,7 @@ fn render_multiplexor_enums(
         }
 
         writeln!(w, "}}")?;
+        writeln!(w)?;
     }
 
     Ok(())

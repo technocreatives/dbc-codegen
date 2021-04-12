@@ -1139,10 +1139,12 @@ pub enum MultiplexTestMultiplexor<'a> {
     M0(MultiplexTestMultiplexorM0<'a>),
     M1(MultiplexTestMultiplexorM1<'a>),
 }
+
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct MultiplexTestMultiplexorM0<'a> {
     raw: &'a mut [u8],
 }
+
 impl<'a> MultiplexTestMultiplexorM0<'a> {
     /// MultiplexedSignalZeroA
     ///
@@ -1230,10 +1232,12 @@ impl<'a> MultiplexTestMultiplexorM0<'a> {
         Ok(())
     }
 }
+
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct MultiplexTestMultiplexorM1<'a> {
     raw: &'a mut [u8],
 }
+
 impl<'a> MultiplexTestMultiplexorM1<'a> {
     /// MultiplexedSignalOneA
     ///
