@@ -994,6 +994,19 @@ pub struct MultiplexTest {
 impl MultiplexTest {
     pub const MESSAGE_ID: u32 = 200;
 
+    pub const MULTIPLEXOR_MIN: u8 = 0_u8;
+    pub const MULTIPLEXOR_MAX: u8 = 0_u8;
+    pub const UNMULTIPLEXED_SIGNAL_MIN: u8 = 0_u8;
+    pub const UNMULTIPLEXED_SIGNAL_MAX: u8 = 0_u8;
+    pub const MULTIPLEXED_SIGNAL_ZERO_A_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ZERO_A_MAX: f32 = 3_f32;
+    pub const MULTIPLEXED_SIGNAL_ZERO_B_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ZERO_B_MAX: f32 = 3_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_A_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_A_MAX: f32 = 6_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_B_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_B_MAX: f32 = 6_f32;
+
     /// Construct new MultiplexTest from values
     pub fn new(
         multiplexor: u8,
@@ -1030,12 +1043,8 @@ impl MultiplexTest {
 
     pub fn multiplexor<'a>(&'a mut self) -> MultiplexTestMultiplexor<'a> {
         match self.multiplexor_raw() {
-            0 => MultiplexTestMultiplexor::MultiplexTestMultiplexorM0(MultiplexTestMultiplexorM0 {
-                raw: &mut self.raw,
-            }),
-            1 => MultiplexTestMultiplexor::MultiplexTestMultiplexorM1(MultiplexTestMultiplexorM1 {
-                raw: &mut self.raw,
-            }),
+            0 => MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 { raw: &mut self.raw }),
+            1 => MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 { raw: &mut self.raw }),
             _ => unreachable!(),
         }
     }
@@ -1127,8 +1136,8 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
 /// Defined values for multiplexed signal MultiplexTest
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub enum MultiplexTestMultiplexor<'a> {
-    MultiplexTestMultiplexorM0(MultiplexTestMultiplexorM0<'a>),
-    MultiplexTestMultiplexorM1(MultiplexTestMultiplexorM1<'a>),
+    M0(MultiplexTestMultiplexorM0<'a>),
+    M1(MultiplexTestMultiplexorM1<'a>),
 }
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct MultiplexTestMultiplexorM0<'a> {

@@ -301,9 +301,10 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                             for multiplexer_index in multiplexer_indexes {
                                 writeln!(
                                     &mut w,
-                                    "{idx} => {enum_name}::{multiplexed_name}({multiplexed_name}{{ raw: &mut self.raw }}),",
+                                    "{idx} => {enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: &mut self.raw }}),",
                                     idx = multiplexer_index,
                                     enum_name = multiplex_enum_name(msg, signal)?,
+                                    multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(multiplexer_index),
                                     multiplexed_name =
                                         multiplexed_enum_variant_name(msg, signal, multiplexer_index)?
                                 )?;
@@ -813,6 +814,10 @@ fn enum_variant_name(x: &str) -> String {
     }
 }
 
+fn multiplexed_enum_variant_wrapper_name(switch_index: u64) -> String {
+    format!("M{}", switch_index)
+}
+
 fn multiplex_enum_name(msg: &Message, multiplexor: &Signal) -> Result<String> {
     ensure!(
         matches!(
@@ -939,7 +944,8 @@ fn render_multiplexor_enums(
         for (switch_index, _multiplexed_signals) in multiplexed_signals.iter() {
             writeln!(
                 w,
-                "{multiplexed_name}({multiplexed_name}<'a>),",
+                "{multiplexed_wrapper_name}({multiplexed_name}<'a>),",
+                multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(**switch_index),
                 multiplexed_name =
                     multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?
             )?;
