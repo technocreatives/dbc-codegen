@@ -1017,6 +1017,7 @@ impl MultiplexTest {
         multiplexed_signal_one_b: f32,
     ) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
+        res.set_multiplexor(multiplexor)?;
         res.set_unmultiplexed_signal(unmultiplexed_signal)?;
         Ok(res)
     }
@@ -1048,6 +1049,17 @@ impl MultiplexTest {
             _ => unreachable!(),
         }
     }
+    /// Set value of Multiplexor
+    #[inline(always)]
+    pub fn set_multiplexor(&mut self, value: u8) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_u8 || 0_u8 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        self.raw.view_bits_mut::<Lsb0>()[0..4].store_le(value);
+        Ok(())
+    }
+
     /// UnmultiplexedSignal
     ///
     /// - Min: 0

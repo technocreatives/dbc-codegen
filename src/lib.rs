@@ -225,8 +225,11 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                 msg.message_size()
             )?;
             for signal in msg.signals().iter() {
-                // TODO add multiplexor
                 if *signal.multiplexer_indicator() == MultiplexIndicator::Plain {
+                    writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
+                }
+
+                if *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor {
                     writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
                 }
             }
@@ -393,6 +396,12 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
 
+    render_set_signal_raw(&mut w, signal, msg)?;
+
+    Ok(())
+}
+
+fn render_set_signal_raw(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
     writeln!(&mut w, "/// Set value of {}", signal.name())?;
     writeln!(w, "#[inline(always)]")?;
     writeln!(
@@ -401,6 +410,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         field_name(signal.name()),
         signal_to_rust_type(&signal)
     )?;
+
     {
         let mut w = PadAdapter::wrap(&mut w);
 
@@ -425,6 +435,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         }
         signal_to_payload(&mut w, signal, msg).context("signal to payload")?;
     }
+
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
 
@@ -496,6 +507,8 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
         writeln!(w, "}}")?;
     }
     writeln!(w, "}}")?;
+
+    render_set_signal_raw(&mut w, signal, msg)?;
 
     Ok(())
 }
