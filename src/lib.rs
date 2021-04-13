@@ -460,17 +460,14 @@ fn render_set_signal_multiplexer(
     writeln!(
         w,
         "pub fn set_{enum_variant_wrapper}(&mut self, value: {enum_variant}) -> Result<(), CanError> {{",
-        enum_variant_wrapper = multiplexed_enum_variant_wrapper_name(switch_index),
+        enum_variant_wrapper = multiplexed_enum_variant_wrapper_name(switch_index).to_snake_case(),
         enum_variant = multiplexed_enum_variant_name(msg, multiplexor, switch_index)?,
     )?;
 
     {
         let mut w = PadAdapter::wrap(&mut w);
 
-        writeln!(
-            &mut w,
-            "let mut b0 = BitArray::<LocalBits, _>::new(self.raw);"
-        )?;
+        writeln!(&mut w, "let b0 = BitArray::<LocalBits, _>::new(self.raw);")?;
         writeln!(&mut w, "let b1 = BitArray::<LocalBits, _>::new(value.raw);")?;
         writeln!(&mut w, "self.raw = b0.bitor(b1).value();")?;
         writeln!(
@@ -517,34 +514,35 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
         field_name(signal.name()),
         multiplex_enum_name(msg, signal)?
     )?;
+
+    let multiplexer_indexes: BTreeSet<u64> = msg
+        .signals()
+        .iter()
+        .filter_map(|s| {
+            if let MultiplexIndicator::MultiplexedSignal(index) = s.multiplexer_indicator() {
+                Some(index)
+            } else {
+                None
+            }
+        })
+        .cloned()
+        .collect();
+
     {
         let mut w = PadAdapter::wrap(&mut w);
         writeln!(&mut w, "match self.{}_raw() {{", field_name(signal.name()))?;
 
-        let multiplexer_indexes: BTreeSet<u64> = msg
-            .signals()
-            .iter()
-            .filter_map(|s| {
-                if let MultiplexIndicator::MultiplexedSignal(index) = s.multiplexer_indicator() {
-                    Some(index)
-                } else {
-                    None
-                }
-            })
-            .cloned()
-            .collect();
-
         {
             let mut w = PadAdapter::wrap(&mut w);
-            for multiplexer_index in multiplexer_indexes {
+            for multiplexer_index in multiplexer_indexes.iter() {
                 writeln!(
                     &mut w,
                     "{idx} => {enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: self.raw }}),",
                     idx = multiplexer_index,
                     enum_name = multiplex_enum_name(msg, signal)?,
-                    multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(multiplexer_index),
+                    multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(*multiplexer_index),
                     multiplexed_name =
-                        multiplexed_enum_variant_name(msg, signal, multiplexer_index)?
+                        multiplexed_enum_variant_name(msg, signal, *multiplexer_index)?
                 )?;
             }
             writeln!(&mut w, "_ => unreachable!(),")?;
@@ -556,7 +554,6 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
 
     render_set_signal(&mut w, signal, msg)?;
 
-    // TODO turn this mapping of signals to multiplex_indicator into an extension method for can_dbc::Message or actually add it to can_dbc
     let mut multiplexed_signals = BTreeMap::new();
     for signal in msg.signals() {
         if let MultiplexIndicator::MultiplexedSignal(switch_index) = signal.multiplexer_indicator()
@@ -568,8 +565,8 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
         }
     }
 
-    for (switch_index, multiplexed_signal) in multiplexed_signals {
-        render_set_signal_multiplexer(&mut w, signal, msg, *switch_index)?;
+    for switch_index in multiplexer_indexes {
+        render_set_signal_multiplexer(&mut w, signal, msg, switch_index)?;
     }
 
     Ok(())
@@ -952,10 +949,7 @@ fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
                 {
                     let mut w = PadAdapter::wrap(&mut w);
                     for signal in msg.signals() {
-                        if *signal.multiplexer_indicator() == MultiplexIndicator::Plain
-                        // TODO fix lifetime
-                        // || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
-                        {
+                        if *signal.multiplexer_indicator() == MultiplexIndicator::Plain {
                             writeln!(
                                 w,
                                 r#".field("{field_name}", &self.{field_name}())"#,
@@ -1084,7 +1078,16 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
         )?;
         {
             let mut w = PadAdapter::wrap(&mut w);
-            for signal in msg.signals() {
+            let filtered_signals: Vec<&Signal> = msg
+                .signals()
+                .iter()
+                .filter(|signal| {
+                    *signal.multiplexer_indicator() == MultiplexIndicator::Plain
+                        || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
+                })
+                .collect();
+
+            for signal in filtered_signals.iter() {
                 writeln!(
                     w,
                     "let {field_name} = {arbitrary_value};",
@@ -1093,18 +1096,9 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
                 )?;
             }
 
-            let args: Vec<String> = msg
-                .signals()
+            let args: Vec<String> = filtered_signals
                 .iter()
-                .filter_map(|signal| {
-                    if *signal.multiplexer_indicator() == MultiplexIndicator::Plain
-                        || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
-                    {
-                        Some(field_name(signal.name()))
-                    } else {
-                        None
-                    }
-                })
+                .map(|signal| field_name(signal.name()))
                 .collect();
 
             writeln!(

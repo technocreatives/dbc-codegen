@@ -1056,8 +1056,8 @@ impl MultiplexTest {
 
     /// Set value of Multiplexor
     #[inline(always)]
-    pub fn set_M0(&mut self, value: MultiplexTestMultiplexorM0) -> Result<(), CanError> {
-        let mut b0 = BitArray::<LocalBits, _>::new(self.raw);
+    pub fn set_m0(&mut self, value: MultiplexTestMultiplexorM0) -> Result<(), CanError> {
+        let b0 = BitArray::<LocalBits, _>::new(self.raw);
         let b1 = BitArray::<LocalBits, _>::new(value.raw);
         self.raw = b0.bitor(b1).value();
         self.set_multiplexor(0)?;
@@ -1066,8 +1066,8 @@ impl MultiplexTest {
 
     /// Set value of Multiplexor
     #[inline(always)]
-    pub fn set_M1(&mut self, value: MultiplexTestMultiplexorM1) -> Result<(), CanError> {
-        let mut b0 = BitArray::<LocalBits, _>::new(self.raw);
+    pub fn set_m1(&mut self, value: MultiplexTestMultiplexorM1) -> Result<(), CanError> {
+        let b0 = BitArray::<LocalBits, _>::new(self.raw);
         let b1 = BitArray::<LocalBits, _>::new(value.raw);
         self.raw = b0.bitor(b1).value();
         self.set_multiplexor(1)?;
@@ -1144,10 +1144,6 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
         let multiplexor = u.int_in_range(0..=2)?;
         let unmultiplexed_signal = u.int_in_range(0..=4)?;
-        let multiplexed_signal_zero_a = u.float_in_range(0_f32..=3_f32)?;
-        let multiplexed_signal_zero_b = u.float_in_range(0_f32..=3_f32)?;
-        let multiplexed_signal_one_a = u.float_in_range(0_f32..=6_f32)?;
-        let multiplexed_signal_one_b = u.float_in_range(0_f32..=6_f32)?;
         MultiplexTest::new(multiplexor, unmultiplexed_signal)
             .map_err(|_| arbitrary::Error::IncorrectFormat)
     }
