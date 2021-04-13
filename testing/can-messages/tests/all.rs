@@ -57,13 +57,13 @@ fn pack_unpack_message2() {
 
 #[test]
 fn pack_unpack_message_containing_multiplexed_signals() {
-    let mut result = MultiplexTest::new(2).unwrap();
+    let mut result = MultiplexTest::new(0, 2).unwrap();
     result
         .set_M0()
         .unwrap()
-        .set_multiplexed_signal_zero_a_raw(1.2)
+        .set_multiplexed_signal_zero_a(1.2)
         .unwrap()
-        .set_multiplexed_signal_zero_b_raw(2.0)
+        .set_multiplexed_signal_zero_b(2.0)
         .unwrap();
     assert_eq!(result.unmultiplexed_signal(), 2);
     assert_eq!(result.multiplexor_raw(), 0);

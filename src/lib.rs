@@ -205,7 +205,9 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
             .signals()
             .iter()
             .filter_map(|signal| {
-                if *signal.multiplexer_indicator() == MultiplexIndicator::Plain {
+                if *signal.multiplexer_indicator() == MultiplexIndicator::Plain
+                    || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
+                {
                     Some(format!(
                         "{}: {}",
                         field_name(signal.name()),
@@ -230,7 +232,11 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
             )?;
             for signal in msg.signals().iter() {
                 if *signal.multiplexer_indicator() == MultiplexIndicator::Plain {
-                    writeln!(&mut w, "res.set_{0}_raw({0})?;", field_name(signal.name()))?;
+                    writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
+                }
+
+                if *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor {
+                    writeln!(&mut w, "res.set_{0}({0})?;", field_name(signal.name()))?;
                 }
             }
             writeln!(&mut w, "Ok(res)")?;
@@ -396,17 +402,17 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
 
-    render_set_signal_raw(&mut w, signal, msg)?;
+    render_set_signal(&mut w, signal, msg)?;
 
     Ok(())
 }
 
-fn render_set_signal_raw(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
+fn render_set_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
     writeln!(&mut w, "/// Set value of {}", signal.name())?;
     writeln!(w, "#[inline(always)]")?;
     writeln!(
         w,
-        "pub fn set_{}_raw(&mut self, value: {}) -> Result<&mut Self, CanError> {{",
+        "pub fn set_{}(&mut self, value: {}) -> Result<&mut Self, CanError> {{",
         field_name(signal.name()),
         signal_to_rust_type(&signal)
     )?;
@@ -458,25 +464,8 @@ fn render_set_signal_multiplexer(
     )?;
 
     {
-        // let mut w = PadAdapter::wrap(&mut w);
-
-        // writeln!(&mut w, "match value {{")?;
-        // {
-        //     let mut w = PadAdapter::wrap(&mut w);
-        //     for (switch_index, multiplexed_signal) in multiplexed_signals {
-        //         writeln!(
-        //             w,
-        //             "{enum_name}::{multiplexed_wrapper_name}(m) => {{self.set_{}(m.MULTIPLEXED_SWITCH_INDEX)?;",
-        //             field_name(multiplexor.name()),
-        //             enum_name = multiplex_enum_name(msg, multiplexor)?,
-        //             multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(*switch_index)
-        //         )?;
-        //     }
-        // }
-        // writeln!(&mut w, "}}")?;
-
         let mut w = PadAdapter::wrap(&mut w);
-        writeln!(&mut w, "self.set_multiplexor_raw({})?;", switch_index)?;
+        writeln!(&mut w, "self.set_multiplexor({})?;", switch_index)?;
         writeln!(
             &mut w,
             "Ok({} {{ raw: &mut self.raw }})",
@@ -556,7 +545,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
     }
     writeln!(w, "}}")?;
 
-    render_set_signal_raw(&mut w, signal, msg)?;
+    render_set_signal(&mut w, signal, msg)?;
 
     // TODO turn this mapping of signals to multiplex_indicator into an extension method for can_dbc::Message or actually add it to can_dbc
     let mut multiplexed_signals = BTreeMap::new();
@@ -1088,7 +1077,9 @@ fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
                 .signals()
                 .iter()
                 .filter_map(|signal| {
-                    if *signal.multiplexer_indicator() == MultiplexIndicator::Plain {
+                    if *signal.multiplexer_indicator() == MultiplexIndicator::Plain
+                        || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
+                    {
                         Some(field_name(signal.name()))
                     } else {
                         None
