@@ -68,7 +68,7 @@ fn pack_unpack_message_containing_multiplexed_signals() {
 
     assert_eq!(result.unmultiplexed_signal(), 2);
     assert_eq!(result.multiplexor_raw(), 0);
-    let multiplexor = result.multiplexor();
+    let multiplexor = result.multiplexor().unwrap();
     if let MultiplexTestMultiplexor::M0(m0) = multiplexor {
         assert_eq!(m0.multiplexed_signal_zero_a(), 1.2);
         assert_eq!(m0.multiplexed_signal_zero_b(), 2.0);

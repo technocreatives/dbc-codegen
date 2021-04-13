@@ -9,6 +9,11 @@ pub enum CanError {
         message_id: u32,
     },
     InvalidPayloadSize,
+    /// Multiplexor value not defined in the dbc
+    InvalidMultiplexor {
+        /// dbc message id
+        message_id: u32,
+    },
 }
 
 #[cfg(feature = "std")]

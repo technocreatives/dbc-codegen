@@ -520,7 +520,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
 
     writeln!(
         w,
-        "pub fn {}(&mut self) -> {} {{",
+        "pub fn {}(&mut self) -> Result<{}, CanError> {{",
         field_name(signal.name()),
         multiplex_enum_name(msg, signal)?
     )?;
@@ -547,7 +547,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
             for multiplexer_index in multiplexer_indexes.iter() {
                 writeln!(
                     &mut w,
-                    "{idx} => {enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: self.raw }}),",
+                    "{idx} => Ok({enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: self.raw }})),",
                     idx = multiplexer_index,
                     enum_name = multiplex_enum_name(msg, signal)?,
                     multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(*multiplexer_index),
@@ -555,7 +555,11 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
                         multiplexed_enum_variant_name(msg, signal, *multiplexer_index)?
                 )?;
             }
-            writeln!(&mut w, "_ => unreachable!(),")?;
+            writeln!(
+                &mut w,
+                "_ => Err(CanError::InvalidMultiplexor {{ message_id: {}}}),",
+                msg.message_id().0
+            )?;
         }
 
         writeln!(w, "}}")?;

@@ -1036,11 +1036,15 @@ impl MultiplexTest {
         signal
     }
 
-    pub fn multiplexor(&mut self) -> MultiplexTestMultiplexor {
+    pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexor, CanError> {
         match self.multiplexor_raw() {
-            0 => MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 { raw: self.raw }),
-            1 => MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 { raw: self.raw }),
-            _ => unreachable!(),
+            0 => Ok(MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 {
+                raw: self.raw,
+            })),
+            1 => Ok(MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 {
+                raw: self.raw,
+            })),
+            _ => Err(CanError::InvalidMultiplexor { message_id: 200 }),
         }
     }
     /// Set value of Multiplexor
@@ -1366,6 +1370,11 @@ pub enum CanError {
         message_id: u32,
     },
     InvalidPayloadSize,
+    /// Multiplexor value not defined in the dbc
+    InvalidMultiplexor {
+        /// dbc message id
+        message_id: u32,
+    },
 }
 
 #[cfg(feature = "std")]
