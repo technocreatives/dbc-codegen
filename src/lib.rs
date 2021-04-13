@@ -50,9 +50,10 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     writeln!(&mut w, "//!")?;
     writeln!(&mut w, "//! - Version: `{:?}`", dbc.version())?;
     writeln!(&mut w)?;
+    writeln!(&mut w, "use core::ops::BitOr;")?;
     writeln!(
         &mut w,
-        "use bitvec::prelude::{{BitField, BitView, Lsb0, Msb0}};"
+        "use bitvec::prelude::{{BitField, BitArray, BitView, LocalBits, Lsb0, Msb0}};"
     )?;
     writeln!(&mut w, "use float_cmp::approx_eq;")?;
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
@@ -458,19 +459,27 @@ fn render_set_signal_multiplexer(
     writeln!(w, "#[inline(always)]")?;
     writeln!(
         w,
-        "pub fn set_{enum_variant_wrapper}(&mut self) -> Result<{enum_variant}, CanError> {{",
+        "pub fn set_{enum_variant_wrapper}(&mut self, value: {enum_variant}) -> Result<(), CanError> {{",
         enum_variant_wrapper = multiplexed_enum_variant_wrapper_name(switch_index),
         enum_variant = multiplexed_enum_variant_name(msg, multiplexor, switch_index)?,
     )?;
 
     {
         let mut w = PadAdapter::wrap(&mut w);
-        writeln!(&mut w, "self.set_multiplexor({})?;", switch_index)?;
+
         writeln!(
             &mut w,
-            "Ok({} {{ raw: &mut self.raw }})",
-            enum_variant = multiplexed_enum_variant_name(msg, multiplexor, switch_index)?
+            "let mut b0 = BitArray::<LocalBits, _>::new(self.raw);"
         )?;
+        writeln!(&mut w, "let b1 = BitArray::<LocalBits, _>::new(value.raw);")?;
+        writeln!(&mut w, "self.raw = b0.bitor(b1).value();")?;
+        writeln!(
+            &mut w,
+            "self.set_{}({})?;",
+            field_name(multiplexor.name()),
+            switch_index
+        )?;
+        writeln!(&mut w, "Ok(())",)?;
     }
 
     writeln!(&mut w, "}}")?;
@@ -504,7 +513,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
 
     writeln!(
         w,
-        "pub fn {}<'a> (&'a mut self) -> {}<'a> {{",
+        "pub fn {}(&mut self) -> {} {{",
         field_name(signal.name()),
         multiplex_enum_name(msg, signal)?
     )?;
@@ -530,7 +539,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
             for multiplexer_index in multiplexer_indexes {
                 writeln!(
                     &mut w,
-                    "{idx} => {enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: &mut self.raw }}),",
+                    "{idx} => {enum_name}::{multiplexed_wrapper_name}({multiplexed_name}{{ raw: self.raw }}),",
                     idx = multiplexer_index,
                     enum_name = multiplex_enum_name(msg, signal)?,
                     multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(multiplexer_index),
@@ -1003,7 +1012,7 @@ fn render_multiplexor_enums(
 
     writeln!(
         w,
-        "pub enum {}<'a> {{",
+        "pub enum {} {{",
         multiplex_enum_name(msg, multiplexor_signal)?
     )?;
 
@@ -1012,7 +1021,7 @@ fn render_multiplexor_enums(
         for (switch_index, _multiplexed_signals) in multiplexed_signals.iter() {
             writeln!(
                 w,
-                "{multiplexed_wrapper_name}({multiplexed_name}<'a>),",
+                "{multiplexed_wrapper_name}({multiplexed_name}),",
                 multiplexed_wrapper_name = multiplexed_enum_variant_wrapper_name(**switch_index),
                 multiplexed_name =
                     multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?
@@ -1025,10 +1034,15 @@ fn render_multiplexor_enums(
     for (switch_index, multiplexed_signals) in multiplexed_signals.iter() {
         writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
         let struct_name = multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?;
-        writeln!(w, "pub struct {}<'a> {{ raw: &'a mut [u8] }}", struct_name)?;
+        writeln!(
+            w,
+            "pub struct {} {{ raw: [u8; {}] }}",
+            struct_name,
+            msg.message_size()
+        )?;
         writeln!(w)?;
 
-        writeln!(w, "impl<'a> {}<'a> {{", struct_name)?;
+        writeln!(w, "impl {} {{", struct_name)?;
 
         writeln!(w)?;
         writeln!(
@@ -1037,6 +1051,12 @@ fn render_multiplexor_enums(
             **switch_index
         )?;
         writeln!(w)?;
+
+        writeln!(
+            w,
+            "pub fn new() -> Self {{ Self {{ raw: [0u8; {}] }} }}",
+            msg.message_size()
+        )?;
 
         for signal in multiplexed_signals {
             render_signal(&mut w, signal, dbc, msg)?;

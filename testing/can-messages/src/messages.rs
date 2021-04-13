@@ -14,7 +14,8 @@
 
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitvec::prelude::{BitField, BitView, Lsb0, Msb0};
+use bitvec::prelude::{BitArray, BitField, BitView, LocalBits, Lsb0, Msb0};
+use core::ops::BitOr;
 use float_cmp::approx_eq;
 
 /// All messages
@@ -1035,10 +1036,10 @@ impl MultiplexTest {
         signal
     }
 
-    pub fn multiplexor<'a>(&'a mut self) -> MultiplexTestMultiplexor<'a> {
+    pub fn multiplexor(&mut self) -> MultiplexTestMultiplexor {
         match self.multiplexor_raw() {
-            0 => MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 { raw: &mut self.raw }),
-            1 => MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 { raw: &mut self.raw }),
+            0 => MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 { raw: self.raw }),
+            1 => MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 { raw: self.raw }),
             _ => unreachable!(),
         }
     }
@@ -1055,16 +1056,22 @@ impl MultiplexTest {
 
     /// Set value of Multiplexor
     #[inline(always)]
-    pub fn set_M0(&mut self) -> Result<MultiplexTestMultiplexorM0, CanError> {
+    pub fn set_M0(&mut self, value: MultiplexTestMultiplexorM0) -> Result<(), CanError> {
+        let mut b0 = BitArray::<LocalBits, _>::new(self.raw);
+        let b1 = BitArray::<LocalBits, _>::new(value.raw);
+        self.raw = b0.bitor(b1).value();
         self.set_multiplexor(0)?;
-        Ok(MultiplexTestMultiplexorM0 { raw: &mut self.raw })
+        Ok(())
     }
 
     /// Set value of Multiplexor
     #[inline(always)]
-    pub fn set_M1(&mut self) -> Result<MultiplexTestMultiplexorM1, CanError> {
+    pub fn set_M1(&mut self, value: MultiplexTestMultiplexorM1) -> Result<(), CanError> {
+        let mut b0 = BitArray::<LocalBits, _>::new(self.raw);
+        let b1 = BitArray::<LocalBits, _>::new(value.raw);
+        self.raw = b0.bitor(b1).value();
         self.set_multiplexor(1)?;
-        Ok(MultiplexTestMultiplexorM1 { raw: &mut self.raw })
+        Ok(())
     }
 
     /// UnmultiplexedSignal
@@ -1147,19 +1154,22 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
 }
 /// Defined values for multiplexed signal MultiplexTest
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub enum MultiplexTestMultiplexor<'a> {
-    M0(MultiplexTestMultiplexorM0<'a>),
-    M1(MultiplexTestMultiplexorM1<'a>),
+pub enum MultiplexTestMultiplexor {
+    M0(MultiplexTestMultiplexorM0),
+    M1(MultiplexTestMultiplexorM1),
 }
 
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct MultiplexTestMultiplexorM0<'a> {
-    raw: &'a mut [u8],
+pub struct MultiplexTestMultiplexorM0 {
+    raw: [u8; 8],
 }
 
-impl<'a> MultiplexTestMultiplexorM0<'a> {
+impl MultiplexTestMultiplexorM0 {
     pub const MULTIPLEXED_SWITCH_INDEX: u64 = 0;
 
+    pub fn new() -> Self {
+        Self { raw: [0u8; 8] }
+    }
     /// MultiplexedSignalZeroA
     ///
     /// - Min: 0
@@ -1248,13 +1258,16 @@ impl<'a> MultiplexTestMultiplexorM0<'a> {
 }
 
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct MultiplexTestMultiplexorM1<'a> {
-    raw: &'a mut [u8],
+pub struct MultiplexTestMultiplexorM1 {
+    raw: [u8; 8],
 }
 
-impl<'a> MultiplexTestMultiplexorM1<'a> {
+impl MultiplexTestMultiplexorM1 {
     pub const MULTIPLEXED_SWITCH_INDEX: u64 = 1;
 
+    pub fn new() -> Self {
+        Self { raw: [0u8; 8] }
+    }
     /// MultiplexedSignalOneA
     ///
     /// - Min: 0

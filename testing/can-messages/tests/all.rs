@@ -1,6 +1,9 @@
 #![allow(clippy::float_cmp)]
 
-use can_messages::{Amet, Bar, BarThree, CanError, Foo, MultiplexTest, MultiplexTestMultiplexor};
+use can_messages::{
+    Amet, Bar, BarThree, CanError, Foo, MultiplexTest, MultiplexTestMultiplexor,
+    MultiplexTestMultiplexorM0,
+};
 
 #[test]
 #[cfg(feature = "range_checked")]
@@ -58,13 +61,13 @@ fn pack_unpack_message2() {
 #[test]
 fn pack_unpack_message_containing_multiplexed_signals() {
     let mut result = MultiplexTest::new(0, 2).unwrap();
-    result
-        .set_M0()
-        .unwrap()
-        .set_multiplexed_signal_zero_a(1.2)
+    let mut m0 = MultiplexTestMultiplexorM0::new();
+    m0.set_multiplexed_signal_zero_a(1.2)
         .unwrap()
         .set_multiplexed_signal_zero_b(2.0)
         .unwrap();
+    result.set_M0(m0).unwrap();
+
     assert_eq!(result.unmultiplexed_signal(), 2);
     assert_eq!(result.multiplexor_raw(), 0);
     let multiplexor = result.multiplexor();
