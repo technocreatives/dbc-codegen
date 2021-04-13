@@ -113,7 +113,7 @@ impl Foo {
 
     /// Set value of Voltage
     #[inline(always)]
-    pub fn set_voltage(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 63.9990234375_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 256 });
@@ -123,7 +123,7 @@ impl Foo {
         let value = ((value - offset) / factor) as u16;
 
         self.raw.view_bits_mut::<Lsb0>()[16..32].store_le(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Current
@@ -157,7 +157,7 @@ impl Foo {
 
     /// Set value of Current
     #[inline(always)]
-    pub fn set_current(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < -2048_f32 || 2047.9375_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 256 });
@@ -168,7 +168,7 @@ impl Foo {
 
         let value = u16::from_ne_bytes(value.to_ne_bytes());
         self.raw.view_bits_mut::<Lsb0>()[0..16].store_le(value);
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -275,13 +275,13 @@ impl Bar {
 
     /// Set value of One
     #[inline(always)]
-    pub fn set_one(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Two
@@ -314,7 +314,7 @@ impl Bar {
 
     /// Set value of Two
     #[inline(always)]
-    pub fn set_two(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 100_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
@@ -324,7 +324,7 @@ impl Bar {
         let value = ((value - offset) / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[0..8].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Three
@@ -355,13 +355,13 @@ impl Bar {
 
     /// Set value of Three
     #[inline(always)]
-    pub fn set_three(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Four
@@ -392,13 +392,13 @@ impl Bar {
 
     /// Set value of Four
     #[inline(always)]
-    pub fn set_four(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         self.raw.view_bits_mut::<Msb0>()[13..15].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Type
@@ -429,10 +429,10 @@ impl Bar {
 
     /// Set value of Type
     #[inline(always)]
-    pub fn set_xtype(&mut self, value: bool) -> Result<&mut Self, CanError> {
+    pub fn set_xtype(&mut self, value: bool) -> Result<(), CanError> {
         let value = value as u8;
         self.raw.view_bits_mut::<Msb0>()[25..26].store_be(value);
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -643,13 +643,13 @@ impl Amet {
 
     /// Set value of One
     #[inline(always)]
-    pub fn set_one(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Two
@@ -682,7 +682,7 @@ impl Amet {
 
     /// Set value of Two
     #[inline(always)]
-    pub fn set_two(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 100_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
@@ -692,7 +692,7 @@ impl Amet {
         let value = ((value - offset) / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[0..8].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Three
@@ -723,13 +723,13 @@ impl Amet {
 
     /// Set value of Three
     #[inline(always)]
-    pub fn set_three(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
         self.raw.view_bits_mut::<Msb0>()[19..22].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Four
@@ -760,13 +760,13 @@ impl Amet {
 
     /// Set value of Four
     #[inline(always)]
-    pub fn set_four(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
         self.raw.view_bits_mut::<Msb0>()[25..27].store_be(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Five
@@ -797,10 +797,10 @@ impl Amet {
 
     /// Set value of Five
     #[inline(always)]
-    pub fn set_five(&mut self, value: bool) -> Result<&mut Self, CanError> {
+    pub fn set_five(&mut self, value: bool) -> Result<(), CanError> {
         let value = value as u8;
         self.raw.view_bits_mut::<Msb0>()[47..48].store_be(value);
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -905,7 +905,7 @@ impl Dolor {
 
     /// Set value of OneFloat
     #[inline(always)]
-    pub fn set_one_float(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_one_float(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 130_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1028 });
@@ -915,7 +915,7 @@ impl Dolor {
         let value = ((value - offset) / factor) as u16;
 
         self.raw.view_bits_mut::<Msb0>()[7..19].store_be(value);
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -1045,13 +1045,13 @@ impl MultiplexTest {
     }
     /// Set value of Multiplexor
     #[inline(always)]
-    pub fn set_multiplexor(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_multiplexor(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 2_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
         self.raw.view_bits_mut::<Lsb0>()[0..4].store_le(value);
-        Ok(self)
+        Ok(())
     }
 
     /// Set value of Multiplexor
@@ -1102,13 +1102,13 @@ impl MultiplexTest {
 
     /// Set value of UnmultiplexedSignal
     #[inline(always)]
-    pub fn set_unmultiplexed_signal(&mut self, value: u8) -> Result<&mut Self, CanError> {
+    pub fn set_unmultiplexed_signal(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 4_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
         self.raw.view_bits_mut::<Lsb0>()[4..12].store_le(value);
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -1200,7 +1200,7 @@ impl MultiplexTestMultiplexorM0 {
 
     /// Set value of MultiplexedSignalZeroA
     #[inline(always)]
-    pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 3_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
@@ -1210,7 +1210,7 @@ impl MultiplexTestMultiplexorM0 {
         let value = ((value - offset) / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
-        Ok(self)
+        Ok(())
     }
 
     /// MultiplexedSignalZeroB
@@ -1243,7 +1243,7 @@ impl MultiplexTestMultiplexorM0 {
 
     /// Set value of MultiplexedSignalZeroB
     #[inline(always)]
-    pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 3_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
@@ -1253,7 +1253,7 @@ impl MultiplexTestMultiplexorM0 {
         let value = ((value - offset) / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -1298,7 +1298,7 @@ impl MultiplexTestMultiplexorM1 {
 
     /// Set value of MultiplexedSignalOneA
     #[inline(always)]
-    pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 6_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
@@ -1308,7 +1308,7 @@ impl MultiplexTestMultiplexorM1 {
         let value = ((value - offset) / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
-        Ok(self)
+        Ok(())
     }
 
     /// MultiplexedSignalOneB
@@ -1341,7 +1341,7 @@ impl MultiplexTestMultiplexorM1 {
 
     /// Set value of MultiplexedSignalOneB
     #[inline(always)]
-    pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<&mut Self, CanError> {
+    pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_f32 || 6_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
@@ -1351,7 +1351,7 @@ impl MultiplexTestMultiplexorM1 {
         let value = ((value - offset) / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
-        Ok(self)
+        Ok(())
     }
 }
 

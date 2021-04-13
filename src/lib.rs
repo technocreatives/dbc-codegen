@@ -413,7 +413,7 @@ fn render_set_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
     writeln!(w, "#[inline(always)]")?;
     writeln!(
         w,
-        "pub fn set_{}(&mut self, value: {}) -> Result<&mut Self, CanError> {{",
+        "pub fn set_{}(&mut self, value: {}) -> Result<(), CanError> {{",
         field_name(signal.name()),
         signal_to_rust_type(&signal)
     )?;
@@ -722,7 +722,7 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
         }
     };
 
-    writeln!(&mut w, "Ok(self)")?;
+    writeln!(&mut w, "Ok(())")?;
     Ok(())
 }
 
