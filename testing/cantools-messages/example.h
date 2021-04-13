@@ -210,14 +210,14 @@ struct example_dolor_t {
  */
 struct example_multiplex_test_t {
     /**
-     * Range: -
+     * Range: 0..2 (0..2 -)
      * Scale: 1
      * Offset: 0
      */
     uint8_t multiplexor;
 
     /**
-     * Range: -
+     * Range: 0..4 (0..4 -)
      * Scale: 1
      * Offset: 0
      */

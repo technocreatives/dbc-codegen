@@ -537,7 +537,7 @@ double example_multiplex_test_multiplexor_decode(uint8_t value)
 
 bool example_multiplex_test_multiplexor_is_in_range(uint8_t value)
 {
-    return (value <= 15u);
+    return (value <= 2u);
 }
 
 uint8_t example_multiplex_test_unmultiplexed_signal_encode(double value)
@@ -552,9 +552,7 @@ double example_multiplex_test_unmultiplexed_signal_decode(uint8_t value)
 
 bool example_multiplex_test_unmultiplexed_signal_is_in_range(uint8_t value)
 {
-    (void)value;
-
-    return (true);
+    return (value <= 4u);
 }
 
 uint8_t example_multiplex_test_multiplexed_signal_zero_a_encode(double value)
