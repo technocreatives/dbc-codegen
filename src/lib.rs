@@ -411,9 +411,19 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
 fn render_set_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
     writeln!(&mut w, "/// Set value of {}", signal.name())?;
     writeln!(w, "#[inline(always)]")?;
+
+    // To avoid accidentially changing the multiplexor value without changing
+    // the signals accordingly this fn is kept private for multiplexors.
+    let visibility = if *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor {
+        ""
+    } else {
+        "pub "
+    };
+
     writeln!(
         w,
-        "pub fn set_{}(&mut self, value: {}) -> Result<(), CanError> {{",
+        "{}fn set_{}(&mut self, value: {}) -> Result<(), CanError> {{",
+        visibility,
         field_name(signal.name()),
         signal_to_rust_type(&signal)
     )?;

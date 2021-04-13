@@ -1045,7 +1045,7 @@ impl MultiplexTest {
     }
     /// Set value of Multiplexor
     #[inline(always)]
-    pub fn set_multiplexor(&mut self, value: u8) -> Result<(), CanError> {
+    fn set_multiplexor(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
         if value < 0_u8 || 2_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
