@@ -1053,14 +1053,6 @@ fn render_multiplexor_enums(
 
         writeln!(w, "impl {} {{", struct_name)?;
 
-        writeln!(w)?;
-        writeln!(
-            w,
-            "pub const MULTIPLEXED_SWITCH_INDEX: u64 = {};",
-            **switch_index
-        )?;
-        writeln!(w)?;
-
         writeln!(
             w,
             "pub fn new() -> Self {{ Self {{ raw: [0u8; {}] }} }}",

@@ -1169,8 +1169,6 @@ pub struct MultiplexTestMultiplexorM0 {
 }
 
 impl MultiplexTestMultiplexorM0 {
-    pub const MULTIPLEXED_SWITCH_INDEX: u64 = 0;
-
     pub fn new() -> Self {
         Self { raw: [0u8; 8] }
     }
@@ -1268,8 +1266,6 @@ pub struct MultiplexTestMultiplexorM1 {
 }
 
 impl MultiplexTestMultiplexorM1 {
-    pub const MULTIPLEXED_SWITCH_INDEX: u64 = 1;
-
     pub fn new() -> Self {
         Self { raw: [0u8; 8] }
     }
