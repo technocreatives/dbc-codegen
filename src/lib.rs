@@ -575,7 +575,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
             multiplexed_signals
                 .entry(switch_index)
                 .and_modify(|v: &mut Vec<&Signal>| v.push(&signal))
-                .or_insert(vec![&signal]);
+                .or_insert_with(|| vec![&signal]);
         }
     }
 
@@ -1007,7 +1007,7 @@ fn render_multiplexor_enums(
             multiplexed_signals
                 .entry(switch_index)
                 .and_modify(|v: &mut Vec<&Signal>| v.push(&signal))
-                .or_insert(vec![&signal]);
+                .or_insert_with(|| vec![&signal]);
         }
     }
 
