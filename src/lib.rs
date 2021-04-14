@@ -1040,6 +1040,7 @@ fn render_multiplexor_enums(
     writeln!(w)?;
 
     for (switch_index, multiplexed_signals) in multiplexed_signals.iter() {
+        writeln!(w, r##"#[derive(Default)]"##)?;
         writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
         let struct_name = multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?;
         writeln!(

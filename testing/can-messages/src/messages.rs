@@ -1162,6 +1162,7 @@ pub enum MultiplexTestMultiplexor {
     M1(MultiplexTestMultiplexorM1),
 }
 
+#[derive(Default)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct MultiplexTestMultiplexorM0 {
     raw: [u8; 8],
@@ -1260,6 +1261,7 @@ impl MultiplexTestMultiplexorM0 {
     }
 }
 
+#[derive(Default)]
 #[cfg_attr(feature = "debug", derive(Debug))]
 pub struct MultiplexTestMultiplexorM1 {
     raw: [u8; 8],
