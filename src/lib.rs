@@ -557,7 +557,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
             }
             writeln!(
                 &mut w,
-                "_ => Err(CanError::InvalidMultiplexor {{ message_id: {}}}),",
+                "multiplexor => Err(CanError::InvalidMultiplexor {{ message_id: {}, multiplexor: multiplexor.into() }}),",
                 msg.message_id().0
             )?;
         }

@@ -1044,7 +1044,10 @@ impl MultiplexTest {
             1 => Ok(MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 {
                 raw: self.raw,
             })),
-            _ => Err(CanError::InvalidMultiplexor { message_id: 200 }),
+            multiplexor => Err(CanError::InvalidMultiplexor {
+                message_id: 200,
+                multiplexor: multiplexor.into(),
+            }),
         }
     }
     /// Set value of Multiplexor
@@ -1374,6 +1377,8 @@ pub enum CanError {
     InvalidMultiplexor {
         /// dbc message id
         message_id: u32,
+        /// Multiplexor value not defined in the dbc
+        multiplexor: u16,
     },
 }
 

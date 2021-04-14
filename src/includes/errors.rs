@@ -13,6 +13,8 @@ pub enum CanError {
     InvalidMultiplexor {
         /// dbc message id
         message_id: u32,
+        /// Multiplexor value not defined in the dbc
+        multiplexor: u16,
     },
 }
 
