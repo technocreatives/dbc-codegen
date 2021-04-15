@@ -14,7 +14,8 @@
 
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitvec::prelude::{BitField, BitView, Lsb0, Msb0};
+use bitvec::prelude::{BitArray, BitField, BitView, LocalBits, Lsb0, Msb0};
+use core::ops::BitOr;
 use float_cmp::approx_eq;
 
 /// All messages
@@ -29,6 +30,8 @@ pub enum Messages {
     Amet(Amet),
     /// Dolor
     Dolor(Dolor),
+    /// MultiplexTest
+    MultiplexTest(MultiplexTest),
 }
 
 impl Messages {
@@ -42,6 +45,7 @@ impl Messages {
             512 => Messages::Bar(Bar::try_from(payload)?),
             1024 => Messages::Amet(Amet::try_from(payload)?),
             1028 => Messages::Dolor(Dolor::try_from(payload)?),
+            200 => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -978,6 +982,380 @@ impl Into<f32> for DolorOneFloat {
     }
 }
 
+/// MultiplexTest
+///
+/// - ID: 200 (0xc8)
+/// - Size: 8 bytes
+/// - Transmitter: SENSOR
+#[derive(Clone, Copy)]
+pub struct MultiplexTest {
+    raw: [u8; 8],
+}
+
+impl MultiplexTest {
+    pub const MESSAGE_ID: u32 = 200;
+
+    pub const MULTIPLEXOR_MIN: u8 = 0_u8;
+    pub const MULTIPLEXOR_MAX: u8 = 2_u8;
+    pub const UNMULTIPLEXED_SIGNAL_MIN: u8 = 0_u8;
+    pub const UNMULTIPLEXED_SIGNAL_MAX: u8 = 4_u8;
+    pub const MULTIPLEXED_SIGNAL_ZERO_A_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ZERO_A_MAX: f32 = 3_f32;
+    pub const MULTIPLEXED_SIGNAL_ZERO_B_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ZERO_B_MAX: f32 = 3_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_A_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_A_MAX: f32 = 6_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_B_MIN: f32 = 0_f32;
+    pub const MULTIPLEXED_SIGNAL_ONE_B_MAX: f32 = 6_f32;
+
+    /// Construct new MultiplexTest from values
+    pub fn new(multiplexor: u8, unmultiplexed_signal: u8) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_multiplexor(multiplexor)?;
+        res.set_unmultiplexed_signal(unmultiplexed_signal)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+
+    /// Get raw value of Multiplexor
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 4 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn multiplexor_raw(&self) -> u8 {
+        let signal = self.raw.view_bits::<Lsb0>()[0..4].load_le::<u8>();
+
+        signal
+    }
+
+    pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexor, CanError> {
+        match self.multiplexor_raw() {
+            0 => Ok(MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 {
+                raw: self.raw,
+            })),
+            1 => Ok(MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 {
+                raw: self.raw,
+            })),
+            multiplexor => Err(CanError::InvalidMultiplexor {
+                message_id: 200,
+                multiplexor: multiplexor.into(),
+            }),
+        }
+    }
+    /// Set value of Multiplexor
+    #[inline(always)]
+    fn set_multiplexor(&mut self, value: u8) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_u8 || 2_u8 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        self.raw.view_bits_mut::<Lsb0>()[0..4].store_le(value);
+        Ok(())
+    }
+
+    /// Set value of Multiplexor
+    #[inline(always)]
+    pub fn set_m0(&mut self, value: MultiplexTestMultiplexorM0) -> Result<(), CanError> {
+        let b0 = BitArray::<LocalBits, _>::new(self.raw);
+        let b1 = BitArray::<LocalBits, _>::new(value.raw);
+        self.raw = b0.bitor(b1).value();
+        self.set_multiplexor(0)?;
+        Ok(())
+    }
+
+    /// Set value of Multiplexor
+    #[inline(always)]
+    pub fn set_m1(&mut self, value: MultiplexTestMultiplexorM1) -> Result<(), CanError> {
+        let b0 = BitArray::<LocalBits, _>::new(self.raw);
+        let b1 = BitArray::<LocalBits, _>::new(value.raw);
+        self.raw = b0.bitor(b1).value();
+        self.set_multiplexor(1)?;
+        Ok(())
+    }
+
+    /// UnmultiplexedSignal
+    ///
+    /// - Min: 0
+    /// - Max: 4
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn unmultiplexed_signal(&self) -> u8 {
+        self.unmultiplexed_signal_raw()
+    }
+
+    /// Get raw value of UnmultiplexedSignal
+    ///
+    /// - Start bit: 4
+    /// - Signal size: 8 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn unmultiplexed_signal_raw(&self) -> u8 {
+        let signal = self.raw.view_bits::<Lsb0>()[4..12].load_le::<u8>();
+
+        signal
+    }
+
+    /// Set value of UnmultiplexedSignal
+    #[inline(always)]
+    pub fn set_unmultiplexed_signal(&mut self, value: u8) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_u8 || 4_u8 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        self.raw.view_bits_mut::<Lsb0>()[4..12].store_le(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for MultiplexTest {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for MultiplexTest {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("MultiplexTest")
+                .field("unmultiplexed_signal", &self.unmultiplexed_signal())
+                .finish()
+        } else {
+            f.debug_tuple("MultiplexTest").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for MultiplexTest {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let multiplexor = u.int_in_range(0..=2)?;
+        let unmultiplexed_signal = u.int_in_range(0..=4)?;
+        MultiplexTest::new(multiplexor, unmultiplexed_signal)
+            .map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+/// Defined values for multiplexed signal MultiplexTest
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum MultiplexTestMultiplexor {
+    M0(MultiplexTestMultiplexorM0),
+    M1(MultiplexTestMultiplexorM1),
+}
+
+#[derive(Default)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct MultiplexTestMultiplexorM0 {
+    raw: [u8; 8],
+}
+
+impl MultiplexTestMultiplexorM0 {
+    pub fn new() -> Self {
+        Self { raw: [0u8; 8] }
+    }
+    /// MultiplexedSignalZeroA
+    ///
+    /// - Min: 0
+    /// - Max: 3
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn multiplexed_signal_zero_a(&self) -> f32 {
+        self.multiplexed_signal_zero_a_raw()
+    }
+
+    /// Get raw value of MultiplexedSignalZeroA
+    ///
+    /// - Start bit: 12
+    /// - Signal size: 8 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn multiplexed_signal_zero_a_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[12..20].load_le::<u8>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of MultiplexedSignalZeroA
+    #[inline(always)]
+    pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 3_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
+        Ok(())
+    }
+
+    /// MultiplexedSignalZeroB
+    ///
+    /// - Min: 0
+    /// - Max: 3
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn multiplexed_signal_zero_b(&self) -> f32 {
+        self.multiplexed_signal_zero_b_raw()
+    }
+
+    /// Get raw value of MultiplexedSignalZeroB
+    ///
+    /// - Start bit: 20
+    /// - Signal size: 8 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn multiplexed_signal_zero_b_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[20..28].load_le::<u8>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of MultiplexedSignalZeroB
+    #[inline(always)]
+    pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 3_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
+        Ok(())
+    }
+}
+
+#[derive(Default)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub struct MultiplexTestMultiplexorM1 {
+    raw: [u8; 8],
+}
+
+impl MultiplexTestMultiplexorM1 {
+    pub fn new() -> Self {
+        Self { raw: [0u8; 8] }
+    }
+    /// MultiplexedSignalOneA
+    ///
+    /// - Min: 0
+    /// - Max: 6
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn multiplexed_signal_one_a(&self) -> f32 {
+        self.multiplexed_signal_one_a_raw()
+    }
+
+    /// Get raw value of MultiplexedSignalOneA
+    ///
+    /// - Start bit: 12
+    /// - Signal size: 8 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn multiplexed_signal_one_a_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[12..20].load_le::<u8>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of MultiplexedSignalOneA
+    #[inline(always)]
+    pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 6_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
+        Ok(())
+    }
+
+    /// MultiplexedSignalOneB
+    ///
+    /// - Min: 0
+    /// - Max: 6
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn multiplexed_signal_one_b(&self) -> f32 {
+        self.multiplexed_signal_one_b_raw()
+    }
+
+    /// Get raw value of MultiplexedSignalOneB
+    ///
+    /// - Start bit: 20
+    /// - Signal size: 8 bits
+    /// - Factor: 0.1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn multiplexed_signal_one_b_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[20..28].load_le::<u8>();
+
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+
+    /// Set value of MultiplexedSignalOneB
+    #[inline(always)]
+    pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 6_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+        }
+        let factor = 0.1_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
+        Ok(())
+    }
+}
+
 /// This is just to make testing easier
 #[allow(dead_code)]
 fn main() {}
@@ -993,6 +1371,13 @@ pub enum CanError {
         message_id: u32,
     },
     InvalidPayloadSize,
+    /// Multiplexor value not defined in the dbc
+    InvalidMultiplexor {
+        /// dbc message id
+        message_id: u32,
+        /// Multiplexor value not defined in the dbc
+        multiplexor: u16,
+    },
 }
 
 #[cfg(feature = "std")]

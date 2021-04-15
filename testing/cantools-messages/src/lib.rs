@@ -59,3 +59,35 @@ fn pack_big_endian_signal_with_start_bit_zero() {
     unsafe { example_dolor_pack(buffer.as_mut_ptr(), &dolor, buffer.len() as u64) };
     assert_eq!(dbc_codegen_bar.raw(), buffer);
 }
+
+#[test]
+fn pack_message_containing_multiplexed_signals() {
+    let mut dbc_codegen_multiplex_test = can_messages::MultiplexTest::new(0, 3).unwrap();
+    let mut m0 = can_messages::MultiplexTestMultiplexorM0::new();
+    m0.set_multiplexed_signal_zero_a(0.4).unwrap();
+    m0.set_multiplexed_signal_zero_b(2.0).unwrap();
+    dbc_codegen_multiplex_test.set_m0(m0).unwrap();
+
+    let multiplexor = unsafe { example_multiplex_test_multiplexor_encode(0.0) };
+    let unmultiplexed_signal = unsafe { example_multiplex_test_unmultiplexed_signal_encode(3.0) };
+    let multiplexed_signal_zero_a =
+        unsafe { example_multiplex_test_multiplexed_signal_zero_a_encode(0.4) };
+    let multiplexed_signal_zero_b =
+        unsafe { example_multiplex_test_multiplexed_signal_zero_b_encode(2.0) };
+    let multiplexed_signal_one_a = 0;
+    let multiplexed_signal_one_b = 0;
+
+    let multiplex_test = example_multiplex_test_t {
+        multiplexor,
+        unmultiplexed_signal,
+        multiplexed_signal_zero_a,
+        multiplexed_signal_zero_b,
+        multiplexed_signal_one_a,
+        multiplexed_signal_one_b,
+    };
+    let mut buffer: [u8; 8] = [0; 8];
+    unsafe {
+        example_multiplex_test_pack(buffer.as_mut_ptr(), &multiplex_test, buffer.len() as u64)
+    };
+    assert_eq!(dbc_codegen_multiplex_test.raw(), buffer);
+}
