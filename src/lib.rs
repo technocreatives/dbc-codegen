@@ -891,7 +891,7 @@ fn field_name(x: &str) -> String {
 }
 
 fn enum_name(msg: &Message, signal: &Signal) -> String {
-    // this turns signal `_4Drive` into `4Drive`
+    // this turns signal `_4DRIVE` into `4drive`
     let signal_name = signal
         .name()
         .trim_start_matches(|c: char| c.is_ascii_punctuation());
