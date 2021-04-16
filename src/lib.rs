@@ -891,15 +891,10 @@ fn field_name(x: &str) -> String {
 }
 
 fn enum_name(msg: &Message, signal: &Signal) -> String {
-    // for example turns signal `_4Drive` into `4Drive`
-    let signal_name = if signal
+    // this turns signal `_4Drive` into `4Drive`
+    let signal_name = signal
         .name()
-        .starts_with(|c: char| c.is_ascii_punctuation())
-    {
-        &signal.name()[1..]
-    } else {
-        &signal.name()[..]
-    };
+        .trim_start_matches(|c: char| c.is_ascii_punctuation());
 
     format!("{}{}", enum_variant_name(msg.message_name()), signal_name)
 }
