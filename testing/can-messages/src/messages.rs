@@ -26,6 +26,8 @@ pub enum Messages {
     Foo(Foo),
     /// Bar
     Bar(Bar),
+    /// _4WD
+    X4wd(X4wd),
     /// Amet
     Amet(Amet),
     /// Dolor
@@ -43,6 +45,7 @@ impl Messages {
         let res = match id {
             256 => Messages::Foo(Foo::try_from(payload)?),
             512 => Messages::Bar(Bar::try_from(payload)?),
+            768 => Messages::X4wd(X4wd::try_from(payload)?),
             1024 => Messages::Amet(Amet::try_from(payload)?),
             1028 => Messages::Dolor(Dolor::try_from(payload)?),
             200 => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
@@ -573,6 +576,141 @@ impl Into<bool> for BarType {
             BarType::X0off => false,
             BarType::X1on => true,
             BarType::_Other(x) => x,
+        }
+    }
+}
+
+/// _4WD
+///
+/// - ID: 768 (0x300)
+/// - Size: 8 bytes
+/// - Transmitter: Ipsum
+#[derive(Clone, Copy)]
+pub struct X4wd {
+    raw: [u8; 8],
+}
+
+impl X4wd {
+    pub const MESSAGE_ID: u32 = 768;
+
+    pub const X4DRIVE_MIN: u8 = 0_u8;
+    pub const X4DRIVE_MAX: u8 = 7_u8;
+
+    /// Construct new _4WD from values
+    pub fn new(x4drive: u8) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_x4drive(x4drive)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+
+    /// _4Drive
+    ///
+    /// - Min: 0
+    /// - Max: 7
+    /// - Unit: ""
+    /// - Receivers: Dolor
+    #[inline(always)]
+    pub fn x4drive(&self) -> X4wd4Drive {
+        self.x4drive_raw().into()
+    }
+
+    /// Get raw value of _4Drive
+    ///
+    /// - Start bit: 13
+    /// - Signal size: 3 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: BigEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn x4drive_raw(&self) -> u8 {
+        let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
+
+        signal
+    }
+
+    /// Set value of _4Drive
+    #[inline(always)]
+    pub fn set_x4drive(&mut self, value: u8) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_u8 || 7_u8 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 768 });
+        }
+        self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for X4wd {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for X4wd {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("X4wd")
+                .field("x4drive", &self.x4drive())
+                .finish()
+        } else {
+            f.debug_tuple("X4wd").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for X4wd {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let x4drive = u.int_in_range(0..=7)?;
+        X4wd::new(x4drive).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+/// Defined values for _4Drive
+#[derive(Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "debug", derive(Debug))]
+pub enum X4wd4Drive {
+    Off,
+    X2wd,
+    X4wd,
+    All,
+    _Other(u8),
+}
+
+impl From<u8> for X4wd4Drive {
+    fn from(raw: u8) -> Self {
+        match raw {
+            0 => X4wd4Drive::Off,
+            1 => X4wd4Drive::X2wd,
+            2 => X4wd4Drive::X4wd,
+            3 => X4wd4Drive::All,
+            x => X4wd4Drive::_Other(x),
+        }
+    }
+}
+
+impl Into<u8> for X4wd4Drive {
+    fn into(self) -> u8 {
+        match self {
+            X4wd4Drive::Off => 0,
+            X4wd4Drive::X2wd => 1,
+            X4wd4Drive::X4wd => 2,
+            X4wd4Drive::All => 3,
+            X4wd4Drive::_Other(x) => x,
         }
     }
 }
