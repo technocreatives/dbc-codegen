@@ -608,18 +608,18 @@ impl X4wd {
         &self.raw
     }
 
-    /// _4Drive
+    /// _4DRIVE
     ///
     /// - Min: 0
     /// - Max: 7
     /// - Unit: ""
     /// - Receivers: Dolor
     #[inline(always)]
-    pub fn x4drive(&self) -> X4wd4Drive {
+    pub fn x4drive(&self) -> X4wd4drive {
         self.x4drive_raw().into()
     }
 
-    /// Get raw value of _4Drive
+    /// Get raw value of _4DRIVE
     ///
     /// - Start bit: 13
     /// - Signal size: 3 bits
@@ -634,7 +634,7 @@ impl X4wd {
         signal
     }
 
-    /// Set value of _4Drive
+    /// Set value of _4DRIVE
     #[inline(always)]
     pub fn set_x4drive(&mut self, value: u8) -> Result<(), CanError> {
         #[cfg(feature = "range_checked")]
@@ -680,10 +680,10 @@ impl<'a> Arbitrary<'a> for X4wd {
         X4wd::new(x4drive).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
-/// Defined values for _4Drive
+/// Defined values for _4DRIVE
 #[derive(Clone, Copy, PartialEq)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub enum X4wd4Drive {
+pub enum X4wd4drive {
     Off,
     X2wd,
     X4wd,
@@ -691,26 +691,26 @@ pub enum X4wd4Drive {
     _Other(u8),
 }
 
-impl From<u8> for X4wd4Drive {
+impl From<u8> for X4wd4drive {
     fn from(raw: u8) -> Self {
         match raw {
-            0 => X4wd4Drive::Off,
-            1 => X4wd4Drive::X2wd,
-            2 => X4wd4Drive::X4wd,
-            3 => X4wd4Drive::All,
-            x => X4wd4Drive::_Other(x),
+            0 => X4wd4drive::Off,
+            1 => X4wd4drive::X2wd,
+            2 => X4wd4drive::X4wd,
+            3 => X4wd4drive::All,
+            x => X4wd4drive::_Other(x),
         }
     }
 }
 
-impl Into<u8> for X4wd4Drive {
+impl Into<u8> for X4wd4drive {
     fn into(self) -> u8 {
         match self {
-            X4wd4Drive::Off => 0,
-            X4wd4Drive::X2wd => 1,
-            X4wd4Drive::X4wd => 2,
-            X4wd4Drive::All => 3,
-            X4wd4Drive::_Other(x) => x,
+            X4wd4drive::Off => 0,
+            X4wd4drive::X2wd => 1,
+            X4wd4drive::X4wd => 2,
+            X4wd4drive::All => 3,
+            X4wd4drive::_Other(x) => x,
         }
     }
 }

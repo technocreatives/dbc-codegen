@@ -20,7 +20,7 @@ BO_ 512 Bar: 8 Ipsum
  SG_ Type : 30|1@0+ (1,0) [0|1] "boolean" Dolor
 
 BO_ 768 _4WD: 8 Ipsum
- SG_ _4Drive : 13|3@0+ (1,0) [0|7] "" Dolor
+ SG_ _4DRIVE : 13|3@0+ (1,0) [0|7] "" Dolor
 
 BO_ 1024 Amet: 8 Sit
  SG_ One : 15|2@0+ (1,0) [0|3] "" Dolor
@@ -43,5 +43,5 @@ BO_ 200 MultiplexTest: 8 SENSOR
 VAL_ 512 Three 0 "OFF" 1 "ON" 2 "ONER" 3 "ONEST";
 VAL_ 512 Four 0 "Off" 1 "On" 2 "Oner" 3 "Onest";
 VAL_ 512 Type 0 "0Off" 1 "1On";
-VAL_ 768 _4Drive 0 "OFF" 1 "2WD" 2 "4WD" 3 "ALL";
+VAL_ 768 _4DRIVE 0 "OFF" 1 "2WD" 2 "4WD" 3 "ALL";
 VAL_ 1028 OneFloat 3 "Dolor" 5 "Other";

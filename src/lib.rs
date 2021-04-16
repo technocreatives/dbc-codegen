@@ -896,7 +896,11 @@ fn enum_name(msg: &Message, signal: &Signal) -> String {
         .name()
         .trim_start_matches(|c: char| c.is_ascii_punctuation());
 
-    format!("{}{}", enum_variant_name(msg.message_name()), signal_name)
+    format!(
+        "{}{}",
+        enum_variant_name(msg.message_name()),
+        signal_name.to_camel_case()
+    )
 }
 
 fn enum_variant_name(x: &str) -> String {
