@@ -182,7 +182,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
             writeln!(
                 &mut w,
                 "pub const {sig}_MIN: {typ} = {min}_{typ};",
-                sig = signal.name().to_snake_case().to_uppercase(),
+                sig = field_name(signal.name()).to_uppercase(),
                 typ = typ,
                 min = signal.min,
             )?;
@@ -190,7 +190,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
             writeln!(
                 &mut w,
                 "pub const {sig}_MAX: {typ} = {max}_{typ};",
-                sig = signal.name().to_snake_case().to_uppercase(),
+                sig = field_name(signal.name()).to_uppercase(),
                 typ = typ,
                 max = signal.max,
             )?;
@@ -875,7 +875,11 @@ fn signal_to_rust_type(signal: &Signal) -> String {
 }
 
 fn type_name(x: &str) -> String {
-    x.to_camel_case()
+    if keywords::is_keyword(x) || !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
+        format!("X{}", x.to_camel_case())
+    } else {
+        x.to_camel_case()
+    }
 }
 
 fn field_name(x: &str) -> String {
@@ -887,11 +891,17 @@ fn field_name(x: &str) -> String {
 }
 
 fn enum_name(msg: &Message, signal: &Signal) -> String {
-    format!(
-        "{}{}",
-        msg.message_name().to_camel_case(),
-        signal.name().to_camel_case()
-    )
+    // for example turns signal `_4Drive` into `4Drive`
+    let signal_name = if signal
+        .name()
+        .starts_with(|c: char| c.is_ascii_punctuation())
+    {
+        &signal.name()[1..]
+    } else {
+        &signal.name()[..]
+    };
+
+    format!("{}{}", enum_variant_name(msg.message_name()), signal_name)
 }
 
 fn enum_variant_name(x: &str) -> String {
