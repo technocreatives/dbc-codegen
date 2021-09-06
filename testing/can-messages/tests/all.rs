@@ -97,11 +97,6 @@ fn debug_alternative_impl() {
 }
 
 #[test]
-fn from_raw_to_enum() {
-    assert_eq!(BarThree::from(3u8), BarThree::Onest);
-}
-
-#[test]
 fn from_enum_into_raw() {
     let raw: u8 = BarThree::Onest.into();
     assert_eq!(raw, 3);

@@ -14,9 +14,8 @@
 
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitvec::prelude::{BitArray, BitField, BitView, LocalBits, Lsb0, Msb0};
+use bitvec::prelude::*;
 use core::ops::BitOr;
-use float_cmp::approx_eq;
 
 /// All messages
 #[derive(Clone)]
@@ -338,7 +337,15 @@ impl Bar {
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn three(&self) -> BarThree {
-        self.three_raw().into()
+        let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
+
+        match signal {
+            0 => BarThree::Off,
+            1 => BarThree::On,
+            2 => BarThree::Oner,
+            3 => BarThree::Onest,
+            _ => BarThree::_Other(self.three_raw()),
+        }
     }
 
     /// Get raw value of Three
@@ -375,7 +382,15 @@ impl Bar {
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn four(&self) -> BarFour {
-        self.four_raw().into()
+        let signal = self.raw.view_bits::<Msb0>()[13..15].load_be::<u8>();
+
+        match signal {
+            0 => BarFour::Off,
+            1 => BarFour::On,
+            2 => BarFour::Oner,
+            3 => BarFour::Onest,
+            _ => BarFour::_Other(self.four_raw()),
+        }
     }
 
     /// Get raw value of Four
@@ -412,7 +427,13 @@ impl Bar {
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn xtype(&self) -> BarType {
-        self.xtype_raw().into()
+        let signal = self.raw.view_bits::<Msb0>()[25..26].load_be::<u8>();
+
+        match signal {
+            0 => BarType::X0off,
+            1 => BarType::X1on,
+            _ => BarType::_Other(self.xtype_raw()),
+        }
     }
 
     /// Get raw value of Type
@@ -492,18 +513,6 @@ pub enum BarThree {
     _Other(u8),
 }
 
-impl From<u8> for BarThree {
-    fn from(raw: u8) -> Self {
-        match raw {
-            0 => BarThree::Off,
-            1 => BarThree::On,
-            2 => BarThree::Oner,
-            3 => BarThree::Onest,
-            x => BarThree::_Other(x),
-        }
-    }
-}
-
 impl Into<u8> for BarThree {
     fn into(self) -> u8 {
         match self {
@@ -527,18 +536,6 @@ pub enum BarFour {
     _Other(u8),
 }
 
-impl From<u8> for BarFour {
-    fn from(raw: u8) -> Self {
-        match raw {
-            0 => BarFour::Off,
-            1 => BarFour::On,
-            2 => BarFour::Oner,
-            3 => BarFour::Onest,
-            x => BarFour::_Other(x),
-        }
-    }
-}
-
 impl Into<u8> for BarFour {
     fn into(self) -> u8 {
         match self {
@@ -558,16 +555,6 @@ pub enum BarType {
     X0off,
     X1on,
     _Other(bool),
-}
-
-impl From<bool> for BarType {
-    fn from(raw: bool) -> Self {
-        match raw {
-            false => BarType::X0off,
-            true => BarType::X1on,
-            x => BarType::_Other(x),
-        }
-    }
 }
 
 impl Into<bool> for BarType {
@@ -616,7 +603,15 @@ impl X4wd {
     /// - Receivers: Dolor
     #[inline(always)]
     pub fn x4drive(&self) -> X4wd4drive {
-        self.x4drive_raw().into()
+        let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
+
+        match signal {
+            0 => X4wd4drive::Off,
+            1 => X4wd4drive::X2wd,
+            2 => X4wd4drive::X4wd,
+            3 => X4wd4drive::All,
+            _ => X4wd4drive::_Other(self.x4drive_raw()),
+        }
     }
 
     /// Get raw value of _4DRIVE
@@ -689,18 +684,6 @@ pub enum X4wd4drive {
     X4wd,
     All,
     _Other(u8),
-}
-
-impl From<u8> for X4wd4drive {
-    fn from(raw: u8) -> Self {
-        match raw {
-            0 => X4wd4drive::Off,
-            1 => X4wd4drive::X2wd,
-            2 => X4wd4drive::X4wd,
-            3 => X4wd4drive::All,
-            x => X4wd4drive::_Other(x),
-        }
-    }
 }
 
 impl Into<u8> for X4wd4drive {
@@ -1021,7 +1004,13 @@ impl Dolor {
     /// - Receivers: Vector__XXX
     #[inline(always)]
     pub fn one_float(&self) -> DolorOneFloat {
-        self.one_float_raw().into()
+        let signal = self.raw.view_bits::<Msb0>()[7..19].load_be::<u16>();
+
+        match signal {
+            3 => DolorOneFloat::Dolor,
+            5 => DolorOneFloat::Other,
+            _ => DolorOneFloat::_Other(self.one_float_raw()),
+        }
     }
 
     /// Get raw value of OneFloat
@@ -1098,16 +1087,6 @@ pub enum DolorOneFloat {
     Dolor,
     Other,
     _Other(f32),
-}
-
-impl From<f32> for DolorOneFloat {
-    fn from(raw: f32) -> Self {
-        match raw {
-            x if approx_eq!(f32, x, 3_f32, ulps = 2) => DolorOneFloat::Dolor,
-            x if approx_eq!(f32, x, 5_f32, ulps = 2) => DolorOneFloat::Other,
-            x => DolorOneFloat::_Other(x),
-        }
-    }
 }
 
 impl Into<f32> for DolorOneFloat {
@@ -1204,7 +1183,7 @@ impl MultiplexTest {
     pub fn set_m0(&mut self, value: MultiplexTestMultiplexorM0) -> Result<(), CanError> {
         let b0 = BitArray::<LocalBits, _>::new(self.raw);
         let b1 = BitArray::<LocalBits, _>::new(value.raw);
-        self.raw = b0.bitor(b1).value();
+        self.raw = b0.bitor(b1).into_inner();
         self.set_multiplexor(0)?;
         Ok(())
     }
@@ -1214,7 +1193,7 @@ impl MultiplexTest {
     pub fn set_m1(&mut self, value: MultiplexTestMultiplexorM1) -> Result<(), CanError> {
         let b0 = BitArray::<LocalBits, _>::new(self.raw);
         let b1 = BitArray::<LocalBits, _>::new(value.raw);
-        self.raw = b0.bitor(b1).value();
+        self.raw = b0.bitor(b1).into_inner();
         self.set_multiplexor(1)?;
         Ok(())
     }
