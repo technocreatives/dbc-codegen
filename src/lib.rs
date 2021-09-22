@@ -51,11 +51,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     writeln!(&mut w, "//! - Version: `{:?}`", dbc.version())?;
     writeln!(&mut w)?;
     writeln!(&mut w, "use core::ops::BitOr;")?;
-    writeln!(
-        &mut w,
-        "use bitvec::prelude::{{BitField, BitArray, BitView, LocalBits, Lsb0, Msb0}};"
-    )?;
-    writeln!(&mut w, "use float_cmp::approx_eq;")?;
+    writeln!(&mut w, "use bitvec::prelude::*;")?;
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
     writeln!(&mut w)?;
@@ -351,7 +347,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     writeln!(w, "/// - Unit: {:?}", signal.unit())?;
     writeln!(w, "/// - Receivers: {}", signal.receivers().join(", "))?;
     writeln!(w, "#[inline(always)]")?;
-    if let Some(_variants) = dbc.value_descriptions_for_signal(*msg.message_id(), signal.name()) {
+    if let Some(variants) = dbc.value_descriptions_for_signal(*msg.message_id(), signal.name()) {
         let type_name = enum_name(msg, signal);
 
         writeln!(
@@ -361,8 +357,58 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
             type_name,
         )?;
         {
+            let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
+                "bool" => |x: f64| format!("{}", x),
+                // "f32" => |x: f64| format!("x if approx_eq!(f32, x, {}_f32, ulps = 2)", x),
+                _ => |x: f64| format!("{}", x),
+            };
             let mut w = PadAdapter::wrap(&mut w);
-            writeln!(&mut w, "self.{}_raw().into()", field_name(signal.name()))?;
+            let read_fn = match signal.byte_order() {
+                can_dbc::ByteOrder::LittleEndian => {
+                    let (start_bit, end_bit) = le_start_end_bit(signal, msg)?;
+
+                    format!(
+                        "self.raw.view_bits::<Lsb0>()[{start}..{end}].load_le::<{typ}>()",
+                        typ = signal_to_rust_uint(signal),
+                        start = start_bit,
+                        end = end_bit,
+                    )
+                }
+                can_dbc::ByteOrder::BigEndian => {
+                    let (start_bit, end_bit) = be_start_end_bit(signal, msg)?;
+
+                    format!(
+                        "self.raw.view_bits::<Msb0>()[{start}..{end}].load_be::<{typ}>()",
+                        typ = signal_to_rust_uint(signal),
+                        start = start_bit,
+                        end = end_bit
+                    )
+                }
+            };
+
+            writeln!(&mut w, r#"let signal = {};"#, read_fn)?;
+            writeln!(&mut w)?;
+            writeln!(&mut w, "match signal {{")?;
+            {
+                let mut w = PadAdapter::wrap(&mut w);
+                for variant in variants {
+                    let literal = match_on_raw_type(*variant.a());
+                    writeln!(
+                        &mut w,
+                        "{} => {}::{},",
+                        literal,
+                        type_name,
+                        enum_variant_name(variant.b())
+                    )?;
+                }
+                writeln!(
+                    &mut w,
+                    "_ => {}::_Other(self.{}_raw()),",
+                    type_name,
+                    field_name(signal.name())
+                )?;
+            }
+            writeln!(&mut w, "}}")?;
         }
         writeln!(&mut w, "}}")?;
         writeln!(w)?;
@@ -479,7 +525,7 @@ fn render_set_signal_multiplexer(
 
         writeln!(&mut w, "let b0 = BitArray::<LocalBits, _>::new(self.raw);")?;
         writeln!(&mut w, "let b1 = BitArray::<LocalBits, _>::new(value.raw);")?;
-        writeln!(&mut w, "self.raw = b0.bitor(b1).value();")?;
+        writeln!(&mut w, "self.raw = b0.bitor(b1).into_inner();")?;
         writeln!(
             &mut w,
             "self.set_{}({})?;",
@@ -756,40 +802,6 @@ fn write_enum(
             writeln!(w, "{},", enum_variant_name(variant.b()))?;
         }
         writeln!(w, "_Other({}),", signal_rust_type)?;
-    }
-    writeln!(w, "}}")?;
-    writeln!(w)?;
-
-    writeln!(w, "impl From<{}> for {} {{", signal_rust_type, type_name)?;
-    {
-        let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
-            "bool" => |x: f64| format!("{}", (x as i64) == 1),
-            "f32" => |x: f64| format!("x if approx_eq!(f32, x, {}_f32, ulps = 2)", x),
-            _ => |x: f64| format!("{}", x),
-        };
-
-        let mut w = PadAdapter::wrap(&mut w);
-        writeln!(w, "fn from(raw: {}) -> Self {{", signal_rust_type)?;
-        {
-            let mut w = PadAdapter::wrap(&mut w);
-            writeln!(&mut w, "match raw {{")?;
-            {
-                let mut w = PadAdapter::wrap(&mut w);
-                for variant in variants {
-                    let literal = match_on_raw_type(*variant.a());
-                    writeln!(
-                        &mut w,
-                        "{} => {}::{},",
-                        literal,
-                        type_name,
-                        enum_variant_name(variant.b())
-                    )?;
-                }
-                writeln!(&mut w, "x => {}::_Other(x),", type_name,)?;
-            }
-            writeln!(w, "}}")?;
-        }
-        writeln!(w, "}}")?;
     }
     writeln!(w, "}}")?;
     writeln!(w)?;

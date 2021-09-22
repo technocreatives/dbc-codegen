@@ -49,7 +49,6 @@ For this to work you need to add following dependencies to `Cargo.toml`:
 
 ```toml
 bitvec = { version = "0.21", default-features = false }
-float-cmp = "0.8"
 arbitrary = { version = "1.0", optional = true } # Enable with `arb` feature
 ```
 

@@ -5,8 +5,7 @@ authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
 edition = "2018"
 
 [dependencies]
-bitvec = { version = "0.21", default-features = false }
-float-cmp = "0.8"
+bitvec = { version = "0.22", default-features = false }
 
 [features]
 debug = []
