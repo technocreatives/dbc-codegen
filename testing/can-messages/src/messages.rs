@@ -1,21 +1,17 @@
 // Generated code!
 #![allow(unused_comparisons, unreachable_patterns)]
 #![allow(clippy::let_and_return, clippy::eq_op)]
-#![allow(
-    clippy::excessive_precision,
-    clippy::manual_range_contains,
-    clippy::absurd_extreme_comparisons
-)]
+#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons)]
 #![deny(clippy::integer_arithmetic)]
 
 //! Message definitions from file `"example.dbc"`
 //!
 //! - Version: `Version("43")`
 
+use core::ops::BitOr;
+use bitvec::prelude::*;
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
-use bitvec::prelude::*;
-use core::ops::BitOr;
 
 /// All messages
 #[derive(Clone)]
@@ -23,6 +19,8 @@ use core::ops::BitOr;
 pub enum Messages {
     /// Foo
     Foo(Foo),
+    /// FooInexact
+    FooInexact(FooInexact),
     /// Bar
     Bar(Bar),
     /// _4WD
@@ -40,9 +38,10 @@ impl Messages {
     #[inline(never)]
     pub fn from_can_message(id: u32, payload: &[u8]) -> Result<Self, CanError> {
         use core::convert::TryFrom;
-
+        
         let res = match id {
             256 => Messages::Foo(Foo::try_from(payload)?),
+            256 => Messages::FooInexact(FooInexact::try_from(payload)?),
             512 => Messages::Bar(Bar::try_from(payload)?),
             768 => Messages::X4wd(X4wd::try_from(payload)?),
             1024 => Messages::Amet(Amet::try_from(payload)?),
@@ -66,12 +65,12 @@ pub struct Foo {
 
 impl Foo {
     pub const MESSAGE_ID: u32 = 256;
-
+    
     pub const VOLTAGE_MIN: f32 = 0_f32;
     pub const VOLTAGE_MAX: f32 = 63.9990234375_f32;
     pub const CURRENT_MIN: f32 = -2048_f32;
     pub const CURRENT_MAX: f32 = 2047.9375_f32;
-
+    
     /// Construct new Foo from values
     pub fn new(voltage: f32, current: f32) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 4] };
@@ -79,12 +78,12 @@ impl Foo {
         res.set_current(current)?;
         Ok(res)
     }
-
+    
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8] {
         &self.raw
     }
-
+    
     /// Voltage
     ///
     /// - Min: 0
@@ -95,7 +94,7 @@ impl Foo {
     pub fn voltage(&self) -> f32 {
         self.voltage_raw()
     }
-
+    
     /// Get raw value of Voltage
     ///
     /// - Start bit: 16
@@ -107,12 +106,12 @@ impl Foo {
     #[inline(always)]
     pub fn voltage_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<Lsb0>()[16..32].load_le::<u16>();
-
+        
         let factor = 0.000976562_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset
     }
-
+    
     /// Set value of Voltage
     #[inline(always)]
     pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
@@ -123,11 +122,11 @@ impl Foo {
         let factor = 0.000976562_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
-
+        
         self.raw.view_bits_mut::<Lsb0>()[16..32].store_le(value);
         Ok(())
     }
-
+    
     /// Current
     ///
     /// - Min: -2048
@@ -138,7 +137,7 @@ impl Foo {
     pub fn current(&self) -> f32 {
         self.current_raw()
     }
-
+    
     /// Get raw value of Current
     ///
     /// - Start bit: 0
@@ -150,13 +149,13 @@ impl Foo {
     #[inline(always)]
     pub fn current_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<Lsb0>()[0..16].load_le::<u16>();
-
-        let signal = i16::from_ne_bytes(signal.to_ne_bytes());
+        
+        let signal  = i16::from_ne_bytes(signal.to_ne_bytes());
         let factor = 0.0625_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset
     }
-
+    
     /// Set value of Current
     #[inline(always)]
     pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
@@ -167,21 +166,20 @@ impl Foo {
         let factor = 0.0625_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as i16;
-
+        
         let value = u16::from_ne_bytes(value.to_ne_bytes());
         self.raw.view_bits_mut::<Lsb0>()[0..16].store_le(value);
         Ok(())
     }
+    
 }
 
 impl core::convert::TryFrom<&[u8]> for Foo {
     type Error = CanError;
-
+    
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 4 {
-            return Err(CanError::InvalidPayloadSize);
-        }
+        if payload.len() != 4 { return Err(CanError::InvalidPayloadSize); }
         let mut raw = [0u8; 4];
         raw.copy_from_slice(&payload[..4]);
         Ok(Self { raw })
@@ -195,7 +193,7 @@ impl core::fmt::Debug for Foo {
             f.debug_struct("Foo")
                 .field("voltage", &self.voltage())
                 .field("current", &self.current())
-                .finish()
+            .finish()
         } else {
             f.debug_tuple("Foo").field(&self.raw).finish()
         }
@@ -207,7 +205,163 @@ impl<'a> Arbitrary<'a> for Foo {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
         let voltage = u.float_in_range(0_f32..=63.9990234375_f32)?;
         let current = u.float_in_range(-2048_f32..=2047.9375_f32)?;
-        Foo::new(voltage, current).map_err(|_| arbitrary::Error::IncorrectFormat)
+        Foo::new(voltage,current).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
+/// FooInexact
+///
+/// - ID: 256 (0x100)
+/// - Size: 4 bytes
+/// - Transmitter: Test
+#[derive(Clone, Copy)]
+pub struct FooInexact {
+    raw: [u8; 4],
+}
+
+impl FooInexact {
+    pub const MESSAGE_ID: u32 = 256;
+    
+    pub const VOLTAGE_MIN: f32 = 0_f32;
+    pub const VOLTAGE_MAX: f32 = 655.35_f32;
+    pub const CURRENT_MIN: f32 = -327.68_f32;
+    pub const CURRENT_MAX: f32 = 327.67_f32;
+    
+    /// Construct new FooInexact from values
+    pub fn new(voltage: f32, current: f32) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 4] };
+        res.set_voltage(voltage)?;
+        res.set_current(current)?;
+        Ok(res)
+    }
+    
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+    
+    /// Voltage
+    ///
+    /// - Min: 0
+    /// - Max: 655.35
+    /// - Unit: "V"
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn voltage(&self) -> f32 {
+        self.voltage_raw()
+    }
+    
+    /// Get raw value of Voltage
+    ///
+    /// - Start bit: 16
+    /// - Signal size: 16 bits
+    /// - Factor: 0.001
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn voltage_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[16..32].load_le::<u16>();
+        
+        let factor = 0.001_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+    
+    /// Set value of Voltage
+    #[inline(always)]
+    pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_f32 || 655.35_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 256 });
+        }
+        let factor = 0.001_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as u16;
+        
+        self.raw.view_bits_mut::<Lsb0>()[16..32].store_le(value);
+        Ok(())
+    }
+    
+    /// Current
+    ///
+    /// - Min: -327.68
+    /// - Max: 327.67
+    /// - Unit: "A"
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn current(&self) -> f32 {
+        self.current_raw()
+    }
+    
+    /// Get raw value of Current
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 16 bits
+    /// - Factor: 0.001
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Signed
+    #[inline(always)]
+    pub fn current_raw(&self) -> f32 {
+        let signal = self.raw.view_bits::<Lsb0>()[0..16].load_le::<u16>();
+        
+        let signal  = i16::from_ne_bytes(signal.to_ne_bytes());
+        let factor = 0.001_f32;
+        let offset = 0_f32;
+        (signal as f32) * factor + offset
+    }
+    
+    /// Set value of Current
+    #[inline(always)]
+    pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < -327.68_f32 || 327.67_f32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 256 });
+        }
+        let factor = 0.001_f32;
+        let offset = 0_f32;
+        let value = ((value - offset) / factor) as i16;
+        
+        let value = u16::from_ne_bytes(value.to_ne_bytes());
+        self.raw.view_bits_mut::<Lsb0>()[0..16].store_le(value);
+        Ok(())
+    }
+    
+}
+
+impl core::convert::TryFrom<&[u8]> for FooInexact {
+    type Error = CanError;
+    
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 4 { return Err(CanError::InvalidPayloadSize); }
+        let mut raw = [0u8; 4];
+        raw.copy_from_slice(&payload[..4]);
+        Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for FooInexact {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("FooInexact")
+                .field("voltage", &self.voltage())
+                .field("current", &self.current())
+            .finish()
+        } else {
+            f.debug_tuple("FooInexact").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for FooInexact {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let voltage = u.float_in_range(0_f32..=655.35_f32)?;
+        let current = u.float_in_range(-327.68_f32..=327.67_f32)?;
+        FooInexact::new(voltage,current).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
@@ -223,7 +377,7 @@ pub struct Bar {
 
 impl Bar {
     pub const MESSAGE_ID: u32 = 512;
-
+    
     pub const ONE_MIN: u8 = 0_u8;
     pub const ONE_MAX: u8 = 3_u8;
     pub const TWO_MIN: f32 = 0_f32;
@@ -232,7 +386,7 @@ impl Bar {
     pub const THREE_MAX: u8 = 7_u8;
     pub const FOUR_MIN: u8 = 0_u8;
     pub const FOUR_MAX: u8 = 3_u8;
-
+    
     /// Construct new Bar from values
     pub fn new(one: u8, two: f32, three: u8, four: u8, xtype: bool) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
@@ -243,12 +397,12 @@ impl Bar {
         res.set_xtype(xtype)?;
         Ok(res)
     }
-
+    
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8] {
         &self.raw
     }
-
+    
     /// One
     ///
     /// - Min: 0
@@ -259,7 +413,7 @@ impl Bar {
     pub fn one(&self) -> u8 {
         self.one_raw()
     }
-
+    
     /// Get raw value of One
     ///
     /// - Start bit: 15
@@ -271,10 +425,10 @@ impl Bar {
     #[inline(always)]
     pub fn one_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[8..10].load_be::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of One
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
@@ -285,7 +439,7 @@ impl Bar {
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
         Ok(())
     }
-
+    
     /// Two
     ///
     /// - Min: 0
@@ -296,7 +450,7 @@ impl Bar {
     pub fn two(&self) -> f32 {
         self.two_raw()
     }
-
+    
     /// Get raw value of Two
     ///
     /// - Start bit: 7
@@ -308,12 +462,12 @@ impl Bar {
     #[inline(always)]
     pub fn two_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<Msb0>()[0..8].load_be::<u8>();
-
+        
         let factor = 0.39_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset
     }
-
+    
     /// Set value of Two
     #[inline(always)]
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
@@ -324,11 +478,11 @@ impl Bar {
         let factor = 0.39_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u8;
-
+        
         self.raw.view_bits_mut::<Msb0>()[0..8].store_be(value);
         Ok(())
     }
-
+    
     /// Three
     ///
     /// - Min: 0
@@ -338,7 +492,7 @@ impl Bar {
     #[inline(always)]
     pub fn three(&self) -> BarThree {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
-
+        
         match signal {
             0 => BarThree::Off,
             1 => BarThree::On,
@@ -347,7 +501,7 @@ impl Bar {
             _ => BarThree::_Other(self.three_raw()),
         }
     }
-
+    
     /// Get raw value of Three
     ///
     /// - Start bit: 13
@@ -359,10 +513,10 @@ impl Bar {
     #[inline(always)]
     pub fn three_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of Three
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
@@ -373,7 +527,7 @@ impl Bar {
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
         Ok(())
     }
-
+    
     /// Four
     ///
     /// - Min: 0
@@ -383,7 +537,7 @@ impl Bar {
     #[inline(always)]
     pub fn four(&self) -> BarFour {
         let signal = self.raw.view_bits::<Msb0>()[13..15].load_be::<u8>();
-
+        
         match signal {
             0 => BarFour::Off,
             1 => BarFour::On,
@@ -392,7 +546,7 @@ impl Bar {
             _ => BarFour::_Other(self.four_raw()),
         }
     }
-
+    
     /// Get raw value of Four
     ///
     /// - Start bit: 10
@@ -404,10 +558,10 @@ impl Bar {
     #[inline(always)]
     pub fn four_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[13..15].load_be::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of Four
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
@@ -418,7 +572,7 @@ impl Bar {
         self.raw.view_bits_mut::<Msb0>()[13..15].store_be(value);
         Ok(())
     }
-
+    
     /// Type
     ///
     /// - Min: 0
@@ -428,14 +582,14 @@ impl Bar {
     #[inline(always)]
     pub fn xtype(&self) -> BarType {
         let signal = self.raw.view_bits::<Msb0>()[25..26].load_be::<u8>();
-
+        
         match signal {
             0 => BarType::X0off,
             1 => BarType::X1on,
             _ => BarType::_Other(self.xtype_raw()),
         }
     }
-
+    
     /// Get raw value of Type
     ///
     /// - Start bit: 30
@@ -447,10 +601,10 @@ impl Bar {
     #[inline(always)]
     pub fn xtype_raw(&self) -> bool {
         let signal = self.raw.view_bits::<Msb0>()[25..26].load_be::<u8>();
-
+        
         signal == 1
     }
-
+    
     /// Set value of Type
     #[inline(always)]
     pub fn set_xtype(&mut self, value: bool) -> Result<(), CanError> {
@@ -458,16 +612,15 @@ impl Bar {
         self.raw.view_bits_mut::<Msb0>()[25..26].store_be(value);
         Ok(())
     }
+    
 }
 
 impl core::convert::TryFrom<&[u8]> for Bar {
     type Error = CanError;
-
+    
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 8 {
-            return Err(CanError::InvalidPayloadSize);
-        }
+        if payload.len() != 8 { return Err(CanError::InvalidPayloadSize); }
         let mut raw = [0u8; 8];
         raw.copy_from_slice(&payload[..8]);
         Ok(Self { raw })
@@ -484,7 +637,7 @@ impl core::fmt::Debug for Bar {
                 .field("three", &self.three())
                 .field("four", &self.four())
                 .field("xtype", &self.xtype())
-                .finish()
+            .finish()
         } else {
             f.debug_tuple("Bar").field(&self.raw).finish()
         }
@@ -499,7 +652,7 @@ impl<'a> Arbitrary<'a> for Bar {
         let three = u.int_in_range(0..=7)?;
         let four = u.int_in_range(0..=3)?;
         let xtype = u.int_in_range(0..=1)? == 1;
-        Bar::new(one, two, three, four, xtype).map_err(|_| arbitrary::Error::IncorrectFormat)
+        Bar::new(one,two,three,four,xtype).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 /// Defined values for Three
@@ -567,6 +720,7 @@ impl Into<bool> for BarType {
     }
 }
 
+
 /// _4WD
 ///
 /// - ID: 768 (0x300)
@@ -579,22 +733,22 @@ pub struct X4wd {
 
 impl X4wd {
     pub const MESSAGE_ID: u32 = 768;
-
+    
     pub const X4DRIVE_MIN: u8 = 0_u8;
     pub const X4DRIVE_MAX: u8 = 7_u8;
-
+    
     /// Construct new _4WD from values
     pub fn new(x4drive: u8) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_x4drive(x4drive)?;
         Ok(res)
     }
-
+    
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8] {
         &self.raw
     }
-
+    
     /// _4DRIVE
     ///
     /// - Min: 0
@@ -604,7 +758,7 @@ impl X4wd {
     #[inline(always)]
     pub fn x4drive(&self) -> X4wd4drive {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
-
+        
         match signal {
             0 => X4wd4drive::Off,
             1 => X4wd4drive::X2wd,
@@ -613,7 +767,7 @@ impl X4wd {
             _ => X4wd4drive::_Other(self.x4drive_raw()),
         }
     }
-
+    
     /// Get raw value of _4DRIVE
     ///
     /// - Start bit: 13
@@ -625,10 +779,10 @@ impl X4wd {
     #[inline(always)]
     pub fn x4drive_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of _4DRIVE
     #[inline(always)]
     pub fn set_x4drive(&mut self, value: u8) -> Result<(), CanError> {
@@ -639,16 +793,15 @@ impl X4wd {
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
         Ok(())
     }
+    
 }
 
 impl core::convert::TryFrom<&[u8]> for X4wd {
     type Error = CanError;
-
+    
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 8 {
-            return Err(CanError::InvalidPayloadSize);
-        }
+        if payload.len() != 8 { return Err(CanError::InvalidPayloadSize); }
         let mut raw = [0u8; 8];
         raw.copy_from_slice(&payload[..8]);
         Ok(Self { raw })
@@ -661,7 +814,7 @@ impl core::fmt::Debug for X4wd {
         if f.alternate() {
             f.debug_struct("X4wd")
                 .field("x4drive", &self.x4drive())
-                .finish()
+            .finish()
         } else {
             f.debug_tuple("X4wd").field(&self.raw).finish()
         }
@@ -698,6 +851,7 @@ impl Into<u8> for X4wd4drive {
     }
 }
 
+
 /// Amet
 ///
 /// - ID: 1024 (0x400)
@@ -710,7 +864,7 @@ pub struct Amet {
 
 impl Amet {
     pub const MESSAGE_ID: u32 = 1024;
-
+    
     pub const ONE_MIN: u8 = 0_u8;
     pub const ONE_MAX: u8 = 3_u8;
     pub const TWO_MIN: f32 = 0_f32;
@@ -719,7 +873,7 @@ impl Amet {
     pub const THREE_MAX: u8 = 7_u8;
     pub const FOUR_MIN: u8 = 0_u8;
     pub const FOUR_MAX: u8 = 3_u8;
-
+    
     /// Construct new Amet from values
     pub fn new(one: u8, two: f32, three: u8, four: u8, five: bool) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
@@ -730,12 +884,12 @@ impl Amet {
         res.set_five(five)?;
         Ok(res)
     }
-
+    
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8] {
         &self.raw
     }
-
+    
     /// One
     ///
     /// - Min: 0
@@ -746,7 +900,7 @@ impl Amet {
     pub fn one(&self) -> u8 {
         self.one_raw()
     }
-
+    
     /// Get raw value of One
     ///
     /// - Start bit: 15
@@ -758,10 +912,10 @@ impl Amet {
     #[inline(always)]
     pub fn one_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[8..10].load_be::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of One
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
@@ -772,7 +926,7 @@ impl Amet {
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
         Ok(())
     }
-
+    
     /// Two
     ///
     /// - Min: 0
@@ -783,7 +937,7 @@ impl Amet {
     pub fn two(&self) -> f32 {
         self.two_raw()
     }
-
+    
     /// Get raw value of Two
     ///
     /// - Start bit: 7
@@ -795,12 +949,12 @@ impl Amet {
     #[inline(always)]
     pub fn two_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<Msb0>()[0..8].load_be::<u8>();
-
+        
         let factor = 0.39_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset
     }
-
+    
     /// Set value of Two
     #[inline(always)]
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
@@ -811,11 +965,11 @@ impl Amet {
         let factor = 0.39_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u8;
-
+        
         self.raw.view_bits_mut::<Msb0>()[0..8].store_be(value);
         Ok(())
     }
-
+    
     /// Three
     ///
     /// - Min: 0
@@ -826,7 +980,7 @@ impl Amet {
     pub fn three(&self) -> u8 {
         self.three_raw()
     }
-
+    
     /// Get raw value of Three
     ///
     /// - Start bit: 20
@@ -838,10 +992,10 @@ impl Amet {
     #[inline(always)]
     pub fn three_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[19..22].load_be::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of Three
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
@@ -852,7 +1006,7 @@ impl Amet {
         self.raw.view_bits_mut::<Msb0>()[19..22].store_be(value);
         Ok(())
     }
-
+    
     /// Four
     ///
     /// - Min: 0
@@ -863,7 +1017,7 @@ impl Amet {
     pub fn four(&self) -> u8 {
         self.four_raw()
     }
-
+    
     /// Get raw value of Four
     ///
     /// - Start bit: 30
@@ -875,10 +1029,10 @@ impl Amet {
     #[inline(always)]
     pub fn four_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[25..27].load_be::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of Four
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
@@ -889,7 +1043,7 @@ impl Amet {
         self.raw.view_bits_mut::<Msb0>()[25..27].store_be(value);
         Ok(())
     }
-
+    
     /// Five
     ///
     /// - Min: 0
@@ -900,7 +1054,7 @@ impl Amet {
     pub fn five(&self) -> bool {
         self.five_raw()
     }
-
+    
     /// Get raw value of Five
     ///
     /// - Start bit: 40
@@ -912,10 +1066,10 @@ impl Amet {
     #[inline(always)]
     pub fn five_raw(&self) -> bool {
         let signal = self.raw.view_bits::<Msb0>()[47..48].load_be::<u8>();
-
+        
         signal == 1
     }
-
+    
     /// Set value of Five
     #[inline(always)]
     pub fn set_five(&mut self, value: bool) -> Result<(), CanError> {
@@ -923,16 +1077,15 @@ impl Amet {
         self.raw.view_bits_mut::<Msb0>()[47..48].store_be(value);
         Ok(())
     }
+    
 }
 
 impl core::convert::TryFrom<&[u8]> for Amet {
     type Error = CanError;
-
+    
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 8 {
-            return Err(CanError::InvalidPayloadSize);
-        }
+        if payload.len() != 8 { return Err(CanError::InvalidPayloadSize); }
         let mut raw = [0u8; 8];
         raw.copy_from_slice(&payload[..8]);
         Ok(Self { raw })
@@ -949,7 +1102,7 @@ impl core::fmt::Debug for Amet {
                 .field("three", &self.three())
                 .field("four", &self.four())
                 .field("five", &self.five())
-                .finish()
+            .finish()
         } else {
             f.debug_tuple("Amet").field(&self.raw).finish()
         }
@@ -964,7 +1117,7 @@ impl<'a> Arbitrary<'a> for Amet {
         let three = u.int_in_range(0..=7)?;
         let four = u.int_in_range(0..=3)?;
         let five = u.int_in_range(0..=1)? == 1;
-        Amet::new(one, two, three, four, five).map_err(|_| arbitrary::Error::IncorrectFormat)
+        Amet::new(one,two,three,four,five).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
@@ -980,22 +1133,22 @@ pub struct Dolor {
 
 impl Dolor {
     pub const MESSAGE_ID: u32 = 1028;
-
+    
     pub const ONE_FLOAT_MIN: f32 = 0_f32;
     pub const ONE_FLOAT_MAX: f32 = 130_f32;
-
+    
     /// Construct new Dolor from values
     pub fn new(one_float: f32) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_one_float(one_float)?;
         Ok(res)
     }
-
+    
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8] {
         &self.raw
     }
-
+    
     /// OneFloat
     ///
     /// - Min: 0
@@ -1005,14 +1158,14 @@ impl Dolor {
     #[inline(always)]
     pub fn one_float(&self) -> DolorOneFloat {
         let signal = self.raw.view_bits::<Msb0>()[7..19].load_be::<u16>();
-
+        
         match signal {
             3 => DolorOneFloat::Dolor,
             5 => DolorOneFloat::Other,
             _ => DolorOneFloat::_Other(self.one_float_raw()),
         }
     }
-
+    
     /// Get raw value of OneFloat
     ///
     /// - Start bit: 0
@@ -1024,12 +1177,12 @@ impl Dolor {
     #[inline(always)]
     pub fn one_float_raw(&self) -> f32 {
         let signal = self.raw.view_bits::<Msb0>()[7..19].load_be::<u16>();
-
+        
         let factor = 0.5_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset
     }
-
+    
     /// Set value of OneFloat
     #[inline(always)]
     pub fn set_one_float(&mut self, value: f32) -> Result<(), CanError> {
@@ -1040,20 +1193,19 @@ impl Dolor {
         let factor = 0.5_f32;
         let offset = 0_f32;
         let value = ((value - offset) / factor) as u16;
-
+        
         self.raw.view_bits_mut::<Msb0>()[7..19].store_be(value);
         Ok(())
     }
+    
 }
 
 impl core::convert::TryFrom<&[u8]> for Dolor {
     type Error = CanError;
-
+    
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 8 {
-            return Err(CanError::InvalidPayloadSize);
-        }
+        if payload.len() != 8 { return Err(CanError::InvalidPayloadSize); }
         let mut raw = [0u8; 8];
         raw.copy_from_slice(&payload[..8]);
         Ok(Self { raw })
@@ -1066,7 +1218,7 @@ impl core::fmt::Debug for Dolor {
         if f.alternate() {
             f.debug_struct("Dolor")
                 .field("one_float", &self.one_float())
-                .finish()
+            .finish()
         } else {
             f.debug_tuple("Dolor").field(&self.raw).finish()
         }
@@ -1099,6 +1251,7 @@ impl Into<f32> for DolorOneFloat {
     }
 }
 
+
 /// MultiplexTest
 ///
 /// - ID: 200 (0xc8)
@@ -1111,7 +1264,7 @@ pub struct MultiplexTest {
 
 impl MultiplexTest {
     pub const MESSAGE_ID: u32 = 200;
-
+    
     pub const MULTIPLEXOR_MIN: u8 = 0_u8;
     pub const MULTIPLEXOR_MAX: u8 = 2_u8;
     pub const UNMULTIPLEXED_SIGNAL_MIN: u8 = 0_u8;
@@ -1124,7 +1277,7 @@ impl MultiplexTest {
     pub const MULTIPLEXED_SIGNAL_ONE_A_MAX: f32 = 6_f32;
     pub const MULTIPLEXED_SIGNAL_ONE_B_MIN: f32 = 0_f32;
     pub const MULTIPLEXED_SIGNAL_ONE_B_MAX: f32 = 6_f32;
-
+    
     /// Construct new MultiplexTest from values
     pub fn new(multiplexor: u8, unmultiplexed_signal: u8) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
@@ -1132,12 +1285,12 @@ impl MultiplexTest {
         res.set_unmultiplexed_signal(unmultiplexed_signal)?;
         Ok(res)
     }
-
+    
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8] {
         &self.raw
     }
-
+    
     /// Get raw value of Multiplexor
     ///
     /// - Start bit: 0
@@ -1149,22 +1302,15 @@ impl MultiplexTest {
     #[inline(always)]
     pub fn multiplexor_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Lsb0>()[0..4].load_le::<u8>();
-
+        
         signal
     }
-
+    
     pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexor, CanError> {
         match self.multiplexor_raw() {
-            0 => Ok(MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 {
-                raw: self.raw,
-            })),
-            1 => Ok(MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 {
-                raw: self.raw,
-            })),
-            multiplexor => Err(CanError::InvalidMultiplexor {
-                message_id: 200,
-                multiplexor: multiplexor.into(),
-            }),
+            0 => Ok(MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0{ raw: self.raw })),
+            1 => Ok(MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1{ raw: self.raw })),
+            multiplexor => Err(CanError::InvalidMultiplexor { message_id: 200, multiplexor: multiplexor.into() }),
         }
     }
     /// Set value of Multiplexor
@@ -1177,7 +1323,7 @@ impl MultiplexTest {
         self.raw.view_bits_mut::<Lsb0>()[0..4].store_le(value);
         Ok(())
     }
-
+    
     /// Set value of Multiplexor
     #[inline(always)]
     pub fn set_m0(&mut self, value: MultiplexTestMultiplexorM0) -> Result<(), CanError> {
@@ -1187,7 +1333,7 @@ impl MultiplexTest {
         self.set_multiplexor(0)?;
         Ok(())
     }
-
+    
     /// Set value of Multiplexor
     #[inline(always)]
     pub fn set_m1(&mut self, value: MultiplexTestMultiplexorM1) -> Result<(), CanError> {
@@ -1197,7 +1343,7 @@ impl MultiplexTest {
         self.set_multiplexor(1)?;
         Ok(())
     }
-
+    
     /// UnmultiplexedSignal
     ///
     /// - Min: 0
@@ -1208,7 +1354,7 @@ impl MultiplexTest {
     pub fn unmultiplexed_signal(&self) -> u8 {
         self.unmultiplexed_signal_raw()
     }
-
+    
     /// Get raw value of UnmultiplexedSignal
     ///
     /// - Start bit: 4
@@ -1220,10 +1366,10 @@ impl MultiplexTest {
     #[inline(always)]
     pub fn unmultiplexed_signal_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Lsb0>()[4..12].load_le::<u8>();
-
+        
         signal
     }
-
+    
     /// Set value of UnmultiplexedSignal
     #[inline(always)]
     pub fn set_unmultiplexed_signal(&mut self, value: u8) -> Result<(), CanError> {
@@ -1234,16 +1380,15 @@ impl MultiplexTest {
         self.raw.view_bits_mut::<Lsb0>()[4..12].store_le(value);
         Ok(())
     }
+    
 }
 
 impl core::convert::TryFrom<&[u8]> for MultiplexTest {
     type Error = CanError;
-
+    
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 8 {
-            return Err(CanError::InvalidPayloadSize);
-        }
+        if payload.len() != 8 { return Err(CanError::InvalidPayloadSize); }
         let mut raw = [0u8; 8];
         raw.copy_from_slice(&payload[..8]);
         Ok(Self { raw })
@@ -1256,7 +1401,7 @@ impl core::fmt::Debug for MultiplexTest {
         if f.alternate() {
             f.debug_struct("MultiplexTest")
                 .field("unmultiplexed_signal", &self.unmultiplexed_signal())
-                .finish()
+            .finish()
         } else {
             f.debug_tuple("MultiplexTest").field(&self.raw).finish()
         }
@@ -1268,8 +1413,7 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
         let multiplexor = u.int_in_range(0..=2)?;
         let unmultiplexed_signal = u.int_in_range(0..=4)?;
-        MultiplexTest::new(multiplexor, unmultiplexed_signal)
-            .map_err(|_| arbitrary::Error::IncorrectFormat)
+        MultiplexTest::new(multiplexor,unmultiplexed_signal).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 /// Defined values for multiplexed signal MultiplexTest
@@ -1281,197 +1425,193 @@ pub enum MultiplexTestMultiplexor {
 
 #[derive(Default)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct MultiplexTestMultiplexorM0 {
-    raw: [u8; 8],
-}
+pub struct MultiplexTestMultiplexorM0 { raw: [u8; 8] }
 
 impl MultiplexTestMultiplexorM0 {
-    pub fn new() -> Self {
-        Self { raw: [0u8; 8] }
+pub fn new() -> Self { Self { raw: [0u8; 8] } }
+/// MultiplexedSignalZeroA
+///
+/// - Min: 0
+/// - Max: 3
+/// - Unit: ""
+/// - Receivers: Vector__XXX
+#[inline(always)]
+pub fn multiplexed_signal_zero_a(&self) -> f32 {
+    self.multiplexed_signal_zero_a_raw()
+}
+
+/// Get raw value of MultiplexedSignalZeroA
+///
+/// - Start bit: 12
+/// - Signal size: 8 bits
+/// - Factor: 0.1
+/// - Offset: 0
+/// - Byte order: LittleEndian
+/// - Value type: Unsigned
+#[inline(always)]
+pub fn multiplexed_signal_zero_a_raw(&self) -> f32 {
+    let signal = self.raw.view_bits::<Lsb0>()[12..20].load_le::<u8>();
+    
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    (signal as f32) * factor + offset
+}
+
+/// Set value of MultiplexedSignalZeroA
+#[inline(always)]
+pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<(), CanError> {
+    #[cfg(feature = "range_checked")]
+    if value < 0_f32 || 3_f32 < value {
+        return Err(CanError::ParameterOutOfRange { message_id: 200 });
     }
-    /// MultiplexedSignalZeroA
-    ///
-    /// - Min: 0
-    /// - Max: 3
-    /// - Unit: ""
-    /// - Receivers: Vector__XXX
-    #[inline(always)]
-    pub fn multiplexed_signal_zero_a(&self) -> f32 {
-        self.multiplexed_signal_zero_a_raw()
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    let value = ((value - offset) / factor) as u8;
+    
+    self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
+    Ok(())
+}
+
+/// MultiplexedSignalZeroB
+///
+/// - Min: 0
+/// - Max: 3
+/// - Unit: ""
+/// - Receivers: Vector__XXX
+#[inline(always)]
+pub fn multiplexed_signal_zero_b(&self) -> f32 {
+    self.multiplexed_signal_zero_b_raw()
+}
+
+/// Get raw value of MultiplexedSignalZeroB
+///
+/// - Start bit: 20
+/// - Signal size: 8 bits
+/// - Factor: 0.1
+/// - Offset: 0
+/// - Byte order: LittleEndian
+/// - Value type: Unsigned
+#[inline(always)]
+pub fn multiplexed_signal_zero_b_raw(&self) -> f32 {
+    let signal = self.raw.view_bits::<Lsb0>()[20..28].load_le::<u8>();
+    
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    (signal as f32) * factor + offset
+}
+
+/// Set value of MultiplexedSignalZeroB
+#[inline(always)]
+pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<(), CanError> {
+    #[cfg(feature = "range_checked")]
+    if value < 0_f32 || 3_f32 < value {
+        return Err(CanError::ParameterOutOfRange { message_id: 200 });
     }
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    let value = ((value - offset) / factor) as u8;
+    
+    self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
+    Ok(())
+}
 
-    /// Get raw value of MultiplexedSignalZeroA
-    ///
-    /// - Start bit: 12
-    /// - Signal size: 8 bits
-    /// - Factor: 0.1
-    /// - Offset: 0
-    /// - Byte order: LittleEndian
-    /// - Value type: Unsigned
-    #[inline(always)]
-    pub fn multiplexed_signal_zero_a_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<Lsb0>()[12..20].load_le::<u8>();
-
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        (signal as f32) * factor + offset
-    }
-
-    /// Set value of MultiplexedSignalZeroA
-    #[inline(always)]
-    pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
-        if value < 0_f32 || 3_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
-        }
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        let value = ((value - offset) / factor) as u8;
-
-        self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
-        Ok(())
-    }
-
-    /// MultiplexedSignalZeroB
-    ///
-    /// - Min: 0
-    /// - Max: 3
-    /// - Unit: ""
-    /// - Receivers: Vector__XXX
-    #[inline(always)]
-    pub fn multiplexed_signal_zero_b(&self) -> f32 {
-        self.multiplexed_signal_zero_b_raw()
-    }
-
-    /// Get raw value of MultiplexedSignalZeroB
-    ///
-    /// - Start bit: 20
-    /// - Signal size: 8 bits
-    /// - Factor: 0.1
-    /// - Offset: 0
-    /// - Byte order: LittleEndian
-    /// - Value type: Unsigned
-    #[inline(always)]
-    pub fn multiplexed_signal_zero_b_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<Lsb0>()[20..28].load_le::<u8>();
-
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        (signal as f32) * factor + offset
-    }
-
-    /// Set value of MultiplexedSignalZeroB
-    #[inline(always)]
-    pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
-        if value < 0_f32 || 3_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
-        }
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        let value = ((value - offset) / factor) as u8;
-
-        self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
-        Ok(())
-    }
 }
 
 #[derive(Default)]
 #[cfg_attr(feature = "debug", derive(Debug))]
-pub struct MultiplexTestMultiplexorM1 {
-    raw: [u8; 8],
-}
+pub struct MultiplexTestMultiplexorM1 { raw: [u8; 8] }
 
 impl MultiplexTestMultiplexorM1 {
-    pub fn new() -> Self {
-        Self { raw: [0u8; 8] }
-    }
-    /// MultiplexedSignalOneA
-    ///
-    /// - Min: 0
-    /// - Max: 6
-    /// - Unit: ""
-    /// - Receivers: Vector__XXX
-    #[inline(always)]
-    pub fn multiplexed_signal_one_a(&self) -> f32 {
-        self.multiplexed_signal_one_a_raw()
-    }
-
-    /// Get raw value of MultiplexedSignalOneA
-    ///
-    /// - Start bit: 12
-    /// - Signal size: 8 bits
-    /// - Factor: 0.1
-    /// - Offset: 0
-    /// - Byte order: LittleEndian
-    /// - Value type: Unsigned
-    #[inline(always)]
-    pub fn multiplexed_signal_one_a_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<Lsb0>()[12..20].load_le::<u8>();
-
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        (signal as f32) * factor + offset
-    }
-
-    /// Set value of MultiplexedSignalOneA
-    #[inline(always)]
-    pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
-        if value < 0_f32 || 6_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
-        }
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        let value = ((value - offset) / factor) as u8;
-
-        self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
-        Ok(())
-    }
-
-    /// MultiplexedSignalOneB
-    ///
-    /// - Min: 0
-    /// - Max: 6
-    /// - Unit: ""
-    /// - Receivers: Vector__XXX
-    #[inline(always)]
-    pub fn multiplexed_signal_one_b(&self) -> f32 {
-        self.multiplexed_signal_one_b_raw()
-    }
-
-    /// Get raw value of MultiplexedSignalOneB
-    ///
-    /// - Start bit: 20
-    /// - Signal size: 8 bits
-    /// - Factor: 0.1
-    /// - Offset: 0
-    /// - Byte order: LittleEndian
-    /// - Value type: Unsigned
-    #[inline(always)]
-    pub fn multiplexed_signal_one_b_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<Lsb0>()[20..28].load_le::<u8>();
-
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        (signal as f32) * factor + offset
-    }
-
-    /// Set value of MultiplexedSignalOneB
-    #[inline(always)]
-    pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
-        if value < 0_f32 || 6_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
-        }
-        let factor = 0.1_f32;
-        let offset = 0_f32;
-        let value = ((value - offset) / factor) as u8;
-
-        self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
-        Ok(())
-    }
+pub fn new() -> Self { Self { raw: [0u8; 8] } }
+/// MultiplexedSignalOneA
+///
+/// - Min: 0
+/// - Max: 6
+/// - Unit: ""
+/// - Receivers: Vector__XXX
+#[inline(always)]
+pub fn multiplexed_signal_one_a(&self) -> f32 {
+    self.multiplexed_signal_one_a_raw()
 }
+
+/// Get raw value of MultiplexedSignalOneA
+///
+/// - Start bit: 12
+/// - Signal size: 8 bits
+/// - Factor: 0.1
+/// - Offset: 0
+/// - Byte order: LittleEndian
+/// - Value type: Unsigned
+#[inline(always)]
+pub fn multiplexed_signal_one_a_raw(&self) -> f32 {
+    let signal = self.raw.view_bits::<Lsb0>()[12..20].load_le::<u8>();
+    
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    (signal as f32) * factor + offset
+}
+
+/// Set value of MultiplexedSignalOneA
+#[inline(always)]
+pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<(), CanError> {
+    #[cfg(feature = "range_checked")]
+    if value < 0_f32 || 6_f32 < value {
+        return Err(CanError::ParameterOutOfRange { message_id: 200 });
+    }
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    let value = ((value - offset) / factor) as u8;
+    
+    self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
+    Ok(())
+}
+
+/// MultiplexedSignalOneB
+///
+/// - Min: 0
+/// - Max: 6
+/// - Unit: ""
+/// - Receivers: Vector__XXX
+#[inline(always)]
+pub fn multiplexed_signal_one_b(&self) -> f32 {
+    self.multiplexed_signal_one_b_raw()
+}
+
+/// Get raw value of MultiplexedSignalOneB
+///
+/// - Start bit: 20
+/// - Signal size: 8 bits
+/// - Factor: 0.1
+/// - Offset: 0
+/// - Byte order: LittleEndian
+/// - Value type: Unsigned
+#[inline(always)]
+pub fn multiplexed_signal_one_b_raw(&self) -> f32 {
+    let signal = self.raw.view_bits::<Lsb0>()[20..28].load_le::<u8>();
+    
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    (signal as f32) * factor + offset
+}
+
+/// Set value of MultiplexedSignalOneB
+#[inline(always)]
+pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<(), CanError> {
+    #[cfg(feature = "range_checked")]
+    if value < 0_f32 || 6_f32 < value {
+        return Err(CanError::ParameterOutOfRange { message_id: 200 });
+    }
+    let factor = 0.1_f32;
+    let offset = 0_f32;
+    let value = ((value - offset) / factor) as u8;
+    
+    self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
+    Ok(())
+}
+
+}
+
+
 
 /// This is just to make testing easier
 #[allow(dead_code)]
@@ -1528,3 +1668,4 @@ impl UnstructuredFloatExt for arbitrary::Unstructured<'_> {
         Ok(random)
     }
 }
+

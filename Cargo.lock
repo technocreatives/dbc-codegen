@@ -36,6 +36,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "approx"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "072df7202e63b127ab55acfe16ce97013d5b97bf160489336d3f1840fd78e99e"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "arbitrary"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -121,6 +130,7 @@ name = "can-messages"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "approx 0.5.0",
  "arbitrary",
  "bitvec",
  "dbc-codegen",
@@ -397,7 +407,7 @@ checksum = "643f8f41a8ebc4c5dc4515c82bb8abd397b527fc20fd681b7c011c2aee5d44fb"
 name = "read_candump"
 version = "0.1.0"
 dependencies = [
- "approx",
+ "approx 0.4.0",
  "can-messages",
 ]
 
