@@ -121,7 +121,7 @@ impl Foo {
         }
         let factor = 0.000976562_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as u16;
+        let value = ((value - offset) / factor).round() as u16;
         
         self.raw.view_bits_mut::<Lsb0>()[16..32].store_le(value);
         Ok(())
@@ -165,7 +165,7 @@ impl Foo {
         }
         let factor = 0.0625_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as i16;
+        let value = ((value - offset) / factor).round() as i16;
         
         let value = u16::from_ne_bytes(value.to_ne_bytes());
         self.raw.view_bits_mut::<Lsb0>()[0..16].store_le(value);
@@ -277,7 +277,7 @@ impl FooInexact {
         }
         let factor = 0.001_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as u16;
+        let value = ((value - offset) / factor).round() as u16;
         
         self.raw.view_bits_mut::<Lsb0>()[16..32].store_le(value);
         Ok(())
@@ -321,7 +321,7 @@ impl FooInexact {
         }
         let factor = 0.001_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as i16;
+        let value = ((value - offset) / factor).round() as i16;
         
         let value = u16::from_ne_bytes(value.to_ne_bytes());
         self.raw.view_bits_mut::<Lsb0>()[0..16].store_le(value);
@@ -477,7 +477,7 @@ impl Bar {
         }
         let factor = 0.39_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as u8;
+        let value = ((value - offset) / factor).round() as u8;
         
         self.raw.view_bits_mut::<Msb0>()[0..8].store_be(value);
         Ok(())
@@ -964,7 +964,7 @@ impl Amet {
         }
         let factor = 0.39_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as u8;
+        let value = ((value - offset) / factor).round() as u8;
         
         self.raw.view_bits_mut::<Msb0>()[0..8].store_be(value);
         Ok(())
@@ -1192,7 +1192,7 @@ impl Dolor {
         }
         let factor = 0.5_f32;
         let offset = 0_f32;
-        let value = ((value - offset) / factor) as u16;
+        let value = ((value - offset) / factor).round() as u16;
         
         self.raw.view_bits_mut::<Msb0>()[7..19].store_be(value);
         Ok(())
@@ -1466,7 +1466,7 @@ pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<(), CanErr
     }
     let factor = 0.1_f32;
     let offset = 0_f32;
-    let value = ((value - offset) / factor) as u8;
+    let value = ((value - offset) / factor).round() as u8;
     
     self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
     Ok(())
@@ -1509,7 +1509,7 @@ pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<(), CanErr
     }
     let factor = 0.1_f32;
     let offset = 0_f32;
-    let value = ((value - offset) / factor) as u8;
+    let value = ((value - offset) / factor).round() as u8;
     
     self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
     Ok(())
@@ -1560,7 +1560,7 @@ pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<(), CanErro
     }
     let factor = 0.1_f32;
     let offset = 0_f32;
-    let value = ((value - offset) / factor) as u8;
+    let value = ((value - offset) / factor).round() as u8;
     
     self.raw.view_bits_mut::<Lsb0>()[12..20].store_le(value);
     Ok(())
@@ -1603,7 +1603,7 @@ pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<(), CanErro
     }
     let factor = 0.1_f32;
     let offset = 0_f32;
-    let value = ((value - offset) / factor) as u8;
+    let value = ((value - offset) / factor).round() as u8;
     
     self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
     Ok(())
