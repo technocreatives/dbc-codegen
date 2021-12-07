@@ -1,6 +1,5 @@
 #![allow(clippy::float_cmp)]
 
-use approx::assert_ulps_eq;
 use can_messages::{
     Amet, Bar, BarThree, CanError, Foo, FooInexact, MultiplexTest, MultiplexTestMultiplexor,
     MultiplexTestMultiplexorM0,
@@ -45,7 +44,7 @@ fn pack_unpack_message() {
 #[test]
 fn pack_unpack_message_inexact_scale() {
     let result = FooInexact::new(0.08, -0.035).unwrap();
-    assert_ulps_eq!(result.voltage_raw(), 0.08);
+    assert_eq!(result.voltage_raw(), 0.08);
     assert_eq!(result.current_raw(), -0.035);
 }
 
