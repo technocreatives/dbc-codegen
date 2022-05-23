@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "dbc-codegen"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "can-dbc",
@@ -193,7 +193,7 @@ dependencies = [
 
 [[package]]
 name = "dbc-codegen-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "dbc-codegen",
  "exitcode",

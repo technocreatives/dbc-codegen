@@ -1,6 +1,6 @@
 [package]
 name = "dbc-codegen"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     "Pascal Hertleif <pascal@technocreatives.com>",
     "Marcel Buesing <buesing.marcel@googlemail.com>",
@@ -33,6 +33,4 @@ members = [
 
 # Indicates features that docs.rs should enable when building documentation.
 [package.metadata.docs.rs]
-features = [
-    "std",
-]
+features = ["std"]
