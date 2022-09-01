@@ -17,7 +17,7 @@ homepage = "https://github.com/technocreatives/dbc-codegen"
 std = []
 
 [dependencies]
-can-dbc = "3.0.2"
+can-dbc = "5.0.0"
 anyhow = "1.0.33"
 heck = "0.3.1"
 

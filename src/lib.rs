@@ -256,6 +256,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                     .with_context(|| format!("write signal impl `{}`", signal.name()))?,
                 MultiplexIndicator::Multiplexor => render_multiplexor_signal(&mut w, signal, msg)?,
                 MultiplexIndicator::MultiplexedSignal(_) => {}
+                MultiplexIndicator::MultiplexorAndMultiplexedSignal(_) => {}
             }
         }
     }
