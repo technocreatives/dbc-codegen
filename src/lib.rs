@@ -524,8 +524,8 @@ fn render_set_signal_multiplexer(
     {
         let mut w = PadAdapter::wrap(&mut w);
 
-        writeln!(&mut w, "let b0 = BitArray::<LocalBits, _>::new(self.raw);")?;
-        writeln!(&mut w, "let b1 = BitArray::<LocalBits, _>::new(value.raw);")?;
+        writeln!(&mut w, "let b0 = BitArray::<_, LocalBits>::new(self.raw);")?;
+        writeln!(&mut w, "let b1 = BitArray::<_, LocalBits>::new(value.raw);")?;
         writeln!(&mut w, "self.raw = b0.bitor(b1).into_inner();")?;
         writeln!(
             &mut w,

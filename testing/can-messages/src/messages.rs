@@ -1181,8 +1181,8 @@ impl MultiplexTest {
     /// Set value of Multiplexor
     #[inline(always)]
     pub fn set_m0(&mut self, value: MultiplexTestMultiplexorM0) -> Result<(), CanError> {
-        let b0 = BitArray::<LocalBits, _>::new(self.raw);
-        let b1 = BitArray::<LocalBits, _>::new(value.raw);
+        let b0 = BitArray::<_, LocalBits>::new(self.raw);
+        let b1 = BitArray::<_, LocalBits>::new(value.raw);
         self.raw = b0.bitor(b1).into_inner();
         self.set_multiplexor(0)?;
         Ok(())
@@ -1191,8 +1191,8 @@ impl MultiplexTest {
     /// Set value of Multiplexor
     #[inline(always)]
     pub fn set_m1(&mut self, value: MultiplexTestMultiplexorM1) -> Result<(), CanError> {
-        let b0 = BitArray::<LocalBits, _>::new(self.raw);
-        let b1 = BitArray::<LocalBits, _>::new(value.raw);
+        let b0 = BitArray::<_, LocalBits>::new(self.raw);
+        let b1 = BitArray::<_, LocalBits>::new(value.raw);
         self.raw = b0.bitor(b1).into_inner();
         self.set_multiplexor(1)?;
         Ok(())
