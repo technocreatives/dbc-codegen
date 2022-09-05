@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(any(feature = "debug", feature = "std"), derive(Debug))]
 pub enum CanError {
     UnknownMessageId(u32),
