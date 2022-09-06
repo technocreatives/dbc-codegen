@@ -172,9 +172,9 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         for signal in msg
             .signals()
             .iter()
-            .filter(|sig| signal_to_rust_type(&sig) != "bool")
+            .filter(|sig| signal_to_rust_type(sig) != "bool")
         {
-            let typ = signal_to_rust_type(&signal);
+            let typ = signal_to_rust_type(signal);
             writeln!(
                 &mut w,
                 "pub const {sig}_MIN: {typ} = {min}_{typ};",
@@ -208,7 +208,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
                     Some(format!(
                         "{}: {}",
                         field_name(signal.name()),
-                        signal_to_rust_type(&signal)
+                        signal_to_rust_type(signal)
                     ))
                 } else {
                     None
@@ -298,9 +298,9 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
     writeln!(w, "}}")?;
     writeln!(w)?;
 
-    render_debug_impl(&mut w, &msg)?;
+    render_debug_impl(&mut w, msg)?;
 
-    render_arbitrary(&mut w, &msg)?;
+    render_arbitrary(&mut w, msg)?;
 
     let enums_for_this_message = dbc.value_descriptions().iter().filter_map(|x| {
         if let ValueDescription::Signal {
@@ -336,7 +336,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
 
 fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -> Result<()> {
     writeln!(w, "/// {}", signal.name())?;
-    if let Some(comment) = dbc.signal_comment(*msg.message_id(), &signal.name()) {
+    if let Some(comment) = dbc.signal_comment(*msg.message_id(), signal.name()) {
         writeln!(w, "///")?;
         for line in comment.trim().lines() {
             writeln!(w, "/// {}", line)?;
@@ -441,7 +441,7 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
         w,
         "pub fn {}_raw(&self) -> {} {{",
         field_name(signal.name()),
-        signal_to_rust_type(&signal)
+        signal_to_rust_type(signal)
     )?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -472,7 +472,7 @@ fn render_set_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
         "{}fn set_{}(&mut self, value: {}) -> Result<(), CanError> {{",
         visibility,
         field_name(signal.name()),
-        signal_to_rust_type(&signal)
+        signal_to_rust_type(signal)
     )?;
 
     {
@@ -483,7 +483,7 @@ fn render_set_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
             writeln!(
                 w,
                 r##"if value < {min}_{typ} || {max}_{typ} < value {{"##,
-                typ = signal_to_rust_type(&signal),
+                typ = signal_to_rust_type(signal),
                 min = signal.min(),
                 max = signal.max(),
             )?;
@@ -556,7 +556,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
         w,
         "pub fn {}_raw(&self) -> {} {{",
         field_name(signal.name()),
-        signal_to_rust_type(&signal)
+        signal_to_rust_type(signal)
     )?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -621,8 +621,8 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
         {
             multiplexed_signals
                 .entry(switch_index)
-                .and_modify(|v: &mut Vec<&Signal>| v.push(&signal))
-                .or_insert_with(|| vec![&signal]);
+                .and_modify(|v: &mut Vec<&Signal>| v.push(signal))
+                .or_insert_with(|| vec![signal]);
         }
     }
 
@@ -1028,8 +1028,8 @@ fn render_multiplexor_enums(
         {
             multiplexed_signals
                 .entry(switch_index)
-                .and_modify(|v: &mut Vec<&Signal>| v.push(&signal))
-                .or_insert_with(|| vec![&signal]);
+                .and_modify(|v: &mut Vec<&Signal>| v.push(signal))
+                .or_insert_with(|| vec![signal]);
         }
     }
 
