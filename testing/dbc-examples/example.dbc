@@ -12,6 +12,10 @@ BO_ 256 Foo: 4 Lorem
  SG_ Voltage : 16|16@1+ (0.000976562,0) [0E-009|63.9990234375] "V" Vector__XXX
  SG_ Current : 0|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
 
+BO_ 256 FooInexact: 4 Test
+ SG_ Voltage : 16|16@1+ (0.001,0) [0|655.35] "V" Vector__XXX
+ SG_ Current : 0|16@1- (0.001,0) [-327.68|327.67] "A" Vector__XXX
+
 BO_ 512 Bar: 8 Ipsum
  SG_ One : 15|2@0+ (1,0) [0|3] "" Dolor
  SG_ Two : 7|8@0+ (0.39,0) [0.00|100] "%" Dolor

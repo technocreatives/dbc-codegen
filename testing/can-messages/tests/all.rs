@@ -1,7 +1,7 @@
 #![allow(clippy::float_cmp)]
 
 use can_messages::{
-    Amet, Bar, BarThree, CanError, Foo, MultiplexTest, MultiplexTestMultiplexor,
+    Amet, Bar, BarThree, CanError, Foo, FooInexact, MultiplexTest, MultiplexTestMultiplexor,
     MultiplexTestMultiplexorM0,
 };
 
@@ -39,6 +39,13 @@ fn pack_unpack_message() {
     let result = Foo::new(63.9990234375, 10.0).unwrap();
     assert_eq!(result.voltage_raw(), 63.99899);
     assert_eq!(result.current_raw(), 10.0);
+}
+
+#[test]
+fn pack_unpack_message_inexact_scale() {
+    let result = FooInexact::new(0.08, -0.035).unwrap();
+    assert_eq!(result.voltage_raw(), 0.08);
+    assert_eq!(result.current_raw(), -0.035);
 }
 
 #[test]
