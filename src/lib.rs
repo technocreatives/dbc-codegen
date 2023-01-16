@@ -806,7 +806,7 @@ fn write_enum(
     writeln!(w, "}}")?;
     writeln!(w)?;
 
-    writeln!(w, "impl Into<{}> for {} {{", signal_rust_type, type_name)?;
+    writeln!(w, "impl From<{type_name}> for {signal_rust_type} {{")?;
     {
         let match_on_raw_type = match signal_to_rust_type(signal).as_str() {
             "bool" => |x: f64| format!("{}", (x as i64) == 1),
@@ -815,11 +815,11 @@ fn write_enum(
         };
 
         let mut w = PadAdapter::wrap(&mut w);
-        writeln!(w, "fn into(self) -> {} {{", signal_rust_type)?;
+        writeln!(w, "fn from(val: {type_name}) -> {signal_rust_type} {{")?;
         {
             let mut w = PadAdapter::wrap(&mut w);
 
-            writeln!(&mut w, "match self {{")?;
+            writeln!(&mut w, "match val {{")?;
             {
                 let mut w = PadAdapter::wrap(&mut w);
                 for variant in variants {

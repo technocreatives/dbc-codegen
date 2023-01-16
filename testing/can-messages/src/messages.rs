@@ -511,9 +511,9 @@ pub enum BarThree {
     _Other(u8),
 }
 
-impl Into<u8> for BarThree {
-    fn into(self) -> u8 {
-        match self {
+impl From<BarThree> for u8 {
+    fn from(val: BarThree) -> u8 {
+        match val {
             BarThree::Off => 0,
             BarThree::On => 1,
             BarThree::Oner => 2,
@@ -534,9 +534,9 @@ pub enum BarFour {
     _Other(u8),
 }
 
-impl Into<u8> for BarFour {
-    fn into(self) -> u8 {
-        match self {
+impl From<BarFour> for u8 {
+    fn from(val: BarFour) -> u8 {
+        match val {
             BarFour::Off => 0,
             BarFour::On => 1,
             BarFour::Oner => 2,
@@ -555,9 +555,9 @@ pub enum BarType {
     _Other(bool),
 }
 
-impl Into<bool> for BarType {
-    fn into(self) -> bool {
-        match self {
+impl From<BarType> for bool {
+    fn from(val: BarType) -> bool {
+        match val {
             BarType::X0off => false,
             BarType::X1on => true,
             BarType::_Other(x) => x,
@@ -684,9 +684,9 @@ pub enum X4wd4drive {
     _Other(u8),
 }
 
-impl Into<u8> for X4wd4drive {
-    fn into(self) -> u8 {
-        match self {
+impl From<X4wd4drive> for u8 {
+    fn from(val: X4wd4drive) -> u8 {
+        match val {
             X4wd4drive::Off => 0,
             X4wd4drive::X2wd => 1,
             X4wd4drive::X4wd => 2,
@@ -1087,9 +1087,9 @@ pub enum DolorOneFloat {
     _Other(f32),
 }
 
-impl Into<f32> for DolorOneFloat {
-    fn into(self) -> f32 {
-        match self {
+impl From<DolorOneFloat> for f32 {
+    fn from(val: DolorOneFloat) -> f32 {
+        match val {
             DolorOneFloat::Dolor => 3_f32,
             DolorOneFloat::Other => 5_f32,
             DolorOneFloat::_Other(x) => x,
