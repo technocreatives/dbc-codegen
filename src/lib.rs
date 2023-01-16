@@ -8,7 +8,7 @@
 
 use anyhow::{anyhow, ensure, Context, Result};
 use can_dbc::{Message, MultiplexIndicator, Signal, ValDescription, ValueDescription, DBC};
-use heck::{CamelCase, SnakeCase};
+use heck::{ToPascalCase, ToSnakeCase};
 use pad::PadAdapter;
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -108,7 +108,6 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC) -> Result<()> {
         )?;
         {
             let mut w = PadAdapter::wrap(&mut w);
-            writeln!(&mut w, "use core::convert::TryFrom;")?;
             writeln!(&mut w)?;
             writeln!(&mut w, "let res = match id {{")?;
             {
@@ -889,9 +888,9 @@ fn signal_to_rust_type(signal: &Signal) -> String {
 
 fn type_name(x: &str) -> String {
     if keywords::is_keyword(x) || !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
-        format!("X{}", x.to_camel_case())
+        format!("X{}", x.to_pascal_case())
     } else {
-        x.to_camel_case()
+        x.to_pascal_case()
     }
 }
 
@@ -912,15 +911,15 @@ fn enum_name(msg: &Message, signal: &Signal) -> String {
     format!(
         "{}{}",
         enum_variant_name(msg.message_name()),
-        signal_name.to_camel_case()
+        signal_name.to_pascal_case()
     )
 }
 
 fn enum_variant_name(x: &str) -> String {
     if keywords::is_keyword(x) || !x.starts_with(|c: char| c.is_ascii_alphabetic()) {
-        format!("X{}", x.to_camel_case())
+        format!("X{}", x.to_pascal_case())
     } else {
-        x.to_camel_case()
+        x.to_pascal_case()
     }
 }
 
@@ -939,8 +938,8 @@ fn multiplex_enum_name(msg: &Message, multiplexor: &Signal) -> Result<String> {
     );
     Ok(format!(
         "{}{}",
-        msg.message_name().to_camel_case(),
-        multiplexor.name().to_camel_case()
+        msg.message_name().to_pascal_case(),
+        multiplexor.name().to_pascal_case()
     ))
 }
 
@@ -960,8 +959,8 @@ fn multiplexed_enum_variant_name(
 
     Ok(format!(
         "{}{}M{}",
-        msg.message_name().to_camel_case(),
-        multiplexor.name().to_camel_case(),
+        msg.message_name().to_pascal_case(),
+        multiplexor.name().to_pascal_case(),
         switch_index
     ))
 }

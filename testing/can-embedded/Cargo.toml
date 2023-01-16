@@ -2,7 +2,7 @@
 name = "can-embedded"
 version = "0.1.0"
 authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 bitvec = { version = "1.0", default-features = false }

@@ -6,7 +6,7 @@ authors = [
     "Marcel Buesing <buesing.marcel@googlemail.com>",
     "Andres Vahter <andres@vahter.me>",
 ]
-edition = "2018"
+edition = "2021"
 description = "CAN DBC code-gen for embedded Rust"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
@@ -18,8 +18,8 @@ std = []
 
 [dependencies]
 can-dbc = "5.0.0"
-anyhow = "1.0.33"
-heck = "0.3.1"
+anyhow = "1.0.68"
+heck = "0.4.0"
 
 [workspace]
 members = [

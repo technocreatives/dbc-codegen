@@ -48,7 +48,7 @@ Here is an example [`testing/can-messages/Cargo.toml`](testing/can-messages/Carg
 For this to work you need to add following dependencies to `Cargo.toml`:
 
 ```toml
-bitvec = { version = "0.21", default-features = false }
+bitvec = { version = "1.0", default-features = false }
 arbitrary = { version = "1.0", optional = true } # Enable with `arb` feature
 ```
 

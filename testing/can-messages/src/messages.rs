@@ -39,8 +39,6 @@ impl Messages {
     /// Read message from CAN frame
     #[inline(never)]
     pub fn from_can_message(id: u32, payload: &[u8]) -> Result<Self, CanError> {
-        use core::convert::TryFrom;
-
         let res = match id {
             256 => Messages::Foo(Foo::try_from(payload)?),
             512 => Messages::Bar(Bar::try_from(payload)?),
