@@ -1,21 +1,22 @@
+use clap::Parser;
 use std::fs::File;
 use std::{path::PathBuf, process::exit};
-use structopt::StructOpt;
 
 /// Generate Rust `struct`s from a `dbc` file.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
+#[command(version)]
 struct Cli {
     /// Path to a `.dbc` file
     dbc_path: PathBuf,
     /// Target directory to write Rust source file(s) to
     out_path: PathBuf,
     /// Enable debug printing
-    #[structopt(long)]
+    #[arg(long)]
     debug: bool,
 }
 
 fn main() {
-    let args = Cli::from_args();
+    let args = Cli::parse();
     let dbc_file = std::fs::read(&args.dbc_path).unwrap_or_else(|e| {
         eprintln!("could not read `{}`: {}", args.dbc_path.display(), e);
         exit(exitcode::NOINPUT);

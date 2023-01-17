@@ -15,7 +15,7 @@ homepage = "https://github.com/technocreatives/dbc-codegen"
 
 [dependencies]
 heck = "0.4.0"
-structopt = "0.3.26"
+clap = { version = "4.1", features = ["derive"] }
 exitcode = "1.1.2"
 dbc-codegen = { version = "0.2", path = ".." }
 
