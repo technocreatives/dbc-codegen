@@ -73,7 +73,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
 fn render_dbc(mut w: impl Write, dbc: &DBC) -> Result<()> {
     render_root_enum(&mut w, dbc)?;
 
-    for msg in dbc.messages() {
+    for msg in get_relevant_messages(dbc) {
         render_message(&mut w, msg, dbc)
             .with_context(|| format!("write message `{}`", msg.message_name()))?;
         writeln!(w)?;
@@ -89,7 +89,7 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC) -> Result<()> {
     writeln!(w, "pub enum Messages {{")?;
     {
         let mut w = PadAdapter::wrap(&mut w);
-        for msg in dbc.messages() {
+        for msg in get_relevant_messages(dbc) {
             writeln!(w, "/// {}", msg.message_name())?;
             writeln!(w, "{0}({0}),", type_name(msg.message_name()))?;
         }
@@ -112,7 +112,7 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC) -> Result<()> {
             writeln!(&mut w, "let res = match id {{")?;
             {
                 let mut w = PadAdapter::wrap(&mut w);
-                for msg in dbc.messages() {
+                for msg in get_relevant_messages(dbc) {
                     writeln!(
                         w,
                         "{} => Messages::{1}({1}::try_from(payload)?),",
@@ -1159,4 +1159,13 @@ fn signal_to_arbitrary(signal: &Signal) -> String {
             max = signal.max()
         )
     }
+}
+
+fn get_relevant_messages(dbc: &DBC) -> impl Iterator<Item = &Message> {
+    dbc.messages().iter().filter(|m| !message_ignored(m))
+}
+
+fn message_ignored(message: &Message) -> bool {
+    // DBC internal message containing signals unassigned to any real message
+    message.message_name() == "VECTOR__INDEPENDENT_SIG_MSG"
 }
