@@ -6,7 +6,7 @@
     clippy::manual_range_contains,
     clippy::absurd_extreme_comparisons
 )]
-#![deny(clippy::integer_arithmetic)]
+#![deny(clippy::arithmetic_side_effects)]
 
 //! Message definitions from file `"example.dbc"`
 //!

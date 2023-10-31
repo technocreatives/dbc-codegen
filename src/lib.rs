@@ -4,7 +4,8 @@
 //! See [this post](https://www.kvaser.com/developer-blog/an-introduction-j1939-and-dbc-files/)
 //! for an introduction.
 
-#![deny(missing_docs, clippy::integer_arithmetic)]
+#![deny(missing_docs)]
+#![deny(clippy::arithmetic_side_effects)]
 
 use anyhow::{anyhow, ensure, Context, Result};
 use can_dbc::{Message, MultiplexIndicator, Signal, ValDescription, ValueDescription, DBC};
@@ -44,7 +45,7 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
         &mut w,
         "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons)]"
     )?;
-    writeln!(&mut w, "#![deny(clippy::integer_arithmetic)]")?;
+    writeln!(&mut w, "#![deny(clippy::arithmetic_side_effects)]")?;
     writeln!(&mut w)?;
     writeln!(&mut w, "//! Message definitions from file `{:?}`", dbc_name)?;
     writeln!(&mut w, "//!")?;
