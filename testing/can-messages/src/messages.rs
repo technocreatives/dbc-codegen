@@ -79,7 +79,7 @@ impl Foo {
     }
 
     /// Access message payload raw value
-    pub fn raw(&self) -> &[u8] {
+    pub fn raw(&self) -> &[u8; 4] {
         &self.raw
     }
 
@@ -243,7 +243,7 @@ impl Bar {
     }
 
     /// Access message payload raw value
-    pub fn raw(&self) -> &[u8] {
+    pub fn raw(&self) -> &[u8; 8] {
         &self.raw
     }
 
@@ -589,7 +589,7 @@ impl X4wd {
     }
 
     /// Access message payload raw value
-    pub fn raw(&self) -> &[u8] {
+    pub fn raw(&self) -> &[u8; 8] {
         &self.raw
     }
 
@@ -730,7 +730,7 @@ impl Amet {
     }
 
     /// Access message payload raw value
-    pub fn raw(&self) -> &[u8] {
+    pub fn raw(&self) -> &[u8; 8] {
         &self.raw
     }
 
@@ -990,7 +990,7 @@ impl Dolor {
     }
 
     /// Access message payload raw value
-    pub fn raw(&self) -> &[u8] {
+    pub fn raw(&self) -> &[u8; 8] {
         &self.raw
     }
 
@@ -1132,7 +1132,7 @@ impl MultiplexTest {
     }
 
     /// Access message payload raw value
-    pub fn raw(&self) -> &[u8] {
+    pub fn raw(&self) -> &[u8; 8] {
         &self.raw
     }
 
