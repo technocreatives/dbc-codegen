@@ -22,7 +22,7 @@ NOTE: This is only known to work on Linux.
 - In `node-socketcan`, edit `main.js` to your liking and run `node main.js --def=../dbc-examples/example.kcd`
 
 `candump` will output lines like `(1603881557.238509) vcan0 200#0594000000000000`.
-These can be used as test cases in the `rust-itegration` crate.
+These can be used as test cases in the `rust-integration` crate.
 
 ## Cantools
 
