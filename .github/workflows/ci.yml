@@ -60,6 +60,8 @@ jobs:
       - name: Build for embedded
         run: cargo build -p can-embedded --target=thumbv7em-none-eabihf
 
+      - name: Install clippy
+        run: rustup component add clippy
       - name: Annotate commit with clippy warnings
         if: startsWith(matrix.os, 'ubuntu')
         run: cargo clippy --all --all-features
