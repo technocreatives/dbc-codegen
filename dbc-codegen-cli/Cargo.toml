@@ -1,6 +1,6 @@
 [package]
 name = "dbc-codegen-cli"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
     "Pascal Hertleif <pascal@technocreatives.com>",
     "Marcel Buesing <buesing.marcel@googlemail.com>",
@@ -17,7 +17,7 @@ homepage = "https://github.com/technocreatives/dbc-codegen"
 heck = "0.4.0"
 clap = { version = "4.1", features = ["derive"] }
 exitcode = "1.1.2"
-dbc-codegen = { version = "0.2", path = ".." }
+dbc-codegen = { version = "0.3", path = ".." }
 
 [[bin]]
 name = "dbc-codegen"

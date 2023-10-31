@@ -281,7 +281,7 @@ checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 
 [[package]]
 name = "dbc-codegen"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "can-dbc",
@@ -290,7 +290,7 @@ dependencies = [
 
 [[package]]
 name = "dbc-codegen-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "clap 4.4.7",
  "dbc-codegen",
