@@ -241,7 +241,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         writeln!(w)?;
 
         writeln!(&mut w, "/// Access message payload raw value")?;
-        writeln!(&mut w, "pub fn raw(&self) -> &[u8] {{")?;
+        writeln!(&mut w, "pub fn raw(&self) -> &[u8; {}] {{", msg.message_size())?;
         {
             let mut w = PadAdapter::wrap(&mut w);
             writeln!(&mut w, "&self.raw")?;
