@@ -12,6 +12,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/technocreatives/dbc-codegen"
 homepage = "https://github.com/technocreatives/dbc-codegen"
+rust-version = "1.66.1"
 
 [features]
 std = []
