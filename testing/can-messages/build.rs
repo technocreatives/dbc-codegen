@@ -16,14 +16,12 @@ fn main() -> Result<()> {
 
     out.flush()?;
 
-    if cfg!(target_os = "linux") {
-        Command::new("rustfmt")
-            .arg("--edition")
-            .arg("2018")
-            .arg(out_file)
-            .output()
-            .expect("failed to execute rustfmt");
-    }
+    Command::new("rustfmt")
+        .arg("--edition")
+        .arg("2021")
+        .arg(out_file)
+        .output()
+        .expect("failed to execute rustfmt");
 
     Ok(())
 }
