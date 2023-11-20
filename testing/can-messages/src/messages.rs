@@ -32,6 +32,8 @@ pub enum Messages {
     Dolor(Dolor),
     /// MultiplexTest
     MultiplexTest(MultiplexTest),
+    /// IntegerFactorOffset
+    IntegerFactorOffset(IntegerFactorOffset),
 }
 
 impl Messages {
@@ -45,6 +47,7 @@ impl Messages {
             1024 => Messages::Amet(Amet::try_from(payload)?),
             1028 => Messages::Dolor(Dolor::try_from(payload)?),
             200 => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
+            1337 => Messages::IntegerFactorOffset(IntegerFactorOffset::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -266,7 +269,9 @@ impl Bar {
     pub fn one_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[8..10].load_be::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of One
@@ -275,6 +280,10 @@ impl Bar {
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
         Ok(())
     }
@@ -352,7 +361,9 @@ impl Bar {
     pub fn three_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of Three
@@ -361,6 +372,10 @@ impl Bar {
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
         Ok(())
     }
@@ -396,7 +411,9 @@ impl Bar {
     pub fn four_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[13..15].load_be::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of Four
@@ -405,6 +422,10 @@ impl Bar {
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Msb0>()[13..15].store_be(value);
         Ok(())
     }
@@ -612,7 +633,9 @@ impl X4wd {
     pub fn x4drive_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of _4DRIVE
@@ -621,6 +644,10 @@ impl X4wd {
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 768 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
         Ok(())
     }
@@ -742,7 +769,9 @@ impl Amet {
     pub fn one_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[8..10].load_be::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of One
@@ -751,6 +780,10 @@ impl Amet {
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
         Ok(())
     }
@@ -820,7 +853,9 @@ impl Amet {
     pub fn three_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[19..22].load_be::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of Three
@@ -829,6 +864,10 @@ impl Amet {
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Msb0>()[19..22].store_be(value);
         Ok(())
     }
@@ -856,7 +895,9 @@ impl Amet {
     pub fn four_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Msb0>()[25..27].load_be::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of Four
@@ -865,6 +906,10 @@ impl Amet {
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Msb0>()[25..27].store_be(value);
         Ok(())
     }
@@ -1125,7 +1170,9 @@ impl MultiplexTest {
     pub fn multiplexor_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Lsb0>()[0..4].load_le::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexor, CanError> {
@@ -1148,6 +1195,10 @@ impl MultiplexTest {
         if value < 0_u8 || 2_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Lsb0>()[0..4].store_le(value);
         Ok(())
     }
@@ -1195,7 +1246,9 @@ impl MultiplexTest {
     pub fn unmultiplexed_signal_raw(&self) -> u8 {
         let signal = self.raw.view_bits::<Lsb0>()[4..12].load_le::<u8>();
 
-        signal
+        let factor = 1;
+        let offset = 0;
+        u8::from(signal) * factor + offset
     }
 
     /// Set value of UnmultiplexedSignal
@@ -1204,6 +1257,10 @@ impl MultiplexTest {
         if value < 0_u8 || 4_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
+        let factor = 1;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
         self.raw.view_bits_mut::<Lsb0>()[4..12].store_le(value);
         Ok(())
     }
@@ -1436,6 +1493,216 @@ impl MultiplexTestMultiplexorM1 {
 
         self.raw.view_bits_mut::<Lsb0>()[20..28].store_le(value);
         Ok(())
+    }
+}
+
+/// IntegerFactorOffset
+///
+/// - ID: 1337 (0x539)
+/// - Size: 8 bytes
+/// - Transmitter: Sit
+#[derive(Clone, Copy)]
+pub struct IntegerFactorOffset {
+    raw: [u8; 8],
+}
+
+impl IntegerFactorOffset {
+    pub const MESSAGE_ID: u32 = 1337;
+
+    pub const BYTE_WITH_OFFSET_MIN: u16 = 1_u16;
+    pub const BYTE_WITH_OFFSET_MAX: u16 = 256_u16;
+    pub const BYTE_WITH_FACTOR_MIN: u16 = 0_u16;
+    pub const BYTE_WITH_FACTOR_MAX: u16 = 1020_u16;
+    pub const BYTE_WITH_BOTH_MIN: u16 = 16_u16;
+    pub const BYTE_WITH_BOTH_MAX: u16 = 526_u16;
+
+    /// Construct new IntegerFactorOffset from values
+    pub fn new(
+        byte_with_offset: u16,
+        byte_with_factor: u16,
+        byte_with_both: u16,
+    ) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_byte_with_offset(byte_with_offset)?;
+        res.set_byte_with_factor(byte_with_factor)?;
+        res.set_byte_with_both(byte_with_both)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8; 8] {
+        &self.raw
+    }
+
+    /// ByteWithOffset
+    ///
+    /// - Min: 1
+    /// - Max: 256
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn byte_with_offset(&self) -> u16 {
+        self.byte_with_offset_raw()
+    }
+
+    /// Get raw value of ByteWithOffset
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 8 bits
+    /// - Factor: 1
+    /// - Offset: 1
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn byte_with_offset_raw(&self) -> u16 {
+        let signal = self.raw.view_bits::<Lsb0>()[0..8].load_le::<u8>();
+
+        let factor = 1;
+        let offset = 1;
+        u16::from(signal) * factor + offset
+    }
+
+    /// Set value of ByteWithOffset
+    #[inline(always)]
+    pub fn set_byte_with_offset(&mut self, value: u16) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 1_u16 || 256_u16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+        }
+        let factor = 1;
+        let offset = 1;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[0..8].store_le(value);
+        Ok(())
+    }
+
+    /// ByteWithFactor
+    ///
+    /// - Min: 0
+    /// - Max: 1020
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn byte_with_factor(&self) -> u16 {
+        self.byte_with_factor_raw()
+    }
+
+    /// Get raw value of ByteWithFactor
+    ///
+    /// - Start bit: 8
+    /// - Signal size: 8 bits
+    /// - Factor: 4
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn byte_with_factor_raw(&self) -> u16 {
+        let signal = self.raw.view_bits::<Lsb0>()[8..16].load_le::<u8>();
+
+        let factor = 4;
+        let offset = 0;
+        u16::from(signal) * factor + offset
+    }
+
+    /// Set value of ByteWithFactor
+    #[inline(always)]
+    pub fn set_byte_with_factor(&mut self, value: u16) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 0_u16 || 1020_u16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+        }
+        let factor = 4;
+        let offset = 0;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[8..16].store_le(value);
+        Ok(())
+    }
+
+    /// ByteWithBoth
+    ///
+    /// - Min: 16
+    /// - Max: 526
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn byte_with_both(&self) -> u16 {
+        self.byte_with_both_raw()
+    }
+
+    /// Get raw value of ByteWithBoth
+    ///
+    /// - Start bit: 16
+    /// - Signal size: 8 bits
+    /// - Factor: 2
+    /// - Offset: 16
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn byte_with_both_raw(&self) -> u16 {
+        let signal = self.raw.view_bits::<Lsb0>()[16..24].load_le::<u8>();
+
+        let factor = 2;
+        let offset = 16;
+        u16::from(signal) * factor + offset
+    }
+
+    /// Set value of ByteWithBoth
+    #[inline(always)]
+    pub fn set_byte_with_both(&mut self, value: u16) -> Result<(), CanError> {
+        #[cfg(feature = "range_checked")]
+        if value < 16_u16 || 526_u16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+        }
+        let factor = 2;
+        let offset = 16;
+        let value = ((value - offset) / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[16..24].store_le(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for IntegerFactorOffset {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+#[cfg(feature = "debug")]
+impl core::fmt::Debug for IntegerFactorOffset {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("IntegerFactorOffset")
+                .field("byte_with_offset", &self.byte_with_offset())
+                .field("byte_with_factor", &self.byte_with_factor())
+                .field("byte_with_both", &self.byte_with_both())
+                .finish()
+        } else {
+            f.debug_tuple("IntegerFactorOffset")
+                .field(&self.raw)
+                .finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for IntegerFactorOffset {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let byte_with_offset = u.int_in_range(1..=256)?;
+        let byte_with_factor = u.int_in_range(0..=1020)?;
+        let byte_with_both = u.int_in_range(16..=526)?;
+        IntegerFactorOffset::new(byte_with_offset, byte_with_factor, byte_with_both)
+            .map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
