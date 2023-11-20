@@ -282,7 +282,10 @@ impl Bar {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
         Ok(())
@@ -374,7 +377,10 @@ impl Bar {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
         Ok(())
@@ -424,7 +430,10 @@ impl Bar {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[13..15].store_be(value);
         Ok(())
@@ -646,7 +655,10 @@ impl X4wd {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 768 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
         Ok(())
@@ -782,7 +794,10 @@ impl Amet {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
         Ok(())
@@ -866,7 +881,10 @@ impl Amet {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[19..22].store_be(value);
         Ok(())
@@ -908,7 +926,10 @@ impl Amet {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[25..27].store_be(value);
         Ok(())
@@ -1197,7 +1218,10 @@ impl MultiplexTest {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 200 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[0..4].store_le(value);
         Ok(())
@@ -1259,7 +1283,10 @@ impl MultiplexTest {
         }
         let factor = 1;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 200 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[4..12].store_le(value);
         Ok(())
@@ -1571,7 +1598,10 @@ impl IntegerFactorOffset {
         }
         let factor = 1;
         let offset = 1;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[0..8].store_le(value);
         Ok(())
@@ -1614,7 +1644,10 @@ impl IntegerFactorOffset {
         }
         let factor = 4;
         let offset = 0;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[8..16].store_le(value);
         Ok(())
@@ -1657,7 +1690,10 @@ impl IntegerFactorOffset {
         }
         let factor = 2;
         let offset = 16;
-        let value = ((value - offset) / factor) as u8;
+        let value = value
+            .checked_sub(offset)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[16..24].store_le(value);
         Ok(())

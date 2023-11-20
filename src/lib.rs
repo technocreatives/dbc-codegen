@@ -861,9 +861,15 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
     } else {
         writeln!(&mut w, "let factor = {};", signal.factor)?;
         writeln!(&mut w, "let offset = {};", signal.offset)?;
+        writeln!(&mut w, "let value = value.checked_sub(offset)")?;
         writeln!(
             &mut w,
-            "let value = ((value - offset) / factor) as {};",
+            "    .ok_or(CanError::ParameterOutOfRange {{ message_id: {} }})?;",
+            msg.message_id().0,
+        )?;
+        writeln!(
+            &mut w,
+            "let value = (value / factor) as {};",
             signal_to_rust_int(signal)
         )?;
         writeln!(&mut w)?;
