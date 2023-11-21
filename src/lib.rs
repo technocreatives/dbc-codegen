@@ -6,14 +6,17 @@
 //!
 //! # Usage
 //!
+//! Create a [Config] and pass it to [codegen] along with the contents of a DBC-file.
+//! See [Config] docs for a complete list of options.
+//!
 //! ```
 //! use dbc_codegen::{codegen, Config, FeatureConfig};
 //!
 //! let config = Config::builder()
-//!     .dbc_name("foo.dbc")
+//!     .dbc_name("example.dbc")
 //!     .dbc_content(include_bytes!("../testing/dbc-examples/example.dbc"))
-//!     .impl_arbitrary(FeatureConfig::Gated("debug"))
-//!     .impl_debug(FeatureConfig::Always)
+//!     //.impl_arbitrary(FeatureConfig::Gated("debug")) // optional
+//!     //.impl_debug(FeatureConfig::Always)             // optional
 //!     .build();
 //!
 //! let mut out = Vec::<u8>::new();
@@ -48,20 +51,20 @@ pub struct Config<'a> {
     /// Raw bytes of a dbc-file.
     pub dbc_content: &'a [u8],
 
-    /// (optional) Print debug info to stdout while generating code.
+    /// Optional: Print debug info to stdout while generating code. Default: `false`.
     #[builder(default)]
     pub debug_prints: bool,
 
-    /// (optional) `impl Debug` for generated types.
+    /// Optional: `impl Debug` for generated types. Default: `Never`.
     #[builder(default)]
     pub impl_debug: FeatureConfig<'a>,
 
-    /// (optional) `impl Arbitraty` for generated types.
+    /// Optional: `impl Arbitrary` for generated types. Default: `Never`.
     #[builder(default)]
     pub impl_arbitrary: FeatureConfig<'a>,
 
-    /// (optional) Whether to validate min and max values for signals.
-    #[builder(default)]
+    /// Optional: Validate min and max values in generated signal setters. Default: `Always`.
+    #[builder(default = FeatureConfig::Always)]
     pub check_ranges: FeatureConfig<'a>,
 }
 
