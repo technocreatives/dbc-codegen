@@ -1,4 +1,5 @@
 use clap::Parser;
+use dbc_codegen::Config;
 use std::fs::File;
 use std::{path::PathBuf, process::exit};
 
@@ -8,8 +9,10 @@ use std::{path::PathBuf, process::exit};
 struct Cli {
     /// Path to a `.dbc` file
     dbc_path: PathBuf,
+
     /// Target directory to write Rust source file(s) to
     out_path: PathBuf,
+
     /// Enable debug printing
     #[arg(long)]
     debug: bool,
@@ -45,13 +48,17 @@ fn main() {
         exit(exitcode::CANTCREAT);
     });
 
-    dbc_codegen::codegen(&dbc_file_name, &dbc_file, &mut messages_code, args.debug).unwrap_or_else(
-        |e| {
-            eprintln!("could not convert `{}`: {}", args.dbc_path.display(), e);
-            if args.debug {
-                eprintln!("details: {:?}", e);
-            }
-            exit(exitcode::NOINPUT)
-        },
-    )
+    let config = Config::builder()
+        .dbc_name(&dbc_file_name)
+        .dbc_content(&dbc_file)
+        .debug_prints(true)
+        .build();
+
+    dbc_codegen::codegen(config, &mut messages_code).unwrap_or_else(|e| {
+        eprintln!("could not convert `{}`: {}", args.dbc_path.display(), e);
+        if args.debug {
+            eprintln!("details: {:?}", e);
+        }
+        exit(exitcode::NOINPUT)
+    })
 }

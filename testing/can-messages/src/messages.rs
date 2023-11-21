@@ -18,8 +18,7 @@ use bitvec::prelude::*;
 use core::ops::BitOr;
 
 /// All messages
-#[derive(Clone)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Clone, Debug)]
 pub enum Messages {
     /// Foo
     Foo(Foo),
@@ -114,7 +113,6 @@ impl Foo {
     /// Set value of Voltage
     #[inline(always)]
     pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 63.9990234375_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 256 });
         }
@@ -158,7 +156,6 @@ impl Foo {
     /// Set value of Current
     #[inline(always)]
     pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < -2048_f32 || 2047.9375_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 256 });
         }
@@ -186,7 +183,6 @@ impl core::convert::TryFrom<&[u8]> for Foo {
     }
 }
 
-#[cfg(feature = "debug")]
 impl core::fmt::Debug for Foo {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
@@ -276,7 +272,6 @@ impl Bar {
     /// Set value of One
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
@@ -315,7 +310,6 @@ impl Bar {
     /// Set value of Two
     #[inline(always)]
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 100_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
@@ -364,7 +358,6 @@ impl Bar {
     /// Set value of Three
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
@@ -409,7 +402,6 @@ impl Bar {
     /// Set value of Four
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
@@ -472,7 +464,6 @@ impl core::convert::TryFrom<&[u8]> for Bar {
     }
 }
 
-#[cfg(feature = "debug")]
 impl core::fmt::Debug for Bar {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
@@ -501,8 +492,7 @@ impl<'a> Arbitrary<'a> for Bar {
     }
 }
 /// Defined values for Three
-#[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum BarThree {
     Off,
     On,
@@ -524,8 +514,7 @@ impl From<BarThree> for u8 {
 }
 
 /// Defined values for Four
-#[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum BarFour {
     Off,
     On,
@@ -547,8 +536,7 @@ impl From<BarFour> for u8 {
 }
 
 /// Defined values for Type
-#[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum BarType {
     X0off,
     X1on,
@@ -630,7 +618,6 @@ impl X4wd {
     /// Set value of _4DRIVE
     #[inline(always)]
     pub fn set_x4drive(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 768 });
         }
@@ -653,7 +640,6 @@ impl core::convert::TryFrom<&[u8]> for X4wd {
     }
 }
 
-#[cfg(feature = "debug")]
 impl core::fmt::Debug for X4wd {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
@@ -674,8 +660,7 @@ impl<'a> Arbitrary<'a> for X4wd {
     }
 }
 /// Defined values for _4DRIVE
-#[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum X4wd4drive {
     Off,
     X2wd,
@@ -763,7 +748,6 @@ impl Amet {
     /// Set value of One
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
@@ -802,7 +786,6 @@ impl Amet {
     /// Set value of Two
     #[inline(always)]
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 100_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
@@ -843,7 +826,6 @@ impl Amet {
     /// Set value of Three
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 7_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
@@ -880,7 +862,6 @@ impl Amet {
     /// Set value of Four
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 3_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
@@ -937,7 +918,6 @@ impl core::convert::TryFrom<&[u8]> for Amet {
     }
 }
 
-#[cfg(feature = "debug")]
 impl core::fmt::Debug for Amet {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
@@ -1031,7 +1011,6 @@ impl Dolor {
     /// Set value of OneFloat
     #[inline(always)]
     pub fn set_one_float(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 130_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1028 });
         }
@@ -1058,7 +1037,6 @@ impl core::convert::TryFrom<&[u8]> for Dolor {
     }
 }
 
-#[cfg(feature = "debug")]
 impl core::fmt::Debug for Dolor {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
@@ -1079,8 +1057,7 @@ impl<'a> Arbitrary<'a> for Dolor {
     }
 }
 /// Defined values for OneFloat
-#[derive(Clone, Copy, PartialEq)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum DolorOneFloat {
     Dolor,
     Other,
@@ -1168,7 +1145,6 @@ impl MultiplexTest {
     /// Set value of Multiplexor
     #[inline(always)]
     fn set_multiplexor(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 2_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
@@ -1225,7 +1201,6 @@ impl MultiplexTest {
     /// Set value of UnmultiplexedSignal
     #[inline(always)]
     pub fn set_unmultiplexed_signal(&mut self, value: u8) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u8 || 4_u8 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
@@ -1248,7 +1223,6 @@ impl core::convert::TryFrom<&[u8]> for MultiplexTest {
     }
 }
 
-#[cfg(feature = "debug")]
 impl core::fmt::Debug for MultiplexTest {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
@@ -1271,14 +1245,13 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
     }
 }
 /// Defined values for multiplexed signal MultiplexTest
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Debug)]
 pub enum MultiplexTestMultiplexor {
     M0(MultiplexTestMultiplexorM0),
     M1(MultiplexTestMultiplexorM1),
 }
 
-#[derive(Default)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Debug, Default)]
 pub struct MultiplexTestMultiplexorM0 {
     raw: [u8; 8],
 }
@@ -1318,7 +1291,6 @@ impl MultiplexTestMultiplexorM0 {
     /// Set value of MultiplexedSignalZeroA
     #[inline(always)]
     pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 3_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
@@ -1361,7 +1333,6 @@ impl MultiplexTestMultiplexorM0 {
     /// Set value of MultiplexedSignalZeroB
     #[inline(always)]
     pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 3_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
@@ -1374,8 +1345,7 @@ impl MultiplexTestMultiplexorM0 {
     }
 }
 
-#[derive(Default)]
-#[cfg_attr(feature = "debug", derive(Debug))]
+#[derive(Debug, Default)]
 pub struct MultiplexTestMultiplexorM1 {
     raw: [u8; 8],
 }
@@ -1415,7 +1385,6 @@ impl MultiplexTestMultiplexorM1 {
     /// Set value of MultiplexedSignalOneA
     #[inline(always)]
     pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 6_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
@@ -1458,7 +1427,6 @@ impl MultiplexTestMultiplexorM1 {
     /// Set value of MultiplexedSignalOneB
     #[inline(always)]
     pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_f32 || 6_f32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
@@ -1475,8 +1443,7 @@ impl MultiplexTestMultiplexorM1 {
 #[allow(dead_code)]
 fn main() {}
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(any(feature = "debug", feature = "std"), derive(Debug))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CanError {
     UnknownMessageId(u32),
     /// Signal parameter is not within the range
@@ -1497,10 +1464,9 @@ pub enum CanError {
 
 #[cfg(feature = "std")]
 use std::error::Error;
-#[cfg(feature = "std")]
-use std::fmt;
 
-#[cfg(feature = "std")]
+use core::fmt;
+
 impl fmt::Display for CanError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)

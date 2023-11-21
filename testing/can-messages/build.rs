@@ -1,4 +1,5 @@
 use anyhow::Result;
+use dbc_codegen::{Config, FeatureConfig};
 use std::{
     fs::{self, File},
     io::{BufWriter, Write},
@@ -12,7 +13,16 @@ fn main() -> Result<()> {
     println!("cargo:rerun-if-changed=../dbc-examples/example.dbc");
     println!("cargo:rerun-if-changed=../../src");
 
-    dbc_codegen::codegen("example.dbc", &dbc_file, &mut out, true)?;
+    let config = Config::builder()
+        .dbc_name("example.dbc")
+        .dbc_content(&dbc_file)
+        .debug_prints(true)
+        .impl_debug(FeatureConfig::Always)
+        .impl_arbitrary(FeatureConfig::Gated("arb"))
+        .check_ranges(FeatureConfig::Always)
+        .build();
+
+    dbc_codegen::codegen(config, &mut out)?;
 
     out.flush()?;
 

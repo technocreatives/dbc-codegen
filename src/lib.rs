@@ -3,6 +3,22 @@
 //! DBC files are descriptions of CAN frames.
 //! See [this post](https://www.kvaser.com/developer-blog/an-introduction-j1939-and-dbc-files/)
 //! for an introduction.
+//!
+//! # Usage
+//!
+//! ```
+//! use dbc_codegen::{codegen, Config, FeatureConfig};
+//!
+//! let config = Config::builder()
+//!     .dbc_name("foo.dbc")
+//!     .dbc_content(include_bytes!("../testing/dbc-examples/example.dbc"))
+//!     .impl_arbitrary(FeatureConfig::Gated("debug"))
+//!     .impl_debug(FeatureConfig::Always)
+//!     .build();
+//!
+//! let mut out = Vec::<u8>::new();
+//! codegen(config, &mut out).unwrap();
+//! ```
 
 #![deny(missing_docs)]
 #![deny(clippy::arithmetic_side_effects)]
@@ -13,24 +29,69 @@ use heck::{ToPascalCase, ToSnakeCase};
 use pad::PadAdapter;
 use std::{
     collections::{BTreeMap, BTreeSet},
-    io::{BufWriter, Write},
+    fmt::Display,
+    io::{self, BufWriter, Write},
 };
+use typed_builder::TypedBuilder;
 
 mod includes;
 mod keywords;
 mod pad;
 
+/// Code generator configuration. See module-level docs for an example.
+#[derive(TypedBuilder)]
+#[non_exhaustive]
+pub struct Config<'a> {
+    /// Name of the dbc-file. Used for generated docs only.
+    pub dbc_name: &'a str,
+
+    /// Raw bytes of a dbc-file.
+    pub dbc_content: &'a [u8],
+
+    /// (optional) Print debug info to stdout while generating code.
+    #[builder(default)]
+    pub debug_prints: bool,
+
+    /// (optional) `impl Debug` for generated types.
+    #[builder(default)]
+    pub impl_debug: FeatureConfig<'a>,
+
+    /// (optional) `impl Arbitraty` for generated types.
+    #[builder(default)]
+    pub impl_arbitrary: FeatureConfig<'a>,
+
+    /// (optional) Whether to validate min and max values for signals.
+    #[builder(default)]
+    pub check_ranges: FeatureConfig<'a>,
+}
+
+/// Configuration for including features in the codegenerator.
+///
+/// e.g. [Debug] impls for generated types.
+#[derive(Default)]
+pub enum FeatureConfig<'a> {
+    /// Generate code for this feature.
+    Always,
+
+    /// Generate code behind `#[cfg(feature = ...)]`
+    Gated(&'a str),
+
+    /// Don't generate code for this feature.
+    #[default]
+    Never,
+}
+
 /// Write Rust structs matching DBC input description to `out` buffer
-pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool) -> Result<()> {
-    let dbc = can_dbc::DBC::from_slice(dbc_content).map_err(|e| {
+pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
+    let dbc = can_dbc::DBC::from_slice(config.dbc_content).map_err(|e| {
         let msg = "Could not parse dbc file";
-        if debug {
+        if config.debug_prints {
             anyhow!("{}: {:#?}", msg, e)
         } else {
             anyhow!("{}", msg)
         }
     })?;
-    if debug {
+    if config.debug_prints {
         eprintln!("{:#?}", dbc);
     }
     let mut w = BufWriter::new(out);
@@ -47,17 +108,23 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     )?;
     writeln!(&mut w, "#![deny(clippy::arithmetic_side_effects)]")?;
     writeln!(&mut w)?;
-    writeln!(&mut w, "//! Message definitions from file `{:?}`", dbc_name)?;
+    writeln!(
+        &mut w,
+        "//! Message definitions from file `{:?}`",
+        config.dbc_name
+    )?;
     writeln!(&mut w, "//!")?;
     writeln!(&mut w, "//! - Version: `{:?}`", dbc.version())?;
     writeln!(&mut w)?;
     writeln!(&mut w, "use core::ops::BitOr;")?;
     writeln!(&mut w, "use bitvec::prelude::*;")?;
+
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
+
     writeln!(&mut w)?;
 
-    render_dbc(&mut w, &dbc).context("could not generate Rust code")?;
+    render_dbc(&mut w, &config, &dbc).context("could not generate Rust code")?;
 
     writeln!(&mut w)?;
     writeln!(&mut w, "/// This is just to make testing easier")?;
@@ -71,11 +138,11 @@ pub fn codegen(dbc_name: &str, dbc_content: &[u8], out: impl Write, debug: bool)
     Ok(())
 }
 
-fn render_dbc(mut w: impl Write, dbc: &DBC) -> Result<()> {
-    render_root_enum(&mut w, dbc)?;
+fn render_dbc(mut w: impl Write, config: &Config<'_>, dbc: &DBC) -> Result<()> {
+    render_root_enum(&mut w, dbc, config)?;
 
     for msg in get_relevant_messages(dbc) {
-        render_message(&mut w, msg, dbc)
+        render_message(&mut w, config, msg, dbc)
             .with_context(|| format!("write message `{}`", msg.message_name()))?;
         writeln!(w)?;
     }
@@ -83,10 +150,10 @@ fn render_dbc(mut w: impl Write, dbc: &DBC) -> Result<()> {
     Ok(())
 }
 
-fn render_root_enum(mut w: impl Write, dbc: &DBC) -> Result<()> {
+fn render_root_enum(mut w: impl Write, dbc: &DBC, config: &Config<'_>) -> Result<()> {
     writeln!(w, "/// All messages")?;
     writeln!(w, "#[derive(Clone)]")?;
-    writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
+    config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
     writeln!(w, "pub enum Messages {{")?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -135,7 +202,7 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC) -> Result<()> {
     Ok(())
 }
 
-fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
+fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &DBC) -> Result<()> {
     writeln!(w, "/// {}", msg.message_name())?;
     writeln!(w, "///")?;
     writeln!(w, "/// - ID: {0} (0x{0:x})", msg.message_id().0)?;
@@ -256,9 +323,11 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
 
         for signal in msg.signals().iter() {
             match signal.multiplexer_indicator() {
-                MultiplexIndicator::Plain => render_signal(&mut w, signal, dbc, msg)
+                MultiplexIndicator::Plain => render_signal(&mut w, config, signal, dbc, msg)
                     .with_context(|| format!("write signal impl `{}`", signal.name()))?,
-                MultiplexIndicator::Multiplexor => render_multiplexor_signal(&mut w, signal, msg)?,
+                MultiplexIndicator::Multiplexor => {
+                    render_multiplexor_signal(&mut w, config, signal, msg)?
+                }
                 MultiplexIndicator::MultiplexedSignal(_) => {}
                 MultiplexIndicator::MultiplexorAndMultiplexedSignal(_) => {}
             }
@@ -302,9 +371,9 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
     writeln!(w, "}}")?;
     writeln!(w)?;
 
-    render_debug_impl(&mut w, msg)?;
+    render_debug_impl(&mut w, config, msg)?;
 
-    render_arbitrary(&mut w, msg)?;
+    render_arbitrary(&mut w, config, msg)?;
 
     let enums_for_this_message = dbc.value_descriptions().iter().filter_map(|x| {
         if let ValueDescription::Signal {
@@ -323,7 +392,7 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         }
     });
     for (signal, variants) in enums_for_this_message {
-        write_enum(&mut w, signal, msg, variants.as_slice())?;
+        write_enum(&mut w, config, signal, msg, variants.as_slice())?;
     }
 
     let multiplexor_signal = msg
@@ -332,13 +401,19 @@ fn render_message(mut w: impl Write, msg: &Message, dbc: &DBC) -> Result<()> {
         .find(|s| *s.multiplexer_indicator() == MultiplexIndicator::Multiplexor);
 
     if let Some(multiplexor_signal) = multiplexor_signal {
-        render_multiplexor_enums(w, dbc, msg, multiplexor_signal)?;
+        render_multiplexor_enums(w, config, dbc, msg, multiplexor_signal)?;
     }
 
     Ok(())
 }
 
-fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -> Result<()> {
+fn render_signal(
+    mut w: impl Write,
+    config: &Config<'_>,
+    signal: &Signal,
+    dbc: &DBC,
+    msg: &Message,
+) -> Result<()> {
     writeln!(w, "/// {}", signal.name())?;
     if let Some(comment) = dbc.signal_comment(*msg.message_id(), signal.name()) {
         writeln!(w, "///")?;
@@ -454,12 +529,17 @@ fn render_signal(mut w: impl Write, signal: &Signal, dbc: &DBC, msg: &Message) -
     writeln!(&mut w, "}}")?;
     writeln!(w)?;
 
-    render_set_signal(&mut w, signal, msg)?;
+    render_set_signal(&mut w, config, signal, msg)?;
 
     Ok(())
 }
 
-fn render_set_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
+fn render_set_signal(
+    mut w: impl Write,
+    config: &Config<'_>,
+    signal: &Signal,
+    msg: &Message,
+) -> Result<()> {
     writeln!(&mut w, "/// Set value of {}", signal.name())?;
     writeln!(w, "#[inline(always)]")?;
 
@@ -483,23 +563,28 @@ fn render_set_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
         let mut w = PadAdapter::wrap(&mut w);
 
         if signal.signal_size != 1 {
-            writeln!(w, r##"#[cfg(feature = "range_checked")]"##)?;
-            writeln!(
-                w,
-                r##"if value < {min}_{typ} || {max}_{typ} < value {{"##,
-                typ = signal_to_rust_type(signal),
-                min = signal.min(),
-                max = signal.max(),
-            )?;
-            {
-                let mut w = PadAdapter::wrap(&mut w);
+            if let FeatureConfig::Gated(gate) = config.check_ranges {
+                writeln!(w, r##"#[cfg(feature = {gate:?})]"##)?;
+            }
+
+            if let FeatureConfig::Gated(..) | FeatureConfig::Always = config.check_ranges {
                 writeln!(
                     w,
-                    r##"return Err(CanError::ParameterOutOfRange {{ message_id: {message_id} }});"##,
-                    message_id = msg.message_id().0,
+                    r##"if value < {min}_{typ} || {max}_{typ} < value {{"##,
+                    typ = signal_to_rust_type(signal),
+                    min = signal.min(),
+                    max = signal.max(),
                 )?;
+                {
+                    let mut w = PadAdapter::wrap(&mut w);
+                    writeln!(
+                        w,
+                        r##"return Err(CanError::ParameterOutOfRange {{ message_id: {message_id} }});"##,
+                        message_id = msg.message_id().0,
+                    )?;
+                }
+                writeln!(w, r"}}")?;
             }
-            writeln!(w, r"}}")?;
         }
         signal_to_payload(&mut w, signal, msg).context("signal to payload")?;
     }
@@ -546,7 +631,12 @@ fn render_set_signal_multiplexer(
     Ok(())
 }
 
-fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) -> Result<()> {
+fn render_multiplexor_signal(
+    mut w: impl Write,
+    config: &Config<'_>,
+    signal: &Signal,
+    msg: &Message,
+) -> Result<()> {
     writeln!(w, "/// Get raw value of {}", signal.name())?;
     writeln!(w, "///")?;
     writeln!(w, "/// - Start bit: {}", signal.start_bit)?;
@@ -617,7 +707,7 @@ fn render_multiplexor_signal(mut w: impl Write, signal: &Signal, msg: &Message) 
     }
     writeln!(w, "}}")?;
 
-    render_set_signal(&mut w, signal, msg)?;
+    render_set_signal(&mut w, config, signal, msg)?;
 
     let mut multiplexed_signals = BTreeMap::new();
     for signal in msg.signals() {
@@ -790,6 +880,7 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
 
 fn write_enum(
     mut w: impl Write,
+    config: &Config<'_>,
     signal: &Signal,
     msg: &Message,
     variants: &[ValDescription],
@@ -799,7 +890,7 @@ fn write_enum(
 
     writeln!(w, "/// Defined values for {}", signal.name())?;
     writeln!(w, "#[derive(Clone, Copy, PartialEq)]")?;
-    writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
+    config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
     writeln!(w, "pub enum {} {{", type_name)?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -970,9 +1061,14 @@ fn multiplexed_enum_variant_name(
     ))
 }
 
-fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
+fn render_debug_impl(mut w: impl Write, config: &Config<'_>, msg: &Message) -> Result<()> {
+    match &config.impl_debug {
+        FeatureConfig::Always => {}
+        FeatureConfig::Gated(gate) => writeln!(w, r##"#[cfg(feature = {gate:?})]"##)?,
+        FeatureConfig::Never => return Ok(()),
+    }
+
     let typ = type_name(msg.message_name());
-    writeln!(w, r##"#[cfg(feature = "debug")]"##)?;
     writeln!(w, r##"impl core::fmt::Debug for {} {{"##, typ)?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -1016,6 +1112,7 @@ fn render_debug_impl(mut w: impl Write, msg: &Message) -> Result<()> {
 
 fn render_multiplexor_enums(
     mut w: impl Write,
+    config: &Config<'_>,
     dbc: &DBC,
     msg: &Message,
     multiplexor_signal: &Signal,
@@ -1042,8 +1139,8 @@ fn render_multiplexor_enums(
         "/// Defined values for multiplexed signal {}",
         msg.message_name()
     )?;
-    writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
 
+    config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
     writeln!(
         w,
         "pub enum {} {{",
@@ -1066,9 +1163,10 @@ fn render_multiplexor_enums(
     writeln!(w)?;
 
     for (switch_index, multiplexed_signals) in multiplexed_signals.iter() {
-        writeln!(w, r##"#[derive(Default)]"##)?;
-        writeln!(w, r##"#[cfg_attr(feature = "debug", derive(Debug))]"##)?;
         let struct_name = multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?;
+
+        config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
+        writeln!(w, r##"#[derive(Default)]"##)?;
         writeln!(
             w,
             "pub struct {} {{ raw: [u8; {}] }}",
@@ -1086,7 +1184,7 @@ fn render_multiplexor_enums(
         )?;
 
         for signal in multiplexed_signals {
-            render_signal(&mut w, signal, dbc, msg)?;
+            render_signal(&mut w, config, signal, dbc, msg)?;
         }
 
         writeln!(w, "}}")?;
@@ -1096,8 +1194,13 @@ fn render_multiplexor_enums(
     Ok(())
 }
 
-fn render_arbitrary(mut w: impl Write, msg: &Message) -> Result<()> {
-    writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
+fn render_arbitrary(mut w: impl Write, config: &Config<'_>, msg: &Message) -> Result<()> {
+    match &config.impl_arbitrary {
+        FeatureConfig::Always => {}
+        FeatureConfig::Gated(gate) => writeln!(w, r##"#[cfg(feature = {gate:?})]"##)?,
+        FeatureConfig::Never => return Ok(()),
+    }
+
     writeln!(
         w,
         "impl<'a> Arbitrary<'a> for {typ} {{",
@@ -1173,4 +1276,14 @@ fn get_relevant_messages(dbc: &DBC) -> impl Iterator<Item = &Message> {
 fn message_ignored(message: &Message) -> bool {
     // DBC internal message containing signals unassigned to any real message
     message.message_name() == "VECTOR__INDEPENDENT_SIG_MSG"
+}
+
+impl FeatureConfig<'_> {
+    fn fmt_attr(&self, mut w: impl Write, attr: impl Display) -> io::Result<()> {
+        match self {
+            FeatureConfig::Always => writeln!(w, "#[{attr}]"),
+            FeatureConfig::Gated(gate) => writeln!(w, "#[cfg_attr(feature = {gate:?}, {attr})]"),
+            FeatureConfig::Never => Ok(()),
+        }
+    }
 }

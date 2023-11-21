@@ -6,4 +6,4 @@ edition = "2021"
 
 [dependencies]
 approx = "0.4"
-can-messages = { path = "../can-messages", features = ["debug"] }
+can-messages = { path = "../can-messages" }
