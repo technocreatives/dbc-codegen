@@ -18,6 +18,7 @@ fn main() -> Result<()> {
         .dbc_content(&dbc_file)
         .debug_prints(true)
         .impl_debug(FeatureConfig::Always)
+        .impl_error(FeatureConfig::Gated("std"))
         .impl_arbitrary(FeatureConfig::Gated("arb"))
         .check_ranges(FeatureConfig::Always)
         .build();

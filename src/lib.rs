@@ -63,6 +63,12 @@ pub struct Config<'a> {
     #[builder(default)]
     pub impl_arbitrary: FeatureConfig<'a>,
 
+    /// Optional: `impl Error` for generated error type. Default: `Never`.
+    ///
+    /// Note: this feature depends on `std`.
+    #[builder(default)]
+    pub impl_error: FeatureConfig<'a>,
+
     /// Optional: Validate min and max values in generated signal setters. Default: `Always`.
     #[builder(default = FeatureConfig::Always)]
     pub check_ranges: FeatureConfig<'a>,
@@ -134,8 +140,8 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w, "#[allow(dead_code)]")?;
     writeln!(&mut w, "fn main() {{}}")?;
     writeln!(&mut w)?;
-    w.write_all(include_bytes!("./includes/errors.rs"))?;
-    w.write_all(include_bytes!("./includes/arbitrary_helpers.rs"))?;
+    render_error(&mut w, &config)?;
+    render_arbitrary_helpers(&mut w, &config)?;
     writeln!(&mut w)?;
 
     Ok(())
@@ -1254,6 +1260,49 @@ fn render_arbitrary(mut w: impl Write, config: &Config<'_>, msg: &Message) -> Re
     Ok(())
 }
 
+fn render_error(mut w: impl Write, config: &Config<'_>) -> io::Result<()> {
+    w.write_all(include_bytes!("./includes/errors.rs"))?;
+
+    config.impl_error.fmt_cfg(w, |w| {
+        writeln!(w, "impl std::error::Error for CanError {{}}")
+    })
+}
+
+fn render_arbitrary_helpers(mut w: impl Write, config: &Config<'_>) -> io::Result<()> {
+    config.impl_arbitrary.fmt_cfg(&mut w, |w| {
+        writeln!(w, "trait UnstructuredFloatExt {{")?;
+        writeln!(w, "    fn float_in_range(&mut self, range: core::ops::RangeInclusive<f32>) -> arbitrary::Result<f32>;")?;
+        writeln!(w, "}}")?;
+        writeln!(w)
+    })?;
+
+    config.impl_arbitrary.fmt_cfg(&mut w, |w| {
+        writeln!(
+            w,
+            "impl UnstructuredFloatExt for arbitrary::Unstructured<'_> {{"
+        )?;
+        writeln!(w, "    fn float_in_range(&mut self, range: core::ops::RangeInclusive<f32>) -> arbitrary::Result<f32> {{")?;
+        writeln!(w, "        let min = range.start();")?;
+        writeln!(w, "        let max = range.end();")?;
+        writeln!(w, "        let steps = u32::MAX;")?;
+        writeln!(w, "        let factor = (max - min) / (steps as f32);")?;
+        writeln!(
+            w,
+            "        let random_int: u32 = self.int_in_range(0..=steps)?;"
+        )?;
+        writeln!(
+            w,
+            "        let random = min + factor * (random_int as f32);"
+        )?;
+        writeln!(w, "        Ok(random)")?;
+        writeln!(w, "    }}")?;
+        writeln!(w, "}}")?;
+        writeln!(w)
+    })?;
+
+    Ok(())
+}
+
 fn signal_to_arbitrary(signal: &Signal) -> String {
     if signal.signal_size == 1 {
         "u.int_in_range(0..=1)? == 1".to_string()
@@ -1288,5 +1337,26 @@ impl FeatureConfig<'_> {
             FeatureConfig::Gated(gate) => writeln!(w, "#[cfg_attr(feature = {gate:?}, {attr})]"),
             FeatureConfig::Never => Ok(()),
         }
+    }
+
+    fn fmt_cfg<W: Write>(
+        &self,
+        mut w: W,
+        f: impl FnOnce(&mut W) -> io::Result<()>,
+    ) -> io::Result<()> {
+        match self {
+            // If config is Never, return immediately without calling `f`
+            FeatureConfig::Never => return Ok(()),
+
+            // If config is Gated, prepend `f` with a cfg guard
+            FeatureConfig::Gated(gate) => {
+                writeln!(w, "#[cfg(feature = {gate:?})]")?;
+            }
+
+            // Otherwise, just call `f`
+            FeatureConfig::Always => {}
+        }
+
+        f(&mut w)
     }
 }

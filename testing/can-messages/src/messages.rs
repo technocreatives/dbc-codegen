@@ -1462,19 +1462,13 @@ pub enum CanError {
     },
 }
 
-#[cfg(feature = "std")]
-use std::error::Error;
-
-use core::fmt;
-
-impl fmt::Display for CanError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl core::fmt::Display for CanError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
-
 #[cfg(feature = "std")]
-impl Error for CanError {}
+impl std::error::Error for CanError {}
 #[cfg(feature = "arb")]
 trait UnstructuredFloatExt {
     fn float_in_range(&mut self, range: core::ops::RangeInclusive<f32>) -> arbitrary::Result<f32>;
