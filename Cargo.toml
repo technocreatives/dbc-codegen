@@ -21,6 +21,7 @@ std = []
 can-dbc = "5.0.0"
 anyhow = "1.0.68"
 heck = "0.4.0"
+typed-builder = "0.18.0"
 
 [workspace]
 members = [

@@ -13,7 +13,6 @@ anyhow = "1.0"
 dbc-codegen = { path = "../../" }
 
 [features]
-default = ["debug", "arb", "range_checked"]
+default = ["arb", "std"]
 arb = ["arbitrary"]
-debug = []
-range_checked = []
+std = []
