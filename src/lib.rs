@@ -113,6 +113,10 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w, "#![allow(clippy::let_and_return, clippy::eq_op)]")?;
     writeln!(
         &mut w,
+        "#![allow(clippy::useless_conversion, clippy::unnecessary_cast)]"
+    )?;
+    writeln!(
+        &mut w,
         "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons)]"
     )?;
     writeln!(&mut w, "#![deny(clippy::arithmetic_side_effects)]")?;
@@ -833,7 +837,13 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Res
         writeln!(&mut w, "let offset = {}_f32;", signal.offset)?;
         writeln!(&mut w, "(signal as f32) * factor + offset")?;
     } else {
-        writeln!(&mut w, "signal")?;
+        writeln!(&mut w, "let factor = {};", signal.factor)?;
+        writeln!(&mut w, "let offset = {};", signal.offset)?;
+        writeln!(
+            &mut w,
+            "{}::from(signal).saturating_mul(factor).saturating_add(offset)",
+            scaled_signal_to_rust_int(signal)
+        )?;
     }
     Ok(())
 }
@@ -849,6 +859,21 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
         writeln!(
             &mut w,
             "let value = ((value - offset) / factor) as {};",
+            signal_to_rust_int(signal)
+        )?;
+        writeln!(&mut w)?;
+    } else {
+        writeln!(&mut w, "let factor = {};", signal.factor)?;
+        writeln!(&mut w, "let offset = {};", signal.offset)?;
+        writeln!(&mut w, "let value = value.checked_sub(offset)")?;
+        writeln!(
+            &mut w,
+            "    .ok_or(CanError::ParameterOutOfRange {{ message_id: {} }})?;",
+            msg.message_id().0,
+        )?;
+        writeln!(
+            &mut w,
+            "let value = (value / factor) as {};",
             signal_to_rust_int(signal)
         )?;
         writeln!(&mut w)?;
@@ -948,22 +973,65 @@ fn write_enum(
     Ok(())
 }
 
+/// Determine the smallest rust integer that can fit the actual signal values,
+/// i.e. accounting for factor and offset.
+///
+/// NOTE: Factor and offset must be whole integers.
+fn scaled_signal_to_rust_int(signal: &Signal) -> String {
+    let sign = match signal.value_type() {
+        can_dbc::ValueType::Signed => "i",
+        can_dbc::ValueType::Unsigned => "u",
+    };
+
+    assert!(
+        signal.factor.fract().abs() <= f64::EPSILON,
+        "Signal Factor ({}) should be an integer",
+        signal.factor,
+    );
+    assert!(
+        signal.offset.fract().abs() <= f64::EPSILON,
+        "Signal Factor ({}) should be an integer",
+        signal.offset,
+    );
+
+    // calculate the maximum possible signal value, accounting for factor and offset
+    let factor = signal.factor as u64;
+    let offset = signal.offset as u64;
+    let max_value = 1u64
+        .checked_shl(*signal.signal_size() as u32)
+        .map(|n| n.saturating_sub(1))
+        .and_then(|n| n.checked_mul(factor))
+        .and_then(|n| n.checked_add(offset))
+        .unwrap_or(u64::MAX);
+
+    let size = match max_value {
+        n if n <= u8::MAX.into() => "8",
+        n if n <= u16::MAX.into() => "16",
+        n if n <= u32::MAX.into() => "32",
+        _ => "64",
+    };
+
+    format!("{sign}{size}")
+}
+
+/// Determine the smallest rust integer that can fit the raw signal values.
 fn signal_to_rust_int(signal: &Signal) -> String {
     let sign = match signal.value_type() {
         can_dbc::ValueType::Signed => "i",
         can_dbc::ValueType::Unsigned => "u",
     };
 
-    let size = match *signal.signal_size() {
-        n if n <= 8 => "8",
-        n if n <= 16 => "16",
-        n if n <= 32 => "32",
+    let size = match signal.signal_size() {
+        ..=8 => "8",
+        ..=16 => "16",
+        ..=32 => "32",
         _ => "64",
     };
 
-    format!("{}{}", sign, size)
+    format!("{sign}{size}")
 }
 
+/// Determine the smallest unsigned rust integer with no fewer bits than the signal.
 fn signal_to_rust_uint(signal: &Signal) -> String {
     let size = match *signal.signal_size() {
         n if n <= 8 => "8",
@@ -977,7 +1045,7 @@ fn signal_to_rust_uint(signal: &Signal) -> String {
 
 #[allow(clippy::float_cmp)]
 fn signal_is_float_in_rust(signal: &Signal) -> bool {
-    *signal.offset() != 0.0 || *signal.factor() != 1.0
+    signal.offset.fract() != 0.0 || signal.factor.fract() != 0.0
 }
 
 fn signal_to_rust_type(signal: &Signal) -> String {
@@ -987,7 +1055,7 @@ fn signal_to_rust_type(signal: &Signal) -> String {
         // If there is any scaling needed, go for float
         String::from("f32")
     } else {
-        signal_to_rust_int(signal)
+        scaled_signal_to_rust_int(signal)
     }
 }
 
