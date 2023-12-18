@@ -33,8 +33,16 @@ fn main() {
     let dbc_file = std::fs::read(dbc_path).unwrap();
     println!("cargo:rerun-if-changed={}", dbc_path);
 
+    let config = Config::builder()
+        .dbc_name("example.dbc")
+        .dbc_content(&dbc_file)
+        //.impl_arbitrary(FeatureConfig::Gated("arbitrary")) // Optional impls.
+        //.impl_debug(FeatureConfig::Always)                 // See rustdoc for more,
+        //.check_ranges(FeatureConfig::Never)                // or look below for an example.
+        .build();
+
     let mut out = std::io::BufWriter::new(std::fs::File::create("src/messages.rs").unwrap());
-    dbc_codegen::codegen("example.dbc", &dbc_file, &mut out, true).unwrap();
+    dbc_codegen::codegen(config, &mut out).expect("dbc-codegen failed");
 }
 ```
 
@@ -45,13 +53,6 @@ Here is an example [`testing/can-messages/Cargo.toml`](testing/can-messages/Carg
 
 ### Project setup
 
-For this to work you need to add following dependencies to `Cargo.toml`:
-
-```toml
-bitvec = { version = "1.0", default-features = false }
-arbitrary = { version = "1.0", optional = true } # Enable with `arb` feature
-```
-
 To use the code, add `mod messages` to your `lib.rs` (or `main.rs`).
 You will most likely want to interact with the generated `Messages` enum, and call `Messages::from_can_message(id, &payload)`.
 
@@ -61,28 +62,34 @@ Give it a try:
 cargo doc --open
 ```
 
-### Feature flags
+### Optional impls
 
-The following (optional) features can be specified:
+The generator config has the following flags that control what code gets generated:
 
-- `debug`: enables `#[derive(Debug)` for messages
-- `range_checked`: adds range checks in setters
-- `arb`: enables implementation of [`Arbitrary`] trait.
-  Also requires you to add `arbitrary` crate (version 1.x) as a dependency of the feature, using `arb = ["arbitrary"]`.
+- `impl_debug`: enables `#[derive(Debug)]` for messages.
+- `impl_arbitrary`: enables implementation of [`Arbitrary`] trait.
+  Also requires you to add `arbitrary` crate (version 1.x) as a dependency of the crate.
   [`Arbitrary`]: https://docs.rs/arbitrary/1.0.0/arbitrary/trait.Arbitrary.html
-- `std`: Implements `std::error::Error` for `CanError`. This makes it easy to use `anyhow` for error handling.
+- `impl_error`: Implements `std::error::Error` for `CanError`. This makes it easy to use crates like `anyhow` for error handling.
+- `check_ranges`: adds range checks in signal setters. (Enabled by default)
 
-To enable all features add this to your `Cargo.toml`:
+These implementations can be enabled, disabled, or placed behind feature guards, like so:
 
-```toml
-# features for dbc-codegen `messages.rs` file
-[features]
-default = ["debug", "arb", "range_checked", "std"]
-arb = ["arbitrary"]
-debug = []
-range_checked = []
-std = []
+```rust
+Config::builder()
+    // this will generate Debug implementations
+    .impl_debug(FeatureConfig::Always)
+
+    // this will generate Error implementations behind `#[cfg(feature = "std")]` guards
+    .impl_error(FeatureConfig::Gated("std"))
+
+    // this will disable range checks
+    .check_ranges(FeatureConfig::Never)
 ```
+
+### no_std
+
+The generated code is no_std compatible, unless you enable `impl_error`.
 
 ### Field/variant rename rules
 
