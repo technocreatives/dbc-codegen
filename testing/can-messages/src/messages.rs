@@ -1,6 +1,7 @@
 // Generated code!
 #![allow(unused_comparisons, unreachable_patterns)]
 #![allow(clippy::let_and_return, clippy::eq_op)]
+#![allow(clippy::useless_conversion, clippy::unnecessary_cast)]
 #![allow(
     clippy::excessive_precision,
     clippy::manual_range_contains,
@@ -271,7 +272,9 @@ impl Bar {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of One
@@ -366,7 +369,9 @@ impl Bar {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of Three
@@ -419,7 +424,9 @@ impl Bar {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of Four
@@ -644,7 +651,9 @@ impl X4wd {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of _4DRIVE
@@ -783,7 +792,9 @@ impl Amet {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of One
@@ -870,7 +881,9 @@ impl Amet {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of Three
@@ -915,7 +928,9 @@ impl Amet {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of Four
@@ -1193,7 +1208,9 @@ impl MultiplexTest {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexor, CanError> {
@@ -1272,7 +1289,9 @@ impl MultiplexTest {
 
         let factor = 1;
         let offset = 0;
-        u8::from(signal) * factor + offset
+        u8::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of UnmultiplexedSignal
@@ -1586,13 +1605,14 @@ impl IntegerFactorOffset {
 
         let factor = 1;
         let offset = 1;
-        u16::from(signal) * factor + offset
+        u16::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of ByteWithOffset
     #[inline(always)]
     pub fn set_byte_with_offset(&mut self, value: u16) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 1_u16 || 256_u16 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1337 });
         }
@@ -1632,13 +1652,14 @@ impl IntegerFactorOffset {
 
         let factor = 4;
         let offset = 0;
-        u16::from(signal) * factor + offset
+        u16::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of ByteWithFactor
     #[inline(always)]
     pub fn set_byte_with_factor(&mut self, value: u16) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 0_u16 || 1020_u16 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1337 });
         }
@@ -1678,13 +1699,14 @@ impl IntegerFactorOffset {
 
         let factor = 2;
         let offset = 16;
-        u16::from(signal) * factor + offset
+        u16::from(signal)
+            .saturating_mul(factor)
+            .saturating_add(offset)
     }
 
     /// Set value of ByteWithBoth
     #[inline(always)]
     pub fn set_byte_with_both(&mut self, value: u16) -> Result<(), CanError> {
-        #[cfg(feature = "range_checked")]
         if value < 16_u16 || 526_u16 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1337 });
         }
@@ -1714,7 +1736,6 @@ impl core::convert::TryFrom<&[u8]> for IntegerFactorOffset {
     }
 }
 
-#[cfg(feature = "debug")]
 impl core::fmt::Debug for IntegerFactorOffset {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {

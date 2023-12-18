@@ -113,6 +113,10 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w, "#![allow(clippy::let_and_return, clippy::eq_op)]")?;
     writeln!(
         &mut w,
+        "#![allow(clippy::useless_conversion, clippy::unnecessary_cast)]"
+    )?;
+    writeln!(
+        &mut w,
         "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons)]"
     )?;
     writeln!(&mut w, "#![deny(clippy::arithmetic_side_effects)]")?;
@@ -837,7 +841,7 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Res
         writeln!(&mut w, "let offset = {};", signal.offset)?;
         writeln!(
             &mut w,
-            "{}::from(signal) * factor + offset",
+            "{}::from(signal).saturating_mul(factor).saturating_add(offset)",
             scaled_signal_to_rust_int(signal)
         )?;
     }
