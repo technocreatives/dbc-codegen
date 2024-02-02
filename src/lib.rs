@@ -838,12 +838,21 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Res
         writeln!(&mut w, "(signal as f32) * factor + offset")?;
     } else {
         writeln!(&mut w, "let factor = {};", signal.factor)?;
-        writeln!(&mut w, "let offset = {};", signal.offset)?;
-        writeln!(
-            &mut w,
-            "{}::from(signal).saturating_mul(factor).saturating_add(offset)",
-            scaled_signal_to_rust_int(signal)
-        )?;
+        if signal.offset >= 0.0 {
+            writeln!(
+                &mut w,
+                "{}::from(signal).saturating_mul(factor).saturating_add({})",
+                scaled_signal_to_rust_int(signal),
+                signal.offset,
+            )?;
+        } else {
+            writeln!(
+                &mut w,
+                "{}::from(signal).saturating_mul(factor).saturating_sub({})",
+                scaled_signal_to_rust_int(signal),
+                signal.offset.abs(),
+            )?;
+        }
     }
     Ok(())
 }
@@ -864,8 +873,15 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
         writeln!(&mut w)?;
     } else {
         writeln!(&mut w, "let factor = {};", signal.factor)?;
-        writeln!(&mut w, "let offset = {};", signal.offset)?;
-        writeln!(&mut w, "let value = value.checked_sub(offset)")?;
+        if signal.offset >= 0.0 {
+            writeln!(&mut w, "let value = value.checked_sub({})", signal.offset)?;
+        } else {
+            writeln!(
+                &mut w,
+                "let value = value.checked_add({})",
+                signal.offset.abs()
+            )?;
+        }
         writeln!(
             &mut w,
             "    .ok_or(CanError::ParameterOutOfRange {{ message_id: {} }})?;",

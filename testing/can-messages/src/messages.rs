@@ -271,10 +271,7 @@ impl Bar {
         let signal = self.raw.view_bits::<Msb0>()[8..10].load_be::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of One
@@ -284,9 +281,8 @@ impl Bar {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
         let value = (value / factor) as u8;
 
@@ -368,10 +364,7 @@ impl Bar {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of Three
@@ -381,9 +374,8 @@ impl Bar {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
         let value = (value / factor) as u8;
 
@@ -423,10 +415,7 @@ impl Bar {
         let signal = self.raw.view_bits::<Msb0>()[13..15].load_be::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of Four
@@ -436,9 +425,8 @@ impl Bar {
             return Err(CanError::ParameterOutOfRange { message_id: 512 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
         let value = (value / factor) as u8;
 
@@ -650,10 +638,7 @@ impl X4wd {
         let signal = self.raw.view_bits::<Msb0>()[10..13].load_be::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of _4DRIVE
@@ -663,9 +648,8 @@ impl X4wd {
             return Err(CanError::ParameterOutOfRange { message_id: 768 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 768 })?;
         let value = (value / factor) as u8;
 
@@ -791,10 +775,7 @@ impl Amet {
         let signal = self.raw.view_bits::<Msb0>()[8..10].load_be::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of One
@@ -804,9 +785,8 @@ impl Amet {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
         let value = (value / factor) as u8;
 
@@ -880,10 +860,7 @@ impl Amet {
         let signal = self.raw.view_bits::<Msb0>()[19..22].load_be::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of Three
@@ -893,9 +870,8 @@ impl Amet {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
         let value = (value / factor) as u8;
 
@@ -927,10 +903,7 @@ impl Amet {
         let signal = self.raw.view_bits::<Msb0>()[25..27].load_be::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of Four
@@ -940,9 +913,8 @@ impl Amet {
             return Err(CanError::ParameterOutOfRange { message_id: 1024 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
         let value = (value / factor) as u8;
 
@@ -1207,10 +1179,7 @@ impl MultiplexTest {
         let signal = self.raw.view_bits::<Lsb0>()[0..4].load_le::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexor, CanError> {
@@ -1234,9 +1203,8 @@ impl MultiplexTest {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 200 })?;
         let value = (value / factor) as u8;
 
@@ -1288,10 +1256,7 @@ impl MultiplexTest {
         let signal = self.raw.view_bits::<Lsb0>()[4..12].load_le::<u8>();
 
         let factor = 1;
-        let offset = 0;
-        u8::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of UnmultiplexedSignal
@@ -1301,9 +1266,8 @@ impl MultiplexTest {
             return Err(CanError::ParameterOutOfRange { message_id: 200 });
         }
         let factor = 1;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 200 })?;
         let value = (value / factor) as u8;
 
@@ -1561,17 +1525,21 @@ impl IntegerFactorOffset {
     pub const BYTE_WITH_FACTOR_MAX: u16 = 1020_u16;
     pub const BYTE_WITH_BOTH_MIN: u16 = 16_u16;
     pub const BYTE_WITH_BOTH_MAX: u16 = 526_u16;
+    pub const BYTE_WITH_NEGATIVE_OFFSET_MIN: u8 = 0_u8;
+    pub const BYTE_WITH_NEGATIVE_OFFSET_MAX: u8 = 255_u8;
 
     /// Construct new IntegerFactorOffset from values
     pub fn new(
         byte_with_offset: u16,
         byte_with_factor: u16,
         byte_with_both: u16,
+        byte_with_negative_offset: u8,
     ) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_byte_with_offset(byte_with_offset)?;
         res.set_byte_with_factor(byte_with_factor)?;
         res.set_byte_with_both(byte_with_both)?;
+        res.set_byte_with_negative_offset(byte_with_negative_offset)?;
         Ok(res)
     }
 
@@ -1604,10 +1572,7 @@ impl IntegerFactorOffset {
         let signal = self.raw.view_bits::<Lsb0>()[0..8].load_le::<u8>();
 
         let factor = 1;
-        let offset = 1;
-        u16::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u16::from(signal).saturating_mul(factor).saturating_add(1)
     }
 
     /// Set value of ByteWithOffset
@@ -1617,9 +1582,8 @@ impl IntegerFactorOffset {
             return Err(CanError::ParameterOutOfRange { message_id: 1337 });
         }
         let factor = 1;
-        let offset = 1;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(1)
             .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
         let value = (value / factor) as u8;
 
@@ -1651,10 +1615,7 @@ impl IntegerFactorOffset {
         let signal = self.raw.view_bits::<Lsb0>()[8..16].load_le::<u8>();
 
         let factor = 4;
-        let offset = 0;
-        u16::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u16::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
     /// Set value of ByteWithFactor
@@ -1664,9 +1625,8 @@ impl IntegerFactorOffset {
             return Err(CanError::ParameterOutOfRange { message_id: 1337 });
         }
         let factor = 4;
-        let offset = 0;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(0)
             .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
         let value = (value / factor) as u8;
 
@@ -1698,10 +1658,7 @@ impl IntegerFactorOffset {
         let signal = self.raw.view_bits::<Lsb0>()[16..24].load_le::<u8>();
 
         let factor = 2;
-        let offset = 16;
-        u16::from(signal)
-            .saturating_mul(factor)
-            .saturating_add(offset)
+        u16::from(signal).saturating_mul(factor).saturating_add(16)
     }
 
     /// Set value of ByteWithBoth
@@ -1711,13 +1668,55 @@ impl IntegerFactorOffset {
             return Err(CanError::ParameterOutOfRange { message_id: 1337 });
         }
         let factor = 2;
-        let offset = 16;
         let value = value
-            .checked_sub(offset)
+            .checked_sub(16)
             .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[16..24].store_le(value);
+        Ok(())
+    }
+
+    /// ByteWithNegativeOffset
+    ///
+    /// - Min: 0
+    /// - Max: 255
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn byte_with_negative_offset(&self) -> u8 {
+        self.byte_with_negative_offset_raw()
+    }
+
+    /// Get raw value of ByteWithNegativeOffset
+    ///
+    /// - Start bit: 24
+    /// - Signal size: 8 bits
+    /// - Factor: 1
+    /// - Offset: -1
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn byte_with_negative_offset_raw(&self) -> u8 {
+        let signal = self.raw.view_bits::<Lsb0>()[24..32].load_le::<u8>();
+
+        let factor = 1;
+        u8::from(signal).saturating_mul(factor).saturating_sub(1)
+    }
+
+    /// Set value of ByteWithNegativeOffset
+    #[inline(always)]
+    pub fn set_byte_with_negative_offset(&mut self, value: u8) -> Result<(), CanError> {
+        if value < 0_u8 || 255_u8 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+        }
+        let factor = 1;
+        let value = value
+            .checked_add(1)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = (value / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[24..32].store_le(value);
         Ok(())
     }
 }
@@ -1743,6 +1742,10 @@ impl core::fmt::Debug for IntegerFactorOffset {
                 .field("byte_with_offset", &self.byte_with_offset())
                 .field("byte_with_factor", &self.byte_with_factor())
                 .field("byte_with_both", &self.byte_with_both())
+                .field(
+                    "byte_with_negative_offset",
+                    &self.byte_with_negative_offset(),
+                )
                 .finish()
         } else {
             f.debug_tuple("IntegerFactorOffset")
@@ -1758,8 +1761,14 @@ impl<'a> Arbitrary<'a> for IntegerFactorOffset {
         let byte_with_offset = u.int_in_range(1..=256)?;
         let byte_with_factor = u.int_in_range(0..=1020)?;
         let byte_with_both = u.int_in_range(16..=526)?;
-        IntegerFactorOffset::new(byte_with_offset, byte_with_factor, byte_with_both)
-            .map_err(|_| arbitrary::Error::IncorrectFormat)
+        let byte_with_negative_offset = u.int_in_range(0..=255)?;
+        IntegerFactorOffset::new(
+            byte_with_offset,
+            byte_with_factor,
+            byte_with_both,
+            byte_with_negative_offset,
+        )
+        .map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
