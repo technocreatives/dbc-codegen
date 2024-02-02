@@ -1011,23 +1011,42 @@ fn scaled_signal_to_rust_int(signal: &Signal) -> String {
     );
 
     // calculate the maximum possible signal value, accounting for factor and offset
-    let factor = signal.factor as u64;
-    let offset = signal.offset as u64;
-    let max_value = 1u64
-        .checked_shl(*signal.signal_size() as u32)
-        .map(|n| n.saturating_sub(1))
-        .and_then(|n| n.checked_mul(factor))
-        .and_then(|n| n.checked_add(offset))
-        .unwrap_or(u64::MAX);
 
-    let size = match max_value {
-        n if n <= u8::MAX.into() => "8",
-        n if n <= u16::MAX.into() => "16",
-        n if n <= u32::MAX.into() => "32",
-        _ => "64",
-    };
+    if signal.min >= 0.0 {
+        let factor = signal.factor as u64;
+        let offset = signal.offset as u64;
+        let max_value = 1u64
+            .checked_shl(*signal.signal_size() as u32)
+            .map(|n| n.saturating_sub(1))
+            .and_then(|n| n.checked_mul(factor))
+            .and_then(|n| n.checked_add(offset))
+            .unwrap_or(u64::MAX);
 
-    format!("{sign}{size}")
+        let size = match max_value {
+            n if n <= u8::MAX.into() => "8",
+            n if n <= u16::MAX.into() => "16",
+            n if n <= u32::MAX.into() => "32",
+            _ => "64",
+        };
+        format!("{sign}{size}")
+    } else {
+        let factor = signal.factor as i64;
+        let offset = signal.offset as i64;
+        let max_value = 1i64
+            .checked_shl(*signal.signal_size() as u32)
+            .map(|n| n.saturating_sub(1))
+            .and_then(|n| n.checked_mul(factor))
+            .and_then(|n| n.checked_add(offset))
+            .unwrap_or(i64::MAX);
+
+        let size = match max_value {
+            n if n <= i8::MAX.into() => "8",
+            n if n <= i16::MAX.into() => "16",
+            n if n <= i32::MAX.into() => "32",
+            _ => "64",
+        };
+        format!("i{size}")
+    }
 }
 
 /// Determine the smallest rust integer that can fit the raw signal values.
