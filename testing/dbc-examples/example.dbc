@@ -44,6 +44,7 @@ BO_ 1337 IntegerFactorOffset: 8 Sit
  SG_ ByteWithOffset : 0|8@1+ (1,1) [1|256] "" Vector__XXX
  SG_ ByteWithFactor : 8|8@1+ (4,0) [0|1020] "" Vector__XXX
  SG_ ByteWithBoth : 16|8@1+ (2,16) [16|526] "" Vector__XXX
+ SG_ ByteWithNegativeOffset : 24|8@1+ (1,-1) [0|255] "" Vector__XXX
 
 VAL_ 512 Three 0 "OFF" 1 "ON" 2 "ONER" 3 "ONEST";
 VAL_ 512 Four 0 "Off" 1 "On" 2 "Oner" 3 "Onest";
