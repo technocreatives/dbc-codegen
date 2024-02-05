@@ -1182,14 +1182,14 @@ impl MultiplexTest {
         u8::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
-    pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexor, CanError> {
+    pub fn multiplexor(&mut self) -> Result<MultiplexTestMultiplexorIndex, CanError> {
         match self.multiplexor_raw() {
-            0 => Ok(MultiplexTestMultiplexor::M0(MultiplexTestMultiplexorM0 {
-                raw: self.raw,
-            })),
-            1 => Ok(MultiplexTestMultiplexor::M1(MultiplexTestMultiplexorM1 {
-                raw: self.raw,
-            })),
+            0 => Ok(MultiplexTestMultiplexorIndex::M0(
+                MultiplexTestMultiplexorM0 { raw: self.raw },
+            )),
+            1 => Ok(MultiplexTestMultiplexorIndex::M1(
+                MultiplexTestMultiplexorM1 { raw: self.raw },
+            )),
             multiplexor => Err(CanError::InvalidMultiplexor {
                 message_id: 200,
                 multiplexor: multiplexor.into(),
@@ -1313,7 +1313,7 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
 }
 /// Defined values for multiplexed signal MultiplexTest
 #[derive(Debug)]
-pub enum MultiplexTestMultiplexor {
+pub enum MultiplexTestMultiplexorIndex {
     M0(MultiplexTestMultiplexorM0),
     M1(MultiplexTestMultiplexorM1),
 }
