@@ -1527,6 +1527,8 @@ impl IntegerFactorOffset {
     pub const BYTE_WITH_BOTH_MAX: u16 = 526_u16;
     pub const BYTE_WITH_NEGATIVE_OFFSET_MIN: u8 = 0_u8;
     pub const BYTE_WITH_NEGATIVE_OFFSET_MAX: u8 = 255_u8;
+    pub const BYTE_WITH_NEGATIVE_MIN_MIN: i16 = -127_i16;
+    pub const BYTE_WITH_NEGATIVE_MIN_MAX: i16 = 127_i16;
 
     /// Construct new IntegerFactorOffset from values
     pub fn new(
@@ -1534,12 +1536,14 @@ impl IntegerFactorOffset {
         byte_with_factor: u16,
         byte_with_both: u16,
         byte_with_negative_offset: u8,
+        byte_with_negative_min: i16,
     ) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 8] };
         res.set_byte_with_offset(byte_with_offset)?;
         res.set_byte_with_factor(byte_with_factor)?;
         res.set_byte_with_both(byte_with_both)?;
         res.set_byte_with_negative_offset(byte_with_negative_offset)?;
+        res.set_byte_with_negative_min(byte_with_negative_min)?;
         Ok(res)
     }
 
@@ -1719,6 +1723,49 @@ impl IntegerFactorOffset {
         self.raw.view_bits_mut::<Lsb0>()[24..32].store_le(value);
         Ok(())
     }
+
+    /// ByteWithNegativeMin
+    ///
+    /// - Min: -127
+    /// - Max: 127
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn byte_with_negative_min(&self) -> i16 {
+        self.byte_with_negative_min_raw()
+    }
+
+    /// Get raw value of ByteWithNegativeMin
+    ///
+    /// - Start bit: 32
+    /// - Signal size: 8 bits
+    /// - Factor: 1
+    /// - Offset: -1
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn byte_with_negative_min_raw(&self) -> i16 {
+        let signal = self.raw.view_bits::<Lsb0>()[32..40].load_le::<u8>();
+
+        let factor = 1;
+        i16::from(signal).saturating_mul(factor).saturating_sub(1)
+    }
+
+    /// Set value of ByteWithNegativeMin
+    #[inline(always)]
+    pub fn set_byte_with_negative_min(&mut self, value: i16) -> Result<(), CanError> {
+        if value < -127_i16 || 127_i16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+        }
+        let factor = 1;
+        let value = value
+            .checked_add(1)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = (value / factor) as u8;
+
+        self.raw.view_bits_mut::<Lsb0>()[32..40].store_le(value);
+        Ok(())
+    }
 }
 
 impl core::convert::TryFrom<&[u8]> for IntegerFactorOffset {
@@ -1746,6 +1793,7 @@ impl core::fmt::Debug for IntegerFactorOffset {
                     "byte_with_negative_offset",
                     &self.byte_with_negative_offset(),
                 )
+                .field("byte_with_negative_min", &self.byte_with_negative_min())
                 .finish()
         } else {
             f.debug_tuple("IntegerFactorOffset")
@@ -1762,11 +1810,13 @@ impl<'a> Arbitrary<'a> for IntegerFactorOffset {
         let byte_with_factor = u.int_in_range(0..=1020)?;
         let byte_with_both = u.int_in_range(16..=526)?;
         let byte_with_negative_offset = u.int_in_range(0..=255)?;
+        let byte_with_negative_min = u.int_in_range(-127..=127)?;
         IntegerFactorOffset::new(
             byte_with_offset,
             byte_with_factor,
             byte_with_both,
             byte_with_negative_offset,
+            byte_with_negative_min,
         )
         .map_err(|_| arbitrary::Error::IncorrectFormat)
     }
