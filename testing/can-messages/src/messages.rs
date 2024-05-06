@@ -36,6 +36,8 @@ pub enum Messages {
     MultiplexTest(MultiplexTest),
     /// IntegerFactorOffset
     IntegerFactorOffset(IntegerFactorOffset),
+    /// LargerIntsWithOffsets
+    LargerIntsWithOffsets(LargerIntsWithOffsets),
     /// MsgWithoutSignals
     MsgWithoutSignals(MsgWithoutSignals),
 }
@@ -52,6 +54,7 @@ impl Messages {
             1028 => Messages::Dolor(Dolor::try_from(payload)?),
             200 => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
             1337 => Messages::IntegerFactorOffset(IntegerFactorOffset::try_from(payload)?),
+            1338 => Messages::LargerIntsWithOffsets(LargerIntsWithOffsets::try_from(payload)?),
             513 => Messages::MsgWithoutSignals(MsgWithoutSignals::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
@@ -1823,6 +1826,167 @@ impl<'a> Arbitrary<'a> for IntegerFactorOffset {
             byte_with_negative_min,
         )
         .map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
+/// LargerIntsWithOffsets
+///
+/// - ID: 1338 (0x53a)
+/// - Size: 8 bytes
+/// - Transmitter: Sit
+#[derive(Clone, Copy)]
+pub struct LargerIntsWithOffsets {
+    raw: [u8; 8],
+}
+
+impl LargerIntsWithOffsets {
+    pub const MESSAGE_ID: u32 = 1338;
+
+    pub const TWELVE_MIN: i16 = -1000_i16;
+    pub const TWELVE_MAX: i16 = 3000_i16;
+    pub const SIXTEEN_MIN: i32 = -1000_i32;
+    pub const SIXTEEN_MAX: i32 = 64535_i32;
+
+    /// Construct new LargerIntsWithOffsets from values
+    pub fn new(twelve: i16, sixteen: i32) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_twelve(twelve)?;
+        res.set_sixteen(sixteen)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8; 8] {
+        &self.raw
+    }
+
+    /// Twelve
+    ///
+    /// - Min: -1000
+    /// - Max: 3000
+    /// - Unit: ""
+    /// - Receivers: XXX
+    #[inline(always)]
+    pub fn twelve(&self) -> i16 {
+        self.twelve_raw()
+    }
+
+    /// Get raw value of Twelve
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 12 bits
+    /// - Factor: 1
+    /// - Offset: -1000
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn twelve_raw(&self) -> i16 {
+        let signal = self.raw.view_bits::<Lsb0>()[0..12].load_le::<u16>();
+
+        let factor = 1;
+        let signal = signal as i16;
+        i16::from(signal)
+            .saturating_mul(factor)
+            .saturating_sub(1000)
+    }
+
+    /// Set value of Twelve
+    #[inline(always)]
+    pub fn set_twelve(&mut self, value: i16) -> Result<(), CanError> {
+        if value < -1000_i16 || 3000_i16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1338 });
+        }
+        let factor = 1;
+        let value = value
+            .checked_add(1000)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1338 })?;
+        let value = (value / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[0..12].store_le(value);
+        Ok(())
+    }
+
+    /// Sixteen
+    ///
+    /// - Min: -1000
+    /// - Max: 64535
+    /// - Unit: ""
+    /// - Receivers: XXX
+    #[inline(always)]
+    pub fn sixteen(&self) -> i32 {
+        self.sixteen_raw()
+    }
+
+    /// Get raw value of Sixteen
+    ///
+    /// - Start bit: 12
+    /// - Signal size: 16 bits
+    /// - Factor: 1
+    /// - Offset: -1000
+    /// - Byte order: LittleEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn sixteen_raw(&self) -> i32 {
+        let signal = self.raw.view_bits::<Lsb0>()[12..28].load_le::<u16>();
+
+        let factor = 1;
+        i32::from(signal)
+            .saturating_mul(factor)
+            .saturating_sub(1000)
+    }
+
+    /// Set value of Sixteen
+    #[inline(always)]
+    pub fn set_sixteen(&mut self, value: i32) -> Result<(), CanError> {
+        if value < -1000_i32 || 64535_i32 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1338 });
+        }
+        let factor = 1;
+        let value = value
+            .checked_add(1000)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1338 })?;
+        let value = (value / factor) as u16;
+
+        self.raw.view_bits_mut::<Lsb0>()[12..28].store_le(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for LargerIntsWithOffsets {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+impl core::fmt::Debug for LargerIntsWithOffsets {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("LargerIntsWithOffsets")
+                .field("twelve", &self.twelve())
+                .field("sixteen", &self.sixteen())
+                .finish()
+        } else {
+            f.debug_tuple("LargerIntsWithOffsets")
+                .field(&self.raw)
+                .finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for LargerIntsWithOffsets {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let twelve = u.int_in_range(-1000..=3000)?;
+        let sixteen = u.int_in_range(-1000..=64535)?;
+        LargerIntsWithOffsets::new(twelve, sixteen).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
