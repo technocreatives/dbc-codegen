@@ -139,6 +139,17 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
 
+    match config.impl_serde {
+        FeatureConfig::Always => {
+            writeln!(&mut w, "use serde::{{Serialize, Deserialize}};")?;
+        }
+        FeatureConfig::Gated(gate) => {
+            writeln!(w, r##"#[cfg(feature = "{gate}")]"##)?;
+            writeln!(&mut w, "use serde::{{Serialize, Deserialize}};")?;
+        }
+        FeatureConfig::Never => (),
+    }
+
     writeln!(&mut w)?;
 
     render_dbc(&mut w, &config, &dbc).context("could not generate Rust code")?;
