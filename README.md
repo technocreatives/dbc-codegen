@@ -131,6 +131,16 @@ pub fn xtype(&self) -> BarType {
 }
 ```
 
+## Development
+
+### lorri for Nix
+
+If using Nix, dbc-codegen is integrated with [lorri](https://github.com/nix-community/lorri) for easy project dependency management. To enable, create a symlink in the top-level working directory:
+
+```sh
+ln -s envrc.lorri .envrc
+```
+
 ## License
 
 Licensed under either of
