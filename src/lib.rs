@@ -69,9 +69,13 @@ pub struct Config<'a> {
     #[builder(default)]
     pub impl_error: FeatureConfig<'a>,
 
-    /// Optional: Validate min and max values in generated signal setters. Default: `Always`.
+    /// Optional: Validate min and max values in generated signal setters. Default: `Always`
     #[builder(default = FeatureConfig::Always)]
     pub check_ranges: FeatureConfig<'a>,
+
+    /// Optional: Allow dead code in the generated module. Default: `false`.
+    #[builder(default)]
+    pub allow_dead_code: bool,
 }
 
 /// Configuration for including features in the codegenerator.
@@ -110,6 +114,9 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
         &mut w,
         "#![allow(unused_comparisons, unreachable_patterns, unused_imports)]"
     )?;
+    if config.allow_dead_code {
+        writeln!(&mut w, "#![allow(dead_code)]")?;
+    }
     writeln!(&mut w, "#![allow(clippy::let_and_return, clippy::eq_op)]")?;
     writeln!(
         &mut w,
