@@ -247,6 +247,8 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
         }
     }
     writeln!(w, "#[derive(Clone, Copy)]")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
     writeln!(w, "pub struct {} {{", type_name(msg.message_name()))?;
     {
         let mut w = PadAdapter::wrap(&mut w);
