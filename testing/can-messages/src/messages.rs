@@ -1,5 +1,5 @@
 // Generated code!
-#![allow(unused_comparisons, unreachable_patterns)]
+#![allow(unused_comparisons, unreachable_patterns, unused_imports)]
 #![allow(clippy::let_and_return, clippy::eq_op)]
 #![allow(clippy::useless_conversion, clippy::unnecessary_cast)]
 #![allow(

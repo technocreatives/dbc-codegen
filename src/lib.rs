@@ -108,7 +108,7 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w, "// Generated code!")?;
     writeln!(
         &mut w,
-        "#![allow(unused_comparisons, unreachable_patterns)]"
+        "#![allow(unused_comparisons, unreachable_patterns, unused_imports)]"
     )?;
     writeln!(&mut w, "#![allow(clippy::let_and_return, clippy::eq_op)]")?;
     writeln!(
