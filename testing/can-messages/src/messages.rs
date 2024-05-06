@@ -5,7 +5,8 @@
 #![allow(
     clippy::excessive_precision,
     clippy::manual_range_contains,
-    clippy::absurd_extreme_comparisons
+    clippy::absurd_extreme_comparisons,
+    clippy::too_many_arguments
 )]
 #![deny(clippy::arithmetic_side_effects)]
 

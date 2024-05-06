@@ -124,7 +124,7 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     )?;
     writeln!(
         &mut w,
-        "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons)]"
+        "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons, clippy::too_many_arguments)]"
     )?;
     writeln!(&mut w, "#![deny(clippy::arithmetic_side_effects)]")?;
     writeln!(&mut w)?;
