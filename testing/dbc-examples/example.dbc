@@ -47,6 +47,8 @@ BO_ 1337 IntegerFactorOffset: 8 Sit
  SG_ ByteWithNegativeOffset : 24|8@1+ (1,-1) [0|255] "" Vector__XXX
  SG_ ByteWithNegativeMin : 32|8@1+ (1,-1) [-127|127] "" Vector__XXX
 
+BO_ 513 MsgWithoutSignals: 8 Ipsum
+
 VAL_ 512 Three 0 "OFF" 1 "ON" 2 "ONER" 3 "ONEST";
 VAL_ 512 Four 0 "Off" 1 "On" 2 "Oner" 3 "Onest";
 VAL_ 512 Type 0 "0Off" 1 "1On";

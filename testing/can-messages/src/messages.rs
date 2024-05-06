@@ -35,6 +35,8 @@ pub enum Messages {
     MultiplexTest(MultiplexTest),
     /// IntegerFactorOffset
     IntegerFactorOffset(IntegerFactorOffset),
+    /// MsgWithoutSignals
+    MsgWithoutSignals(MsgWithoutSignals),
 }
 
 impl Messages {
@@ -49,6 +51,7 @@ impl Messages {
             1028 => Messages::Dolor(Dolor::try_from(payload)?),
             200 => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
             1337 => Messages::IntegerFactorOffset(IntegerFactorOffset::try_from(payload)?),
+            513 => Messages::MsgWithoutSignals(MsgWithoutSignals::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -1819,6 +1822,62 @@ impl<'a> Arbitrary<'a> for IntegerFactorOffset {
             byte_with_negative_min,
         )
         .map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
+/// MsgWithoutSignals
+///
+/// - ID: 513 (0x201)
+/// - Size: 8 bytes
+/// - Transmitter: Ipsum
+#[derive(Clone, Copy)]
+pub struct MsgWithoutSignals {
+    raw: [u8; 8],
+}
+
+impl MsgWithoutSignals {
+    pub const MESSAGE_ID: u32 = 513;
+
+    /// Construct new MsgWithoutSignals from values
+    pub fn new() -> Result<Self, CanError> {
+        let res = Self { raw: [0u8; 8] };
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8; 8] {
+        &self.raw
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for MsgWithoutSignals {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+impl core::fmt::Debug for MsgWithoutSignals {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("MsgWithoutSignals").finish()
+        } else {
+            f.debug_tuple("MsgWithoutSignals").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for MsgWithoutSignals {
+    fn arbitrary(_u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        MsgWithoutSignals::new().map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 

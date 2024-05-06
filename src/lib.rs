@@ -304,7 +304,8 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
             let mut w = PadAdapter::wrap(&mut w);
             writeln!(
                 &mut w,
-                "let mut res = Self {{ raw: [0u8; {}] }};",
+                "let {}res = Self {{ raw: [0u8; {}] }};",
+                if msg.signals().is_empty() { "" } else { "mut " },
                 msg.message_size()
             )?;
             for signal in msg.signals().iter() {
@@ -1319,21 +1320,22 @@ fn render_arbitrary(mut w: impl Write, config: &Config<'_>, msg: &Message) -> Re
         typ = type_name(msg.message_name())
     )?;
     {
+        let filtered_signals: Vec<&Signal> = msg
+            .signals()
+            .iter()
+            .filter(|signal| {
+                *signal.multiplexer_indicator() == MultiplexIndicator::Plain
+                    || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
+            })
+            .collect();
         let mut w = PadAdapter::wrap(&mut w);
         writeln!(
             w,
-            "fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {{"
+            "fn arbitrary({}u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {{",
+            if filtered_signals.is_empty() { "_" } else { "" },
         )?;
         {
             let mut w = PadAdapter::wrap(&mut w);
-            let filtered_signals: Vec<&Signal> = msg
-                .signals()
-                .iter()
-                .filter(|signal| {
-                    *signal.multiplexer_indicator() == MultiplexIndicator::Plain
-                        || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
-                })
-                .collect();
 
             for signal in filtered_signals.iter() {
                 writeln!(
