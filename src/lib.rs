@@ -73,9 +73,13 @@ pub struct Config<'a> {
     #[builder(default)]
     pub impl_error: FeatureConfig<'a>,
 
-    /// Optional: Validate min and max values in generated signal setters. Default: `Always`.
+    /// Optional: Validate min and max values in generated signal setters. Default: `Always`
     #[builder(default = FeatureConfig::Always)]
     pub check_ranges: FeatureConfig<'a>,
+
+    /// Optional: Allow dead code in the generated module. Default: `false`.
+    #[builder(default)]
+    pub allow_dead_code: bool,
 }
 
 /// Configuration for including features in the codegenerator.
@@ -112,8 +116,11 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w, "// Generated code!")?;
     writeln!(
         &mut w,
-        "#![allow(unused_comparisons, unreachable_patterns)]"
+        "#![allow(unused_comparisons, unreachable_patterns, unused_imports)]"
     )?;
+    if config.allow_dead_code {
+        writeln!(&mut w, "#![allow(dead_code)]")?;
+    }
     writeln!(&mut w, "#![allow(clippy::let_and_return, clippy::eq_op)]")?;
     writeln!(
         &mut w,
@@ -121,7 +128,7 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     )?;
     writeln!(
         &mut w,
-        "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons)]"
+        "#![allow(clippy::excessive_precision, clippy::manual_range_contains, clippy::absurd_extreme_comparisons, clippy::too_many_arguments)]"
     )?;
     writeln!(&mut w, "#![deny(clippy::arithmetic_side_effects)]")?;
     writeln!(&mut w)?;
@@ -326,7 +333,8 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
             let mut w = PadAdapter::wrap(&mut w);
             writeln!(
                 &mut w,
-                "let mut res = Self {{ raw: [0u8; {}] }};",
+                "let {}res = Self {{ raw: [0u8; {}] }};",
+                if msg.signals().is_empty() { "" } else { "mut " },
                 msg.message_size()
             )?;
             for signal in msg.signals().iter() {
@@ -1347,21 +1355,22 @@ fn render_arbitrary(mut w: impl Write, config: &Config<'_>, msg: &Message) -> Re
         typ = type_name(msg.message_name())
     )?;
     {
+        let filtered_signals: Vec<&Signal> = msg
+            .signals()
+            .iter()
+            .filter(|signal| {
+                *signal.multiplexer_indicator() == MultiplexIndicator::Plain
+                    || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
+            })
+            .collect();
         let mut w = PadAdapter::wrap(&mut w);
         writeln!(
             w,
-            "fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {{"
+            "fn arbitrary({}u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {{",
+            if filtered_signals.is_empty() { "_" } else { "" },
         )?;
         {
             let mut w = PadAdapter::wrap(&mut w);
-            let filtered_signals: Vec<&Signal> = msg
-                .signals()
-                .iter()
-                .filter(|signal| {
-                    *signal.multiplexer_indicator() == MultiplexIndicator::Plain
-                        || *signal.multiplexer_indicator() == MultiplexIndicator::Multiplexor
-                })
-                .collect();
 
             for signal in filtered_signals.iter() {
                 writeln!(
