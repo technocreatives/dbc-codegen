@@ -63,6 +63,10 @@ pub struct Config<'a> {
     #[builder(default)]
     pub impl_arbitrary: FeatureConfig<'a>,
 
+    /// Optional: `impl Serialize` and `impl Deserialize` for generated types.. Default: `Never`.
+    #[builder(default)]
+    pub impl_serde: FeatureConfig<'a>,
+
     /// Optional: `impl Error` for generated error type. Default: `Never`.
     ///
     /// Note: this feature depends on `std`.
@@ -135,6 +139,17 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
 
+    match config.impl_serde {
+        FeatureConfig::Always => {
+            writeln!(&mut w, "use serde::{{Serialize, Deserialize}};")?;
+        }
+        FeatureConfig::Gated(gate) => {
+            writeln!(w, r##"#[cfg(feature = "{gate}")]"##)?;
+            writeln!(&mut w, "use serde::{{Serialize, Deserialize}};")?;
+        }
+        FeatureConfig::Never => (),
+    }
+
     writeln!(&mut w)?;
 
     render_dbc(&mut w, &config, &dbc).context("could not generate Rust code")?;
@@ -167,6 +182,8 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC, config: &Config<'_>) -> Result
     writeln!(w, "/// All messages")?;
     writeln!(w, "#[derive(Clone)]")?;
     config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
     writeln!(w, "pub enum Messages {{")?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -230,9 +247,14 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
         }
     }
     writeln!(w, "#[derive(Clone, Copy)]")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
     writeln!(w, "pub struct {} {{", type_name(msg.message_name()))?;
     {
         let mut w = PadAdapter::wrap(&mut w);
+        config
+            .impl_serde
+            .fmt_attr(&mut w, "serde(with = \"serde_bytes\")");
         writeln!(w, "raw: [u8; {}],", msg.message_size())?;
     }
     writeln!(w, "}}")?;
@@ -941,6 +963,8 @@ fn write_enum(
     writeln!(w, "/// Defined values for {}", signal.name())?;
     writeln!(w, "#[derive(Clone, Copy, PartialEq)]")?;
     config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
     writeln!(w, "pub enum {} {{", type_name)?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -1253,6 +1277,8 @@ fn render_multiplexor_enums(
     )?;
 
     config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
     writeln!(
         w,
         "pub enum {} {{",
@@ -1278,6 +1304,8 @@ fn render_multiplexor_enums(
         let struct_name = multiplexed_enum_variant_name(msg, multiplexor_signal, **switch_index)?;
 
         config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
+        config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
+        config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
         writeln!(w, r##"#[derive(Default)]"##)?;
         writeln!(
             w,
