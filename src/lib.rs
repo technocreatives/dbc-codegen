@@ -355,7 +355,7 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
         writeln!(&mut w, "pub fn id(&self) -> u32 {{",)?;
         {
             let mut w = PadAdapter::wrap(&mut w);
-            writeln!(&mut w, "Self::MESSAGE_ID")?;
+            writeln!(&mut w, "Self::MESSAGE_ID & 0x1FFF_FFFF")?;
         }
         writeln!(&mut w, "}}")?;
         writeln!(w)?;
