@@ -351,6 +351,15 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
         writeln!(&mut w, "}}")?;
         writeln!(w)?;
 
+        writeln!(&mut w, "/// Access message id")?;
+        writeln!(&mut w, "pub fn id(&self) -> u32 {{",)?;
+        {
+            let mut w = PadAdapter::wrap(&mut w);
+            writeln!(&mut w, "Self::MESSAGE_ID")?;
+        }
+        writeln!(&mut w, "}}")?;
+        writeln!(w)?;
+
         writeln!(&mut w, "/// Access message payload raw value")?;
         writeln!(
             &mut w,
