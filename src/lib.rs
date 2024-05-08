@@ -261,7 +261,7 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
         let mut w = PadAdapter::wrap(&mut w);
         config
             .impl_serde
-            .fmt_attr(&mut w, "serde(with = \"serde_bytes\")");
+            .fmt_attr(&mut w, "serde(with = \"serde_bytes\")")?;
         writeln!(w, "raw: [u8; {}],", msg.message_size())?;
     }
     writeln!(w, "}}")?;
