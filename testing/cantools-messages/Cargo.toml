@@ -12,4 +12,4 @@ can-messages = { path = "../can-messages" }
 
 [build-dependencies]
 cc = "1.0"
-bindgen = "0.57.0"
+bindgen = "0.69.4"
