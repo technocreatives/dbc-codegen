@@ -21,7 +21,7 @@ fn pack_message() {
         type_,
     };
     let mut buffer: [u8; 8] = [0; 8];
-    unsafe { example_bar_pack(buffer.as_mut_ptr(), &bar, buffer.len() as u64) };
+    unsafe { example_bar_pack(buffer.as_mut_ptr(), &bar, buffer.len()) };
     assert_eq!(dbc_codegen_bar.raw(), &buffer);
 }
 
@@ -33,7 +33,7 @@ fn pack_message_signed_negative() {
 
     let foo = example_foo_t { current, voltage };
     let mut buffer: [u8; 4] = [0; 4];
-    unsafe { example_foo_pack(buffer.as_mut_ptr(), &foo, buffer.len() as u64) };
+    unsafe { example_foo_pack(buffer.as_mut_ptr(), &foo, buffer.len()) };
     assert_eq!(dbc_codegen_foo.raw(), &buffer);
 }
 
@@ -45,7 +45,7 @@ fn pack_message_signed_positive() {
 
     let foo = example_foo_t { current, voltage };
     let mut buffer: [u8; 4] = [0; 4];
-    unsafe { example_foo_pack(buffer.as_mut_ptr(), &foo, buffer.len() as u64) };
+    unsafe { example_foo_pack(buffer.as_mut_ptr(), &foo, buffer.len()) };
     assert_eq!(dbc_codegen_foo.raw(), &buffer);
 }
 
@@ -56,7 +56,7 @@ fn pack_big_endian_signal_with_start_bit_zero() {
 
     let dolor = example_dolor_t { one_float };
     let mut buffer: [u8; 8] = [0; 8];
-    unsafe { example_dolor_pack(buffer.as_mut_ptr(), &dolor, buffer.len() as u64) };
+    unsafe { example_dolor_pack(buffer.as_mut_ptr(), &dolor, buffer.len()) };
     assert_eq!(dbc_codegen_bar.raw(), &buffer);
 }
 
@@ -86,8 +86,6 @@ fn pack_message_containing_multiplexed_signals() {
         multiplexed_signal_one_b,
     };
     let mut buffer: [u8; 8] = [0; 8];
-    unsafe {
-        example_multiplex_test_pack(buffer.as_mut_ptr(), &multiplex_test, buffer.len() as u64)
-    };
+    unsafe { example_multiplex_test_pack(buffer.as_mut_ptr(), &multiplex_test, buffer.len()) };
     assert_eq!(dbc_codegen_multiplex_test.raw(), &buffer);
 }
