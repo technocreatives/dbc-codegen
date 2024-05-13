@@ -1,8 +1,8 @@
 #![allow(clippy::float_cmp)]
 
 use can_messages::{
-    Amet, Bar, BarThree, CanError, Foo, MultiplexTest, MultiplexTestMultiplexorIndex,
-    MultiplexTestMultiplexorM0,
+    Amet, Bar, BarThree, CanError, Foo, LargerIntsWithOffsets, MultiplexTest,
+    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0,
 };
 
 #[test]
@@ -75,6 +75,40 @@ fn pack_unpack_message_containing_multiplexed_signals() {
     } else {
         panic!("Invalid multiplexor value");
     }
+}
+
+#[test]
+fn offset_integers() {
+    let mut m = LargerIntsWithOffsets::new(100, 30000).unwrap();
+
+    // Check min/max limits
+    assert_eq!(LargerIntsWithOffsets::TWELVE_MIN, -1000);
+    assert_eq!(LargerIntsWithOffsets::TWELVE_MAX, 3000);
+    assert_eq!(LargerIntsWithOffsets::SIXTEEN_MIN, -1000);
+    assert_eq!(LargerIntsWithOffsets::SIXTEEN_MAX, 64535);
+
+    // Setting at the min/max limits
+    m.set_twelve(-1000).unwrap();
+    m.set_sixteen(64535).unwrap();
+    assert_eq!(m.raw(), b"\x00\xf0\xff\x0f\x00\x00\x00\x00");
+    assert_eq!(m.twelve(), -1000);
+    assert_eq!(m.sixteen(), 64535);
+
+    m.set_twelve(3000).unwrap();
+    m.set_sixteen(-1000).unwrap();
+    assert_eq!(m.raw(), b"\xa0\x0f\x00\x00\x00\x00\x00\x00");
+    assert_eq!(m.twelve(), 3000);
+    assert_eq!(m.sixteen(), -1000);
+
+    // Setting out of range values
+    assert!(matches!(
+        m.set_twelve(-2000),
+        Err(CanError::ParameterOutOfRange { message_id: 1338 })
+    ));
+    assert!(matches!(
+        m.set_sixteen(65536),
+        Err(CanError::ParameterOutOfRange { message_id: 1338 })
+    ));
 }
 
 #[test]
