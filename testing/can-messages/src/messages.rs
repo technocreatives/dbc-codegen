@@ -1,19 +1,4 @@
 // Generated code!
-#![allow(unused_comparisons, unreachable_patterns, unused_imports)]
-#![allow(clippy::let_and_return, clippy::eq_op)]
-#![allow(clippy::useless_conversion, clippy::unnecessary_cast)]
-#![allow(
-    clippy::excessive_precision,
-    clippy::manual_range_contains,
-    clippy::absurd_extreme_comparisons,
-    clippy::too_many_arguments
-)]
-#![deny(clippy::arithmetic_side_effects)]
-
-//! Message definitions from file `"example.dbc"`
-//!
-//! - Version: `Version("43")`
-
 #[cfg(feature = "arb")]
 use arbitrary::{Arbitrary, Unstructured};
 use bitvec::prelude::*;

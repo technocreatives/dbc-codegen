@@ -52,6 +52,7 @@ fn main() {
         .dbc_name(&dbc_file_name)
         .dbc_content(&dbc_file)
         .debug_prints(true)
+        .clippy_attributes(true)
         .build();
 
     dbc_codegen::codegen(config, &mut messages_code).unwrap_or_else(|e| {
