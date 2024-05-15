@@ -42,8 +42,18 @@ fn main() {
         //.check_ranges(FeatureConfig::Never)                // or look below for an example.
         .build();
 
-    let mut out = std::io::BufWriter::new(std::fs::File::create("src/messages.rs").unwrap());
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let dest_path = std::path::Path::new(&out_dir).join("messages.rs");
+    let mut out = std::io::BufWriter::new(std::fs::File::create(&dest_path).unwrap());
     dbc_codegen::codegen(config, &mut out).expect("dbc-codegen failed");
+}
+```
+
+and including the following snippet in your `main.rs` or `lib.rs`:
+
+```rust
+pub mod messages {
+    include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 }
 ```
 
