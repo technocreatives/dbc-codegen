@@ -2,7 +2,7 @@
 
 use can_messages::{
     Amet, Bar, BarThree, CanError, Foo, LargerIntsWithOffsets, MultiplexTest,
-    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0, NegativeFactor
+    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0, NegativeFactorTest,
 };
 
 #[test]
@@ -138,7 +138,19 @@ fn from_enum_into_raw() {
 
 #[test]
 fn negative_factor() {
-    assert_eq!(NegativeFactor::UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MIN, -65535_i32,
-               "Rust type should expand to i32 to hold the negated u16");
+    assert_eq!(
+        NegativeFactorTest::UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MIN,
+        -65535_i32,
+        "Rust type should expand to i32 to hold the negated u16"
+    );
 }
 
+
+#[test]
+fn test_min_max_doesnt_confuse_width() {
+    assert_eq!(
+        NegativeFactorTest::WIDTH_MORE_THAN_MIN_MAX_MAX,
+        2_i16,
+        "This signal should be a Rust i16 because the underlying signal is 10 bits."
+    )
+}

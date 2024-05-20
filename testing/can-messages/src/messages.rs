@@ -36,8 +36,8 @@ pub enum Messages {
     MultiplexTest(MultiplexTest),
     /// IntegerFactorOffset
     IntegerFactorOffset(IntegerFactorOffset),
-    /// NegativeFactor
-    NegativeFactor(NegativeFactor),
+    /// NegativeFactorTest
+    NegativeFactorTest(NegativeFactorTest),
     /// LargerIntsWithOffsets
     LargerIntsWithOffsets(LargerIntsWithOffsets),
     /// MsgWithoutSignals
@@ -56,7 +56,7 @@ impl Messages {
             1028 => Messages::Dolor(Dolor::try_from(payload)?),
             200 => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
             1337 => Messages::IntegerFactorOffset(IntegerFactorOffset::try_from(payload)?),
-            1344 => Messages::NegativeFactor(NegativeFactor::try_from(payload)?),
+            1344 => Messages::NegativeFactorTest(NegativeFactorTest::try_from(payload)?),
             1338 => Messages::LargerIntsWithOffsets(LargerIntsWithOffsets::try_from(payload)?),
             513 => Messages::MsgWithoutSignals(MsgWithoutSignals::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
@@ -1833,32 +1833,83 @@ impl<'a> Arbitrary<'a> for IntegerFactorOffset {
     }
 }
 
-/// NegativeFactor
+/// NegativeFactorTest
 ///
 /// - ID: 1344 (0x540)
-/// - Size: 2 bytes
+/// - Size: 4 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
-pub struct NegativeFactor {
-    raw: [u8; 2],
+pub struct NegativeFactorTest {
+    raw: [u8; 4],
 }
 
-impl NegativeFactor {
+impl NegativeFactorTest {
     pub const MESSAGE_ID: u32 = 1344;
 
+    pub const WIDTH_MORE_THAN_MIN_MAX_MIN: i8 = -2_i8;
+    pub const WIDTH_MORE_THAN_MIN_MAX_MAX: i8 = 2_i8;
     pub const UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MIN: i32 = -65535_i32;
     pub const UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MAX: i32 = 0_i32;
 
-    /// Construct new NegativeFactor from values
-    pub fn new(unsigned_negative_factor_signal: i32) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 2] };
+    /// Construct new NegativeFactorTest from values
+    pub fn new(
+        width_more_than_min_max: i8,
+        unsigned_negative_factor_signal: i32,
+    ) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 4] };
+        res.set_width_more_than_min_max(width_more_than_min_max)?;
         res.set_unsigned_negative_factor_signal(unsigned_negative_factor_signal)?;
         Ok(res)
     }
 
     /// Access message payload raw value
-    pub fn raw(&self) -> &[u8; 2] {
+    pub fn raw(&self) -> &[u8; 4] {
         &self.raw
+    }
+
+    /// WidthMoreThanMinMax
+    ///
+    /// - Min: -2
+    /// - Max: 2
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn width_more_than_min_max(&self) -> i8 {
+        self.width_more_than_min_max_raw()
+    }
+
+    /// Get raw value of WidthMoreThanMinMax
+    ///
+    /// - Start bit: 16
+    /// - Signal size: 10 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Signed
+    #[inline(always)]
+    pub fn width_more_than_min_max_raw(&self) -> i8 {
+        let signal = self.raw.view_bits::<Lsb0>()[16..26].load_le::<u16>();
+
+        let signal = i16::from_ne_bytes(signal.to_ne_bytes());
+        let factor = 1;
+        i8::from(signal).saturating_mul(factor).saturating_add(0)
+    }
+
+    /// Set value of WidthMoreThanMinMax
+    #[inline(always)]
+    pub fn set_width_more_than_min_max(&mut self, value: i8) -> Result<(), CanError> {
+        if value < -2_i8 || 2_i8 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 1344 });
+        }
+        let factor = 1;
+        let value = value
+            .checked_sub(0)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 1344 })?;
+        let value = (value / factor) as i16;
+
+        let value = u16::from_ne_bytes(value.to_ne_bytes());
+        self.raw.view_bits_mut::<Lsb0>()[16..26].store_le(value);
+        Ok(())
     }
 
     /// UnsignedNegativeFactorSignal
@@ -1905,40 +1956,44 @@ impl NegativeFactor {
     }
 }
 
-impl core::convert::TryFrom<&[u8]> for NegativeFactor {
+impl core::convert::TryFrom<&[u8]> for NegativeFactorTest {
     type Error = CanError;
 
     #[inline(always)]
     fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
-        if payload.len() != 2 {
+        if payload.len() != 4 {
             return Err(CanError::InvalidPayloadSize);
         }
-        let mut raw = [0u8; 2];
-        raw.copy_from_slice(&payload[..2]);
+        let mut raw = [0u8; 4];
+        raw.copy_from_slice(&payload[..4]);
         Ok(Self { raw })
     }
 }
 
-impl core::fmt::Debug for NegativeFactor {
+impl core::fmt::Debug for NegativeFactorTest {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
-            f.debug_struct("NegativeFactor")
+            f.debug_struct("NegativeFactorTest")
+                .field("width_more_than_min_max", &self.width_more_than_min_max())
                 .field(
                     "unsigned_negative_factor_signal",
                     &self.unsigned_negative_factor_signal(),
                 )
                 .finish()
         } else {
-            f.debug_tuple("NegativeFactor").field(&self.raw).finish()
+            f.debug_tuple("NegativeFactorTest")
+                .field(&self.raw)
+                .finish()
         }
     }
 }
 
 #[cfg(feature = "arb")]
-impl<'a> Arbitrary<'a> for NegativeFactor {
+impl<'a> Arbitrary<'a> for NegativeFactorTest {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let width_more_than_min_max = u.int_in_range(-2..=2)?;
         let unsigned_negative_factor_signal = u.int_in_range(-65535..=0)?;
-        NegativeFactor::new(unsigned_negative_factor_signal)
+        NegativeFactorTest::new(width_more_than_min_max, unsigned_negative_factor_signal)
             .map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
