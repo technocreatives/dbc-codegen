@@ -1031,15 +1031,9 @@ fn write_enum(
 }
 
 /// Determine the smallest rust integer that can fit the actual signal values,
-/// i.e. accounting for factor and offset.
-///
-/// NOTE: Factor and offset must be whole integers.
+/// using the min/max information of the signal.
 fn scaled_signal_to_rust_int(signal: &Signal) -> String {
-    let sign = match signal.value_type() {
-        can_dbc::ValueType::Signed => "i",
-        can_dbc::ValueType::Unsigned => "u",
-    };
-
+    // Check the factor and offset to convince ourselves that this is supposed to be an integer
     assert!(
         signal.factor.fract().abs() <= f64::EPSILON,
         "Signal Factor ({}) should be an integer",
@@ -1047,7 +1041,7 @@ fn scaled_signal_to_rust_int(signal: &Signal) -> String {
     );
     assert!(
         signal.offset.fract().abs() <= f64::EPSILON,
-        "Signal Factor ({}) should be an integer",
+        "Signal Offset ({}) should be an integer",
         signal.offset,
     );
 
@@ -1540,5 +1534,3 @@ mod tests {
         assert_eq!(signal_params_to_rust_int(-129.0, -127.0), "i16");
     }
 }
-
-// TODO: test getting values from the signal with negative factor
