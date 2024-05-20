@@ -1846,13 +1846,13 @@ pub struct NegativeFactor {
 impl NegativeFactor {
     pub const MESSAGE_ID: u32 = 1344;
 
-    pub const NEGATIVE_FACTOR_SIGNAL_MIN: i32 = -65535_i32;
-    pub const NEGATIVE_FACTOR_SIGNAL_MAX: i32 = 0_i32;
+    pub const UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MIN: i32 = -65535_i32;
+    pub const UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MAX: i32 = 0_i32;
 
     /// Construct new NegativeFactor from values
-    pub fn new(negative_factor_signal: i32) -> Result<Self, CanError> {
+    pub fn new(unsigned_negative_factor_signal: i32) -> Result<Self, CanError> {
         let mut res = Self { raw: [0u8; 2] };
-        res.set_negative_factor_signal(negative_factor_signal)?;
+        res.set_unsigned_negative_factor_signal(unsigned_negative_factor_signal)?;
         Ok(res)
     }
 
@@ -1861,18 +1861,18 @@ impl NegativeFactor {
         &self.raw
     }
 
-    /// NegativeFactorSignal
+    /// UnsignedNegativeFactorSignal
     ///
     /// - Min: -65535
     /// - Max: 0
     /// - Unit: ""
     /// - Receivers: Vector__XXX
     #[inline(always)]
-    pub fn negative_factor_signal(&self) -> i32 {
-        self.negative_factor_signal_raw()
+    pub fn unsigned_negative_factor_signal(&self) -> i32 {
+        self.unsigned_negative_factor_signal_raw()
     }
 
-    /// Get raw value of NegativeFactorSignal
+    /// Get raw value of UnsignedNegativeFactorSignal
     ///
     /// - Start bit: 0
     /// - Signal size: 16 bits
@@ -1881,16 +1881,16 @@ impl NegativeFactor {
     /// - Byte order: LittleEndian
     /// - Value type: Unsigned
     #[inline(always)]
-    pub fn negative_factor_signal_raw(&self) -> i32 {
+    pub fn unsigned_negative_factor_signal_raw(&self) -> i32 {
         let signal = self.raw.view_bits::<Lsb0>()[0..16].load_le::<u16>();
 
         let factor = -1;
         i32::from(signal).saturating_mul(factor).saturating_add(0)
     }
 
-    /// Set value of NegativeFactorSignal
+    /// Set value of UnsignedNegativeFactorSignal
     #[inline(always)]
-    pub fn set_negative_factor_signal(&mut self, value: i32) -> Result<(), CanError> {
+    pub fn set_unsigned_negative_factor_signal(&mut self, value: i32) -> Result<(), CanError> {
         if value < -65535_i32 || 0_i32 < value {
             return Err(CanError::ParameterOutOfRange { message_id: 1344 });
         }
@@ -1923,7 +1923,10 @@ impl core::fmt::Debug for NegativeFactor {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         if f.alternate() {
             f.debug_struct("NegativeFactor")
-                .field("negative_factor_signal", &self.negative_factor_signal())
+                .field(
+                    "unsigned_negative_factor_signal",
+                    &self.unsigned_negative_factor_signal(),
+                )
                 .finish()
         } else {
             f.debug_tuple("NegativeFactor").field(&self.raw).finish()
@@ -1934,8 +1937,9 @@ impl core::fmt::Debug for NegativeFactor {
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for NegativeFactor {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
-        let negative_factor_signal = u.int_in_range(-65535..=0)?;
-        NegativeFactor::new(negative_factor_signal).map_err(|_| arbitrary::Error::IncorrectFormat)
+        let unsigned_negative_factor_signal = u.int_in_range(-65535..=0)?;
+        NegativeFactor::new(unsigned_negative_factor_signal)
+            .map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 

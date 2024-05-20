@@ -1537,10 +1537,8 @@ mod tests {
         assert_eq!(signal_params_to_rust_int(-1.0, 128.0), "i16");
         assert_eq!(signal_params_to_rust_int(-1.0, 255.0), "i16");
         assert_eq!(signal_params_to_rust_int(-65535.0, 0.0), "i32");
+        assert_eq!(signal_params_to_rust_int(-129.0, -127.0), "i16");
     }
 }
 
-// TODO: both min and max are negative?
-// TODO: bulletproof it against errors? min and max are 0, min/max reversed
 // TODO: test getting values from the signal with negative factor
-// TODO: consolidate all the signal range functions?

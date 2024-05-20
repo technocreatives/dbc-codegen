@@ -48,7 +48,7 @@ BO_ 1337 IntegerFactorOffset: 8 Sit
  SG_ ByteWithNegativeMin : 32|8@1+ (1,-1) [-127|127] "" Vector__XXX
 
 BO_ 1344 NegativeFactor: 2 Sit
- SG_ NegativeFactorSignal : 0|16@1+ (-1,0) [-65535|0] "" Vector__XXX
+ SG_ UnsignedNegativeFactorSignal : 0|16@1+ (-1,0) [-65535|0] "" Vector__XXX
 
 BO_ 1338 LargerIntsWithOffsets: 8 Sit
  SG_ Twelve : 0|12@1+ (1,-1000) [-1000|3000] "" XXX

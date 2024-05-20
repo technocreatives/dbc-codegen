@@ -2,7 +2,7 @@
 
 use can_messages::{
     Amet, Bar, BarThree, CanError, Foo, LargerIntsWithOffsets, MultiplexTest,
-    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0,
+    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0, NegativeFactor
 };
 
 #[test]
@@ -135,3 +135,10 @@ fn from_enum_into_raw() {
     let raw: u8 = BarThree::Onest.into();
     assert_eq!(raw, 3);
 }
+
+#[test]
+fn negative_factor() {
+    assert_eq!(NegativeFactor::UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MIN, -65535_i32,
+               "Rust type should expand to i32 to hold the negated u16");
+}
+
