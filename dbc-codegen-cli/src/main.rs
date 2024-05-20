@@ -51,7 +51,7 @@ fn main() {
     let config = Config::builder()
         .dbc_name(&dbc_file_name)
         .dbc_content(&dbc_file)
-        .debug_prints(true)
+        .debug_prints(args.debug)
         .build();
 
     dbc_codegen::codegen(config, &mut messages_code).unwrap_or_else(|e| {
