@@ -27,17 +27,20 @@
 #![deny(clippy::arithmetic_side_effects)]
 
 use anyhow::{anyhow, ensure, Context, Result};
-use can_dbc::{Message, MultiplexIndicator, Signal, ValDescription, ValueDescription, DBC};
+use can_dbc::ValueType::Signed;
+use can_dbc::{
+    Message, MultiplexIndicator, Signal, ValDescription, ValueDescription, ValueType, DBC,
+};
 use heck::{ToPascalCase, ToSnakeCase};
 use pad::PadAdapter;
+use std::cmp::{max, min};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Display,
+    i128, i64,
     io::{self, BufWriter, Write},
 };
-use std::cmp::max;
 use typed_builder::TypedBuilder;
-
 
 mod includes;
 mod keywords;
@@ -1035,11 +1038,6 @@ fn write_enum(
 ///
 /// NOTE: Factor and offset must be whole integers.
 fn scaled_signal_to_rust_int(signal: &Signal) -> String {
-    let sign = match signal.value_type() {
-        can_dbc::ValueType::Signed => "i",
-        can_dbc::ValueType::Unsigned => "u",
-    };
-
     assert!(
         signal.factor.fract().abs() <= f64::EPSILON,
         "Signal Factor ({}) should be an integer",
@@ -1052,48 +1050,119 @@ fn scaled_signal_to_rust_int(signal: &Signal) -> String {
     );
 
     // calculate the maximum possible signal value, accounting for factor and offset
+    signal_params_to_rust_int(
+        *signal.value_type(),
+        signal.signal_size as u32,
+        signal.factor as i64,
+        signal.offset as i64,
+    )
+    .expect(&format!(
+        "Signal {} could not be represented as a Rust integer",
+        &signal.name()
+    ))
+}
 
-    if signal.min >= 0.0 {
-        let factor = signal.factor as u64;
-        let offset = signal.offset as u64;
-        let max_value = 1u64
-            .checked_shl(*signal.signal_size() as u32)
-            .map(|n| n.saturating_sub(1))
-            .and_then(|n| n.checked_mul(factor))
-            .and_then(|n| n.checked_add(offset))
-            .unwrap_or(u64::MAX);
-
-        let size = match max_value {
-            n if n <= u8::MAX.into() => "8",
-            n if n <= u16::MAX.into() => "16",
-            n if n <= u32::MAX.into() => "32",
-            _ => "64",
-        };
-        format!("{sign}{size}")
-    } else {
-        let factor = signal.factor as i64;
-        let offset = signal.offset as i64;
-        let max_value = 1i64
-            .checked_shl(*signal.signal_size() as u32)
-            .map(|n| n.saturating_sub(1))
-            .and_then(|n| n.checked_mul(factor))
-            .and_then(|n| n.checked_add(offset))
-            .unwrap_or(i64::MAX);
-
-        let size = match max_value {
-            n if n <= i8::MAX.into() => "8",
-            n if n <= i16::MAX.into() => "16",
-            n if n <= i32::MAX.into() => "32",
-            _ => "64",
-        };
-        format!("i{size}")
+fn signal_params_to_rust_int(
+    sign: ValueType,
+    signal_size: u32,
+    factor: i64,
+    offset: i64,
+) -> Option<String> {
+    if signal_size > 64 {
+        return None;
+    }
+    let range = get_range_of_values(sign, signal_size, factor, offset);
+    match range {
+        Some((low, high)) => Some(range_to_rust_int(low, high)),
+        _ => None,
     }
 }
 
-fn signal_params_to_rust_int(signal_size: u32, factor: i64, offset: i64) -> String {
-    String::from("u8")
+/// Using the signal's parameters, find the range of values that it spans
+fn get_range_of_values(
+    sign: ValueType,
+    signal_size: u32,
+    factor: i64,
+    offset: i64,
+) -> Option<(i128, i128)> {
+    let range1;
+    let range2;
+    match sign {
+        Signed => {
+            range1 = 1i128
+                .checked_shl(signal_size - 1)
+                .and_then(|n| n.checked_mul(-1))
+                .and_then(|n| n.checked_mul(factor.into()))
+                .and_then(|n| n.checked_add(offset.into()));
+            range2 = 1i128
+                .checked_shl(signal_size - 1)
+                .and_then(|n| n.checked_sub(1))
+                .and_then(|n| n.checked_mul(factor.into()))
+                .and_then(|n| n.checked_add(offset.into()));
+        }
+        ValueType::Unsigned => {
+            range1 = Some(0);
+            range2 = 1i128
+                .checked_shl(signal_size)
+                .and_then(|n| n.checked_sub(1))
+                .and_then(|n| n.checked_mul(factor.into()))
+                .and_then(|n| n.checked_add(offset.into()));
+        }
+    }
+    match (range1, range2) {
+        (Some(a), Some(b)) => Some((min(a, b), max(a, b))),
+        _ => None,
+    }
 }
 
+fn apply_factor_and_offset(input: Option<i64>, factor: i64, offset: i64) -> Option<i64> {
+    input
+        .and_then(|n| n.checked_mul(factor))
+        .and_then(|n| n.checked_add(offset))
+}
+
+/// Determine the smallest Rust integer type that can fit the range of values
+/// Only values derived from 64 bit integers are supported, i.e. the range [-2^64-1, 2^64-1]
+fn range_to_rust_int(low: i128, high: i128) -> String {
+    // Two cases:
+    // Min is negative, in which case lower and upper bounds are signed
+    // Min is positive so lower/upper bounds are unsigned
+    let lower_bound: u8;
+    let upper_bound: u8;
+    let sign: &str;
+
+    if low < 0 {
+        // signed case
+        sign = "i";
+        lower_bound = match low {
+            n if n >= i8::MIN.into() => 8,
+            n if n >= i16::MIN.into() => 16,
+            n if n >= i32::MIN.into() => 32,
+            n if n >= i64::MIN.into() => 64,
+            _ => 128,
+        };
+        upper_bound = match high {
+            n if n <= i8::MAX.into() => 8,
+            n if n <= i16::MAX.into() => 16,
+            n if n <= i32::MAX.into() => 32,
+            n if n <= i64::MAX.into() => 64,
+            _ => 128,
+        };
+    } else {
+        sign = "u";
+        lower_bound = 8;
+        upper_bound = match high {
+            n if n <= u8::MAX.into() => 8,
+            n if n <= u16::MAX.into() => 16,
+            n if n <= u32::MAX.into() => 32,
+            n if n <= u64::MAX.into() => 64,
+            _ => 128,
+        };
+    }
+
+    let size = max(lower_bound, upper_bound);
+    format!("{sign}{size}")
+}
 
 /// Determine the smallest rust integer that can fit the raw signal values.
 fn signal_to_rust_int(signal: &Signal) -> String {
@@ -1123,7 +1192,6 @@ fn signal_to_rust_uint(signal: &Signal) -> String {
 
     format!("u{}", size)
 }
-
 
 #[allow(clippy::float_cmp)]
 fn signal_is_float_in_rust(signal: &Signal) -> bool {
@@ -1518,19 +1586,43 @@ impl FeatureConfig<'_> {
 
 #[cfg(test)]
 mod tests {
-    use crate::signal_params_to_rust_int;
+    use crate::{get_range_of_values, range_to_rust_int, signal_params_to_rust_int};
+    use can_dbc::ValueType::{Signed, Unsigned};
 
     #[test]
-    fn test_something() {
-        // TODO drop
-        assert_eq!(1, 1);
+    fn test_range_of_values() {
+        assert_eq!(get_range_of_values(Unsigned, 4, 1, 0), Some((0, 15)));
+        assert_eq!(
+            get_range_of_values(Unsigned, 32, -1, 0),
+            Some((-(u32::MAX as i128), 0))
+        );
     }
 
     #[test]
-    fn test_convert_signal_params_to_rust_int(){
-        assert_eq!(signal_params_to_rust_int(8, 1, 0), "u8");
-        assert_eq!(signal_params_to_rust_int(8, 2, 0), "u16");
-
+    fn test_range_to_rust_int() {
+        assert_eq!(range_to_rust_int(0, 255), "u8");
+        assert_eq!(range_to_rust_int(-1, 127), "i8");
+        assert_eq!(range_to_rust_int(-1, 128), "i16");
+        assert_eq!(range_to_rust_int(-1, 255), "i16");
+        assert_eq!(range_to_rust_int(-65535, 0), "i32");
+        assert_eq!(range_to_rust_int(-129, -127), "i16");
+        assert_eq!(range_to_rust_int(0, 1i128 << 65), "u128");
+        assert_eq!(range_to_rust_int(-(1i128 << 65), 0), "i128");
     }
 
+    #[test]
+    fn test_convert_signal_params_to_rust_int() {
+        assert_eq!(signal_params_to_rust_int(Signed, 8, 1, 0).unwrap(), "i8");
+        assert_eq!(signal_params_to_rust_int(Signed, 8, 2, 0).unwrap(), "i16");
+        assert_eq!(signal_params_to_rust_int(Signed, 63, 1, 0).unwrap(), "i64");
+        assert_eq!(
+            signal_params_to_rust_int(Unsigned, 64, -1, 0).unwrap(),
+            "i128"
+        );
+        assert_eq!(
+            signal_params_to_rust_int(Unsigned, 65, 1, 0),
+            None,
+            "This shouldn't be valid in a DBC, it's more than 64 bits"
+        );
+    }
 }
