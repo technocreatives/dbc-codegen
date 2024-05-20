@@ -35,7 +35,9 @@ use std::{
     fmt::Display,
     io::{self, BufWriter, Write},
 };
+use std::cmp::max;
 use typed_builder::TypedBuilder;
+
 
 mod includes;
 mod keywords;
@@ -261,7 +263,7 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
         let mut w = PadAdapter::wrap(&mut w);
         config
             .impl_serde
-            .fmt_attr(&mut w, "serde(with = \"serde_bytes\")");
+            .fmt_attr(&mut w, "serde(with = \"serde_bytes\")")?;
         writeln!(w, "raw: [u8; {}],", msg.message_size())?;
     }
     writeln!(w, "}}")?;
@@ -1049,44 +1051,54 @@ fn scaled_signal_to_rust_int(signal: &Signal) -> String {
         signal.offset,
     );
 
-    // calculate the maximum possible signal value, accounting for factor and offset
-
-    if signal.min >= 0.0 {
-        let factor = signal.factor as u64;
-        let offset = signal.offset as u64;
-        let max_value = 1u64
-            .checked_shl(*signal.signal_size() as u32)
-            .map(|n| n.saturating_sub(1))
-            .and_then(|n| n.checked_mul(factor))
-            .and_then(|n| n.checked_add(offset))
-            .unwrap_or(u64::MAX);
-
-        let size = match max_value {
-            n if n <= u8::MAX.into() => "8",
-            n if n <= u16::MAX.into() => "16",
-            n if n <= u32::MAX.into() => "32",
-            _ => "64",
-        };
-        format!("{sign}{size}")
-    } else {
-        let factor = signal.factor as i64;
-        let offset = signal.offset as i64;
-        let max_value = 1i64
-            .checked_shl(*signal.signal_size() as u32)
-            .map(|n| n.saturating_sub(1))
-            .and_then(|n| n.checked_mul(factor))
-            .and_then(|n| n.checked_add(offset))
-            .unwrap_or(i64::MAX);
-
-        let size = match max_value {
-            n if n <= i8::MAX.into() => "8",
-            n if n <= i16::MAX.into() => "16",
-            n if n <= i32::MAX.into() => "32",
-            _ => "64",
-        };
-        format!("i{size}")
-    }
+    signal_params_to_rust_int(*signal.min(), *signal.max())
 }
+
+
+
+/// Determine the smallest Rust integer type that can fit the range of values
+fn signal_params_to_rust_int(
+    low: f64,
+    high: f64
+) -> String {
+
+    // Two cases:
+    // Min is negative, in which case lower and upper bounds are signed
+    // Min is positive so lower/upper bounds are unsigned
+    let lower_bound: u8;
+    let upper_bound: u8;
+    let sign: &str;
+
+    if low < 0.0 {
+        // signed case
+        sign = "i";
+        lower_bound = match low {
+            n if n >= i8::MIN.into() => 8,
+            n if n >= i16::MIN.into() => 16,
+            n if n >= i32::MIN.into() => 32,
+            _ => 64
+        };
+        upper_bound = match high {
+            n if n <= i8::MAX.into() => 8,
+            n if n <= i16::MAX.into() => 16,
+            n if n <= i32::MAX.into() => 32,
+            _ => 64
+        };
+    } else{
+        sign = "u";
+        lower_bound = 8;
+        upper_bound = match high {
+            n if n <= u8::MAX.into() => 8,
+            n if n <= u16::MAX.into() => 16,
+            n if n <= u32::MAX.into() => 32,
+            _ => 64
+        };
+    }
+
+    let size = max(lower_bound, upper_bound);
+    format!("{sign}{size}")
+}
+
 
 /// Determine the smallest rust integer that can fit the raw signal values.
 fn signal_to_rust_int(signal: &Signal) -> String {
@@ -1116,6 +1128,7 @@ fn signal_to_rust_uint(signal: &Signal) -> String {
 
     format!("u{}", size)
 }
+
 
 #[allow(clippy::float_cmp)]
 fn signal_is_float_in_rust(signal: &Signal) -> bool {
@@ -1507,3 +1520,27 @@ impl FeatureConfig<'_> {
         f(&mut w)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{signal_params_to_rust_int};
+
+    #[test]
+    fn test_something() {
+        assert_eq!(1, 1);
+    }
+
+    #[test]
+    fn test_signal_params_to_rust_int() {
+        assert_eq!(signal_params_to_rust_int(0.0, 255.0), "u8");
+        assert_eq!(signal_params_to_rust_int(-1.0, 127.0), "i8");
+        assert_eq!(signal_params_to_rust_int(-1.0, 128.0), "i16");
+        assert_eq!(signal_params_to_rust_int(-1.0, 255.0), "i16");
+        assert_eq!(signal_params_to_rust_int(-65535.0, 0.0), "i32");
+    }
+}
+
+// TODO: both min and max are negative?
+// TODO: bulletproof it against errors? min and max are 0, min/max reversed
+// TODO: test getting values from the signal with negative factor
+// TODO: consolidate all the signal range functions?
