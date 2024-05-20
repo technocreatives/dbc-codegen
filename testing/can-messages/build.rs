@@ -34,5 +34,7 @@ fn main() -> Result<()> {
         .output()
         .expect("failed to execute rustfmt");
 
+    fs::copy("src/messages.rs", "../can-embedded/src/messages.rs")?;
+
     Ok(())
 }
