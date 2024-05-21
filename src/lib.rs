@@ -1058,8 +1058,7 @@ fn scaled_signal_to_rust_int(signal: &Signal) -> String {
     .expect(&err)
 }
 
-/// Convert the relevant parameters of a signal into a Rust type.
-/// This is easiest to unit-test than taking the whole `can_dbc::Signal`
+/// Convert the relevant parameters of a `can_dbc::Signal` into a Rust type.
 fn signal_params_to_rust_int(
     sign: can_dbc::ValueType,
     signal_size: u32,
