@@ -27,17 +27,13 @@
 #![deny(clippy::arithmetic_side_effects)]
 
 use anyhow::{anyhow, ensure, Context, Result};
-use can_dbc::ValueType::Signed;
-use can_dbc::{
-    Message, MultiplexIndicator, Signal, ValDescription, ValueDescription, ValueType, DBC,
-};
+use can_dbc::{Message, MultiplexIndicator, Signal, ValDescription, ValueDescription, DBC};
 use heck::{ToPascalCase, ToSnakeCase};
 use pad::PadAdapter;
 use std::cmp::{max, min};
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Display,
-    i128, i64,
     io::{self, BufWriter, Write},
 };
 use typed_builder::TypedBuilder;
@@ -1063,7 +1059,7 @@ fn scaled_signal_to_rust_int(signal: &Signal) -> String {
 }
 
 fn signal_params_to_rust_int(
-    sign: ValueType,
+    sign: can_dbc::ValueType,
     signal_size: u32,
     factor: i64,
     offset: i64,
@@ -1080,7 +1076,7 @@ fn signal_params_to_rust_int(
 
 /// Using the signal's parameters, find the range of values that it spans
 fn get_range_of_values(
-    sign: ValueType,
+    sign: can_dbc::ValueType,
     signal_size: u32,
     factor: i64,
     offset: i64,
@@ -1088,7 +1084,7 @@ fn get_range_of_values(
     let low;
     let high;
     match sign {
-        Signed => {
+        can_dbc::ValueType::Signed => {
             low = 1i128
                 .checked_shl(signal_size - 1)
                 .and_then(|n| n.checked_mul(-1));
@@ -1096,7 +1092,7 @@ fn get_range_of_values(
                 .checked_shl(signal_size - 1)
                 .and_then(|n| n.checked_sub(1));
         }
-        ValueType::Unsigned => {
+        can_dbc::ValueType::Unsigned => {
             low = Some(0);
             high = 1i128
                 .checked_shl(signal_size)
