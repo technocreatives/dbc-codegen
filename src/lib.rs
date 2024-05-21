@@ -1085,40 +1085,37 @@ fn get_range_of_values(
     factor: i64,
     offset: i64,
 ) -> Option<(i128, i128)> {
-    let range1;
-    let range2;
+    let low;
+    let high;
     match sign {
         Signed => {
-            range1 = 1i128
+            low = 1i128
                 .checked_shl(signal_size - 1)
-                .and_then(|n| n.checked_mul(-1))
-                .and_then(|n| n.checked_mul(factor.into()))
-                .and_then(|n| n.checked_add(offset.into()));
-            range2 = 1i128
+                .and_then(|n| n.checked_mul(-1));
+            high = 1i128
                 .checked_shl(signal_size - 1)
-                .and_then(|n| n.checked_sub(1))
-                .and_then(|n| n.checked_mul(factor.into()))
-                .and_then(|n| n.checked_add(offset.into()));
+                .and_then(|n| n.checked_sub(1));
         }
         ValueType::Unsigned => {
-            range1 = Some(0);
-            range2 = 1i128
+            low = Some(0);
+            high = 1i128
                 .checked_shl(signal_size)
-                .and_then(|n| n.checked_sub(1))
-                .and_then(|n| n.checked_mul(factor.into()))
-                .and_then(|n| n.checked_add(offset.into()));
+                .and_then(|n| n.checked_sub(1));
+
         }
     }
+    let range1 = apply_factor_and_offset(low, factor, offset);
+    let range2 = apply_factor_and_offset(high, factor, offset);
     match (range1, range2) {
         (Some(a), Some(b)) => Some((min(a, b), max(a, b))),
         _ => None,
     }
 }
 
-fn apply_factor_and_offset(input: Option<i64>, factor: i64, offset: i64) -> Option<i64> {
+fn apply_factor_and_offset(input: Option<i128>, factor: i64, offset: i64) -> Option<i128> {
     input
-        .and_then(|n| n.checked_mul(factor))
-        .and_then(|n| n.checked_add(offset))
+        .and_then(|n| n.checked_mul(factor.into()))
+        .and_then(|n| n.checked_add(offset.into()))
 }
 
 /// Determine the smallest Rust integer type that can fit the range of values
@@ -1595,6 +1592,10 @@ mod tests {
         assert_eq!(
             get_range_of_values(Unsigned, 32, -1, 0),
             Some((-(u32::MAX as i128), 0))
+        );
+        assert_eq!(
+            get_range_of_values(Unsigned, 12, 1, -1000),
+            Some((-1000, 3095))
         );
     }
 
