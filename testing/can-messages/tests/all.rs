@@ -6,7 +6,6 @@ use can_messages::{
 };
 
 #[test]
-#[cfg(feature = "range_checked")]
 fn check_range_value_error() {
     let result = Bar::new(1, 2.0, 3, 4, true);
     assert!(matches!(
@@ -16,7 +15,6 @@ fn check_range_value_error() {
 }
 
 #[test]
-#[cfg(feature = "range_checked")]
 fn check_range_value_valid() {
     let result = Bar::new(1, 2.0, 3, 3, true);
     assert!(result.is_ok());
