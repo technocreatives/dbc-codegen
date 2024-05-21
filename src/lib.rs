@@ -1045,19 +1045,21 @@ fn scaled_signal_to_rust_int(signal: &Signal) -> String {
         signal.offset,
     );
 
-    // calculate the maximum possible signal value, accounting for factor and offset
+    let err = format!(
+        "Signal {} could not be represented as a Rust integer",
+        &signal.name()
+    );
     signal_params_to_rust_int(
         *signal.value_type(),
         signal.signal_size as u32,
         signal.factor as i64,
         signal.offset as i64,
     )
-    .expect(&format!(
-        "Signal {} could not be represented as a Rust integer",
-        &signal.name()
-    ))
+    .expect(&err)
 }
 
+/// Convert the relevant parameters of a signal into a Rust type.
+/// This is easiest to unit-test than taking the whole `can_dbc::Signal`
 fn signal_params_to_rust_int(
     sign: can_dbc::ValueType,
     signal_size: u32,
@@ -1074,22 +1076,25 @@ fn signal_params_to_rust_int(
     }
 }
 
-/// Using the signal's parameters, find the range of values that it spans
+/// Using the signal's parameters, find the range of values that it spans.
 fn get_range_of_values(
     sign: can_dbc::ValueType,
     signal_size: u32,
     factor: i64,
     offset: i64,
 ) -> Option<(i128, i128)> {
+    if signal_size == 0 {
+        return None;
+    }
     let low;
     let high;
     match sign {
         can_dbc::ValueType::Signed => {
             low = 1i128
-                .checked_shl(signal_size - 1)
+                .checked_shl(signal_size.saturating_sub(1))
                 .and_then(|n| n.checked_mul(-1));
             high = 1i128
-                .checked_shl(signal_size - 1)
+                .checked_shl(signal_size.saturating_sub(1))
                 .and_then(|n| n.checked_sub(1));
         }
         can_dbc::ValueType::Unsigned => {
@@ -1116,9 +1121,6 @@ fn apply_factor_and_offset(input: Option<i128>, factor: i64, offset: i64) -> Opt
 /// Determine the smallest Rust integer type that can fit the range of values
 /// Only values derived from 64 bit integers are supported, i.e. the range [-2^64-1, 2^64-1]
 fn range_to_rust_int(low: i128, high: i128) -> String {
-    // Two cases:
-    // Min is negative, in which case lower and upper bounds are signed
-    // Min is positive so lower/upper bounds are unsigned
     let lower_bound: u8;
     let upper_bound: u8;
     let sign: &str;
@@ -1591,6 +1593,15 @@ mod tests {
         assert_eq!(
             get_range_of_values(Unsigned, 12, 1, -1000),
             Some((-1000, 3095))
+        );
+    }
+
+    #[test]
+    fn test_range_0_signal_size() {
+        assert_eq!(
+            get_range_of_values(Signed, 0, 1, 0),
+            None,
+            "0 bit signal should be invalid"
         );
     }
 
