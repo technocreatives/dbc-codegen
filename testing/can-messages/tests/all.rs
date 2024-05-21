@@ -148,6 +148,6 @@ fn test_min_max_doesnt_confuse_width() {
     assert_eq!(
         NegativeFactorTest::WIDTH_MORE_THAN_MIN_MAX_MAX,
         2_i16,
-        "This signal should be a Rust i16 because the underlying signal is 10 bits."
+        "This signal should be i16 even though the min/max only needs i8."
     )
 }
