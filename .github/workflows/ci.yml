@@ -58,7 +58,7 @@ jobs:
       - name: Install Rust targets we use for embedded
         run: rustup target install thumbv7em-none-eabihf
       - name: Build for embedded
-        run: cargo build -p can-embedded --target=thumbv7em-none-eabihf
+        run: cargo build -p can-embedded --target=thumbv7em-none-eabihf --no-default-features
 
       - name: Install clippy
         run: rustup component add clippy
