@@ -6,3 +6,4 @@ edition = "2021"
 
 [dependencies]
 bitvec = { version = "1.0", default-features = false }
+can-messages = { path = "../can-messages" }
