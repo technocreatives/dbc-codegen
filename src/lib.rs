@@ -1101,7 +1101,6 @@ fn get_range_of_values(
             high = 1i128
                 .checked_shl(signal_size)
                 .and_then(|n| n.checked_sub(1));
-
         }
     }
     let range1 = apply_factor_and_offset(low, factor, offset);

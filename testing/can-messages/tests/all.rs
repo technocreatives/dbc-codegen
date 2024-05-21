@@ -143,7 +143,6 @@ fn negative_factor() {
     );
 }
 
-
 #[test]
 fn test_min_max_doesnt_confuse_width() {
     assert_eq!(
