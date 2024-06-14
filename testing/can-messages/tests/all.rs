@@ -2,7 +2,8 @@
 
 use can_messages::{
     Amet, Bar, BarThree, CanError, Foo, LargerIntsWithOffsets, MultiplexTest,
-    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0,
+    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0, TruncatedBeSignal,
+    TruncatedLeSignal,
 };
 
 #[test]
@@ -75,6 +76,24 @@ fn pack_unpack_message_containing_multiplexed_signals() {
     } else {
         panic!("Invalid multiplexor value");
     }
+}
+
+#[test]
+fn pack_unpack_signed_truncated_signal() {
+    let result = TruncatedBeSignal::new(42).unwrap();
+    assert_eq!(result.foo_raw(), 42);
+
+    let result = TruncatedLeSignal::new(42).unwrap();
+    assert_eq!(result.foo_raw(), 42);
+}
+
+#[test]
+fn pack_unpack_signed_truncated_signal_negative() {
+    let result = TruncatedBeSignal::new(-42).unwrap();
+    assert_eq!(result.foo_raw(), -42);
+
+    let result = TruncatedLeSignal::new(-42).unwrap();
+    assert_eq!(result.foo_raw(), -42);
 }
 
 #[test]
