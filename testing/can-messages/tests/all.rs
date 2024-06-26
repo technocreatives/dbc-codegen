@@ -2,11 +2,10 @@
 
 use can_messages::{
     Amet, Bar, BarThree, CanError, Foo, LargerIntsWithOffsets, MultiplexTest,
-    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0,
+    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0, NegativeFactorTest,
 };
 
 #[test]
-#[cfg(feature = "range_checked")]
 fn check_range_value_error() {
     let result = Bar::new(1, 2.0, 3, 4, true);
     assert!(matches!(
@@ -16,7 +15,6 @@ fn check_range_value_error() {
 }
 
 #[test]
-#[cfg(feature = "range_checked")]
 fn check_range_value_valid() {
     let result = Bar::new(1, 2.0, 3, 3, true);
     assert!(result.is_ok());
@@ -134,4 +132,22 @@ fn debug_alternative_impl() {
 fn from_enum_into_raw() {
     let raw: u8 = BarThree::Onest.into();
     assert_eq!(raw, 3);
+}
+
+#[test]
+fn negative_factor() {
+    assert_eq!(
+        NegativeFactorTest::UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MIN,
+        -65535_i32,
+        "Rust type should expand to i32 to hold the negated u16"
+    );
+}
+
+#[test]
+fn test_min_max_doesnt_confuse_width() {
+    assert_eq!(
+        NegativeFactorTest::WIDTH_MORE_THAN_MIN_MAX_MAX,
+        2_i16,
+        "This signal should be i16 even though the min/max only needs i8."
+    )
 }

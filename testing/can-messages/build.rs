@@ -12,6 +12,7 @@ fn main() -> Result<()> {
     let mut out = BufWriter::new(File::create(out_file)?);
     println!("cargo:rerun-if-changed=../dbc-examples/example.dbc");
     println!("cargo:rerun-if-changed=../../src");
+    println!("cargo:rerun-if-changed=../can-embedded/src");
 
     let config = Config::builder()
         .dbc_name("example.dbc")
@@ -33,6 +34,8 @@ fn main() -> Result<()> {
         .arg(out_file)
         .output()
         .expect("failed to execute rustfmt");
+
+    fs::copy("src/messages.rs", "../can-embedded/src/messages.rs")?;
 
     Ok(())
 }

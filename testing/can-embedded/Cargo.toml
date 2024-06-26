@@ -4,5 +4,16 @@ version = "0.1.0"
 authors = ["Pascal Hertleif <pascal@technocreatives.com>"]
 edition = "2021"
 
+[features]
+default = ["build-messages"]
+build-messages = ["dep:can-messages"]
+
 [dependencies]
 bitvec = { version = "1.0", default-features = false }
+
+
+# This is optional and default so we can turn it off for the embedded target.
+# Then it doesn't pull in std.
+[dependencies.can-messages]
+path = "../can-messages"
+optional = true
