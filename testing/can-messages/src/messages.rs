@@ -91,6 +91,11 @@ impl Foo {
         Ok(res)
     }
 
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
+    }
+
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8; 4] {
         &self.raw
@@ -250,6 +255,11 @@ impl Bar {
         res.set_four(four)?;
         res.set_xtype(xtype)?;
         Ok(res)
+    }
+
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
     }
 
     /// Access message payload raw value
@@ -611,6 +621,11 @@ impl X4wd {
         Ok(res)
     }
 
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
+    }
+
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8; 8] {
         &self.raw
@@ -754,6 +769,11 @@ impl Amet {
         res.set_four(four)?;
         res.set_five(five)?;
         Ok(res)
+    }
+
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
     }
 
     /// Access message payload raw value
@@ -1032,6 +1052,11 @@ impl Dolor {
         Ok(res)
     }
 
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
+    }
+
     /// Access message payload raw value
     pub fn raw(&self) -> &[u8; 8] {
         &self.raw
@@ -1169,6 +1194,11 @@ impl MultiplexTest {
         res.set_multiplexor(multiplexor)?;
         res.set_unmultiplexed_signal(unmultiplexed_signal)?;
         Ok(res)
+    }
+
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
     }
 
     /// Access message payload raw value
@@ -1555,6 +1585,11 @@ impl IntegerFactorOffset {
         res.set_byte_with_negative_offset(byte_with_negative_offset)?;
         res.set_byte_with_negative_min(byte_with_negative_min)?;
         Ok(res)
+    }
+
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
     }
 
     /// Access message payload raw value
@@ -2176,6 +2211,11 @@ impl MsgWithoutSignals {
     pub fn new() -> Result<Self, CanError> {
         let res = Self { raw: [0u8; 8] };
         Ok(res)
+    }
+
+    /// Access message id
+    pub fn id(&self) -> u32 {
+        Self::MESSAGE_ID & 0x1FFF_FFFF
     }
 
     /// Access message payload raw value
