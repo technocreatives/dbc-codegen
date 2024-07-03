@@ -42,6 +42,10 @@ pub enum Messages {
     LargerIntsWithOffsets(LargerIntsWithOffsets),
     /// MsgWithoutSignals
     MsgWithoutSignals(MsgWithoutSignals),
+    /// TruncatedBeSignal
+    TruncatedBeSignal(TruncatedBeSignal),
+    /// TruncatedLeSignal
+    TruncatedLeSignal(TruncatedLeSignal),
 }
 
 impl Messages {
@@ -59,6 +63,8 @@ impl Messages {
             1344 => Messages::NegativeFactorTest(NegativeFactorTest::try_from(payload)?),
             1338 => Messages::LargerIntsWithOffsets(LargerIntsWithOffsets::try_from(payload)?),
             513 => Messages::MsgWithoutSignals(MsgWithoutSignals::try_from(payload)?),
+            9001 => Messages::TruncatedBeSignal(TruncatedBeSignal::try_from(payload)?),
+            9002 => Messages::TruncatedLeSignal(TruncatedLeSignal::try_from(payload)?),
             n => return Err(CanError::UnknownMessageId(n)),
         };
         Ok(res)
@@ -159,9 +165,8 @@ impl Foo {
     /// - Value type: Signed
     #[inline(always)]
     pub fn current_raw(&self) -> f32 {
-        let signal = self.raw.view_bits::<Lsb0>()[0..16].load_le::<u16>();
+        let signal = self.raw.view_bits::<Lsb0>()[0..16].load_le::<i16>();
 
-        let signal = i16::from_ne_bytes(signal.to_ne_bytes());
         let factor = 0.0625_f32;
         let offset = 0_f32;
         (signal as f32) * factor + offset
@@ -1930,9 +1935,8 @@ impl NegativeFactorTest {
     /// - Value type: Signed
     #[inline(always)]
     pub fn width_more_than_min_max_raw(&self) -> i16 {
-        let signal = self.raw.view_bits::<Lsb0>()[16..26].load_le::<u16>();
+        let signal = self.raw.view_bits::<Lsb0>()[16..26].load_le::<i16>();
 
-        let signal = i16::from_ne_bytes(signal.to_ne_bytes());
         let factor = 1;
         let signal = signal as i16;
         i16::from(signal).saturating_mul(factor).saturating_add(0)
@@ -2212,6 +2216,222 @@ impl core::fmt::Debug for MsgWithoutSignals {
 impl<'a> Arbitrary<'a> for MsgWithoutSignals {
     fn arbitrary(_u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
         MsgWithoutSignals::new().map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
+/// TruncatedBeSignal
+///
+/// - ID: 9001 (0x2329)
+/// - Size: 8 bytes
+/// - Transmitter: Ipsum
+#[derive(Clone, Copy)]
+pub struct TruncatedBeSignal {
+    raw: [u8; 8],
+}
+
+impl TruncatedBeSignal {
+    pub const MESSAGE_ID: u32 = 9001;
+
+    pub const FOO_MIN: i16 = -100_i16;
+    pub const FOO_MAX: i16 = 100_i16;
+
+    /// Construct new TruncatedBeSignal from values
+    pub fn new(foo: i16) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_foo(foo)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8; 8] {
+        &self.raw
+    }
+
+    /// Foo
+    ///
+    /// - Min: -100
+    /// - Max: 100
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn foo(&self) -> i16 {
+        self.foo_raw()
+    }
+
+    /// Get raw value of Foo
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 12 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: BigEndian
+    /// - Value type: Signed
+    #[inline(always)]
+    pub fn foo_raw(&self) -> i16 {
+        let signal = self.raw.view_bits::<Msb0>()[7..19].load_be::<i16>();
+
+        let factor = 1;
+        let signal = signal as i16;
+        i16::from(signal).saturating_mul(factor).saturating_add(0)
+    }
+
+    /// Set value of Foo
+    #[inline(always)]
+    pub fn set_foo(&mut self, value: i16) -> Result<(), CanError> {
+        if value < -100_i16 || 100_i16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 9001 });
+        }
+        let factor = 1;
+        let value = value
+            .checked_sub(0)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 9001 })?;
+        let value = (value / factor) as i16;
+
+        let value = u16::from_ne_bytes(value.to_ne_bytes());
+        self.raw.view_bits_mut::<Msb0>()[7..19].store_be(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for TruncatedBeSignal {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+impl core::fmt::Debug for TruncatedBeSignal {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("TruncatedBeSignal")
+                .field("foo", &self.foo())
+                .finish()
+        } else {
+            f.debug_tuple("TruncatedBeSignal").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for TruncatedBeSignal {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let foo = u.int_in_range(-100..=100)?;
+        TruncatedBeSignal::new(foo).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
+/// TruncatedLeSignal
+///
+/// - ID: 9002 (0x232a)
+/// - Size: 8 bytes
+/// - Transmitter: Ipsum
+#[derive(Clone, Copy)]
+pub struct TruncatedLeSignal {
+    raw: [u8; 8],
+}
+
+impl TruncatedLeSignal {
+    pub const MESSAGE_ID: u32 = 9002;
+
+    pub const FOO_MIN: i16 = -100_i16;
+    pub const FOO_MAX: i16 = 100_i16;
+
+    /// Construct new TruncatedLeSignal from values
+    pub fn new(foo: i16) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_foo(foo)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8; 8] {
+        &self.raw
+    }
+
+    /// Foo
+    ///
+    /// - Min: -100
+    /// - Max: 100
+    /// - Unit: ""
+    /// - Receivers: Vector__XXX
+    #[inline(always)]
+    pub fn foo(&self) -> i16 {
+        self.foo_raw()
+    }
+
+    /// Get raw value of Foo
+    ///
+    /// - Start bit: 0
+    /// - Signal size: 12 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: LittleEndian
+    /// - Value type: Signed
+    #[inline(always)]
+    pub fn foo_raw(&self) -> i16 {
+        let signal = self.raw.view_bits::<Lsb0>()[0..12].load_le::<i16>();
+
+        let factor = 1;
+        let signal = signal as i16;
+        i16::from(signal).saturating_mul(factor).saturating_add(0)
+    }
+
+    /// Set value of Foo
+    #[inline(always)]
+    pub fn set_foo(&mut self, value: i16) -> Result<(), CanError> {
+        if value < -100_i16 || 100_i16 < value {
+            return Err(CanError::ParameterOutOfRange { message_id: 9002 });
+        }
+        let factor = 1;
+        let value = value
+            .checked_sub(0)
+            .ok_or(CanError::ParameterOutOfRange { message_id: 9002 })?;
+        let value = (value / factor) as i16;
+
+        let value = u16::from_ne_bytes(value.to_ne_bytes());
+        self.raw.view_bits_mut::<Lsb0>()[0..12].store_le(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for TruncatedLeSignal {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+impl core::fmt::Debug for TruncatedLeSignal {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("TruncatedLeSignal")
+                .field("foo", &self.foo())
+                .finish()
+        } else {
+            f.debug_tuple("TruncatedLeSignal").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for TruncatedLeSignal {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let foo = u.int_in_range(-100..=100)?;
+        TruncatedLeSignal::new(foo).map_err(|_| arbitrary::Error::IncorrectFormat)
     }
 }
 
