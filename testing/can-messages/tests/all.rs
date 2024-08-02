@@ -2,7 +2,7 @@
 
 use can_messages::{
     Amet, Bar, BarThree, CanError, Foo, LargerIntsWithOffsets, MultiplexTest,
-    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0, NegativeFactorTest,
+    MultiplexTestMultiplexorIndex, MultiplexTestMultiplexorM0, NegativeFactorTest, NoMinMax,
 };
 
 #[test]
@@ -18,6 +18,15 @@ fn check_range_value_error() {
 fn check_range_value_valid() {
     let result = Bar::new(1, 2.0, 3, 3, true);
     assert!(result.is_ok());
+}
+
+#[test]
+fn check_min_max_zero_disables_range_check() {
+    let result = NoMinMax::new(10);
+    assert!(
+        result.is_ok(),
+        "This should be valid. The min and max are 0 in the DBC which disables range checking."
+    );
 }
 
 #[test]
