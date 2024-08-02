@@ -8,6 +8,8 @@ BS_:
 BU_: Lorem Ipsum Dolor
 
 
+BO_ 1345 NoMinMax: 1 Vector__XXX
+ SG_ NoMinMaxSignal : 0|8@1- (1,0) [0|0] "" Vector__XXX
 BO_ 256 Foo: 4 Lorem
  SG_ Voltage : 16|16@1+ (0.000976562,0) [0E-009|63.9990234375] "V" Vector__XXX
  SG_ Current : 0|16@1- (0.0625,0) [-2048|2047.9375] "A" Vector__XXX
