@@ -57,9 +57,9 @@ dependencies = [
 
 [[package]]
 name = "can-dbc"
-version = "5.0.0"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c2d32f0a7f3754502f84cb68e493a6765ce0978348a59efcb1bccf2ee19c255"
+checksum = "cbe0d033ec316c3bb50e2e53d7ef3d8805e65c5f976d49daea65a12f7e0f9ce8"
 dependencies = [
  "derive-getters",
  "nom",
@@ -73,6 +73,7 @@ dependencies = [
  "arbitrary",
  "bitvec",
  "dbc-codegen",
+ "embedded-can",
 ]
 
 [[package]]
@@ -122,6 +123,7 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "can-dbc",
+ "embedded-can",
  "heck",
  "typed-builder",
 ]
@@ -137,9 +139,9 @@ dependencies = [
 
 [[package]]
 name = "derive-getters"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0122f262bf9c9a367829da84f808d9fb128c10ef283bbe7b0922a77cf07b2747"
+checksum = "7a2c35ab6e03642397cdda1dd58abbc05d418aef8e36297f336d5aba060fe8df"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -151,6 +153,15 @@ name = "either"
 version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a47c1c47d2f5964e29c61246e81db715514cd532db6b5116a25ea3c03d6780a2"
+
+[[package]]
+name = "embedded-can"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9d2e857f87ac832df68fa498d18ddc679175cf3d2e4aa893988e5601baf9438"
+dependencies = [
+ "nb",
+]
 
 [[package]]
 name = "errno"
@@ -263,6 +274,12 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "nb"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d5439c4ad607c3c23abf66de8c8bf57ba8adcd1f129e699851a6e43935d339d"
 
 [[package]]
 name = "nom"

@@ -18,6 +18,7 @@
 use arbitrary::{Arbitrary, Unstructured};
 use bitvec::prelude::*;
 use core::ops::BitOr;
+use embedded_can::{ExtendedId, Id, StandardId};
 
 /// All messages
 #[derive(Clone, Debug)]
@@ -46,26 +47,41 @@ pub enum Messages {
     TruncatedBeSignal(TruncatedBeSignal),
     /// TruncatedLeSignal
     TruncatedLeSignal(TruncatedLeSignal),
+    /// MsgExtendedId
+    MsgExtendedId(MsgExtendedId),
 }
 
 impl Messages {
     /// Read message from CAN frame
     #[inline(never)]
-    pub fn from_can_message(id: u32, payload: &[u8]) -> Result<Self, CanError> {
+    pub fn from_can_message(id: Id, payload: &[u8]) -> Result<Self, CanError> {
         let res = match id {
-            256 => Messages::Foo(Foo::try_from(payload)?),
-            512 => Messages::Bar(Bar::try_from(payload)?),
-            768 => Messages::X4wd(X4wd::try_from(payload)?),
-            1024 => Messages::Amet(Amet::try_from(payload)?),
-            1028 => Messages::Dolor(Dolor::try_from(payload)?),
-            200 => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
-            1337 => Messages::IntegerFactorOffset(IntegerFactorOffset::try_from(payload)?),
-            1344 => Messages::NegativeFactorTest(NegativeFactorTest::try_from(payload)?),
-            1338 => Messages::LargerIntsWithOffsets(LargerIntsWithOffsets::try_from(payload)?),
-            513 => Messages::MsgWithoutSignals(MsgWithoutSignals::try_from(payload)?),
-            9001 => Messages::TruncatedBeSignal(TruncatedBeSignal::try_from(payload)?),
-            9002 => Messages::TruncatedLeSignal(TruncatedLeSignal::try_from(payload)?),
-            n => return Err(CanError::UnknownMessageId(n)),
+            Foo::MESSAGE_ID => Messages::Foo(Foo::try_from(payload)?),
+            Bar::MESSAGE_ID => Messages::Bar(Bar::try_from(payload)?),
+            X4wd::MESSAGE_ID => Messages::X4wd(X4wd::try_from(payload)?),
+            Amet::MESSAGE_ID => Messages::Amet(Amet::try_from(payload)?),
+            Dolor::MESSAGE_ID => Messages::Dolor(Dolor::try_from(payload)?),
+            MultiplexTest::MESSAGE_ID => Messages::MultiplexTest(MultiplexTest::try_from(payload)?),
+            IntegerFactorOffset::MESSAGE_ID => {
+                Messages::IntegerFactorOffset(IntegerFactorOffset::try_from(payload)?)
+            }
+            NegativeFactorTest::MESSAGE_ID => {
+                Messages::NegativeFactorTest(NegativeFactorTest::try_from(payload)?)
+            }
+            LargerIntsWithOffsets::MESSAGE_ID => {
+                Messages::LargerIntsWithOffsets(LargerIntsWithOffsets::try_from(payload)?)
+            }
+            MsgWithoutSignals::MESSAGE_ID => {
+                Messages::MsgWithoutSignals(MsgWithoutSignals::try_from(payload)?)
+            }
+            TruncatedBeSignal::MESSAGE_ID => {
+                Messages::TruncatedBeSignal(TruncatedBeSignal::try_from(payload)?)
+            }
+            TruncatedLeSignal::MESSAGE_ID => {
+                Messages::TruncatedLeSignal(TruncatedLeSignal::try_from(payload)?)
+            }
+            MsgExtendedId::MESSAGE_ID => Messages::MsgExtendedId(MsgExtendedId::try_from(payload)?),
+            id => return Err(CanError::UnknownMessageId(id)),
         };
         Ok(res)
     }
@@ -73,7 +89,7 @@ impl Messages {
 
 /// Foo
 ///
-/// - ID: 256 (0x100)
+/// - Standard ID: 256 (0x100)
 /// - Size: 4 bytes
 /// - Transmitter: Lorem
 #[derive(Clone, Copy)]
@@ -82,7 +98,8 @@ pub struct Foo {
 }
 
 impl Foo {
-    pub const MESSAGE_ID: u32 = 256;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x100) });
 
     pub const VOLTAGE_MIN: f32 = 0_f32;
     pub const VOLTAGE_MAX: f32 = 63.9990234375_f32;
@@ -134,7 +151,9 @@ impl Foo {
     #[inline(always)]
     pub fn set_voltage(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 63.9990234375_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 256 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Foo::MESSAGE_ID,
+            });
         }
         let factor = 0.000976562_f32;
         let offset = 0_f32;
@@ -176,7 +195,9 @@ impl Foo {
     #[inline(always)]
     pub fn set_current(&mut self, value: f32) -> Result<(), CanError> {
         if value < -2048_f32 || 2047.9375_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 256 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Foo::MESSAGE_ID,
+            });
         }
         let factor = 0.0625_f32;
         let offset = 0_f32;
@@ -226,7 +247,7 @@ impl<'a> Arbitrary<'a> for Foo {
 
 /// Bar
 ///
-/// - ID: 512 (0x200)
+/// - Standard ID: 512 (0x200)
 /// - Size: 8 bytes
 /// - Transmitter: Ipsum
 #[derive(Clone, Copy)]
@@ -235,7 +256,8 @@ pub struct Bar {
 }
 
 impl Bar {
-    pub const MESSAGE_ID: u32 = 512;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x200) });
 
     pub const ONE_MIN: u8 = 0_u8;
     pub const ONE_MAX: u8 = 3_u8;
@@ -293,12 +315,14 @@ impl Bar {
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 3_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 512 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Bar::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
@@ -337,7 +361,9 @@ impl Bar {
     #[inline(always)]
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 100_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 512 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Bar::MESSAGE_ID,
+            });
         }
         let factor = 0.39_f32;
         let offset = 0_f32;
@@ -386,12 +412,14 @@ impl Bar {
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 7_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 512 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Bar::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
@@ -437,12 +465,14 @@ impl Bar {
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 3_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 512 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Bar::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 512 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[13..15].store_be(value);
@@ -595,7 +625,7 @@ impl From<BarType> for bool {
 
 /// _4WD
 ///
-/// - ID: 768 (0x300)
+/// - Standard ID: 768 (0x300)
 /// - Size: 8 bytes
 /// - Transmitter: Ipsum
 #[derive(Clone, Copy)]
@@ -604,7 +634,8 @@ pub struct X4wd {
 }
 
 impl X4wd {
-    pub const MESSAGE_ID: u32 = 768;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x300) });
 
     pub const X4DRIVE_MIN: u8 = 0_u8;
     pub const X4DRIVE_MAX: u8 = 7_u8;
@@ -660,12 +691,14 @@ impl X4wd {
     #[inline(always)]
     pub fn set_x4drive(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 7_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 768 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: X4wd::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 768 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[10..13].store_be(value);
@@ -730,7 +763,7 @@ impl From<X4wd4drive> for u8 {
 
 /// Amet
 ///
-/// - ID: 1024 (0x400)
+/// - Standard ID: 1024 (0x400)
 /// - Size: 8 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
@@ -739,7 +772,8 @@ pub struct Amet {
 }
 
 impl Amet {
-    pub const MESSAGE_ID: u32 = 1024;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x400) });
 
     pub const ONE_MIN: u8 = 0_u8;
     pub const ONE_MAX: u8 = 3_u8;
@@ -797,12 +831,14 @@ impl Amet {
     #[inline(always)]
     pub fn set_one(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 3_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1024 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Amet::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
@@ -841,7 +877,9 @@ impl Amet {
     #[inline(always)]
     pub fn set_two(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 100_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1024 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Amet::MESSAGE_ID,
+            });
         }
         let factor = 0.39_f32;
         let offset = 0_f32;
@@ -882,12 +920,14 @@ impl Amet {
     #[inline(always)]
     pub fn set_three(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 7_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1024 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Amet::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[19..22].store_be(value);
@@ -925,12 +965,14 @@ impl Amet {
     #[inline(always)]
     pub fn set_four(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 3_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1024 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Amet::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1024 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Msb0>()[25..27].store_be(value);
@@ -1016,7 +1058,7 @@ impl<'a> Arbitrary<'a> for Amet {
 
 /// Dolor
 ///
-/// - ID: 1028 (0x404)
+/// - Standard ID: 1028 (0x404)
 /// - Size: 8 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
@@ -1025,7 +1067,8 @@ pub struct Dolor {
 }
 
 impl Dolor {
-    pub const MESSAGE_ID: u32 = 1028;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x404) });
 
     pub const ONE_FLOAT_MIN: f32 = 0_f32;
     pub const ONE_FLOAT_MAX: f32 = 130_f32;
@@ -1080,7 +1123,9 @@ impl Dolor {
     #[inline(always)]
     pub fn set_one_float(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 130_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1028 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: Dolor::MESSAGE_ID,
+            });
         }
         let factor = 0.5_f32;
         let offset = 0_f32;
@@ -1144,7 +1189,7 @@ impl From<DolorOneFloat> for f32 {
 
 /// MultiplexTest
 ///
-/// - ID: 200 (0xc8)
+/// - Standard ID: 200 (0xc8)
 /// - Size: 8 bytes
 /// - Transmitter: SENSOR
 #[derive(Clone, Copy)]
@@ -1153,7 +1198,8 @@ pub struct MultiplexTest {
 }
 
 impl MultiplexTest {
-    pub const MESSAGE_ID: u32 = 200;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0xc8) });
 
     pub const MULTIPLEXOR_MIN: u8 = 0_u8;
     pub const MULTIPLEXOR_MAX: u8 = 2_u8;
@@ -1206,7 +1252,7 @@ impl MultiplexTest {
                 MultiplexTestMultiplexorM1 { raw: self.raw },
             )),
             multiplexor => Err(CanError::InvalidMultiplexor {
-                message_id: 200,
+                message_id: MultiplexTest::MESSAGE_ID,
                 multiplexor: multiplexor.into(),
             }),
         }
@@ -1215,12 +1261,14 @@ impl MultiplexTest {
     #[inline(always)]
     fn set_multiplexor(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 2_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: MultiplexTest::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 200 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[0..4].store_le(value);
@@ -1278,12 +1326,14 @@ impl MultiplexTest {
     #[inline(always)]
     pub fn set_unmultiplexed_signal(&mut self, value: u8) -> Result<(), CanError> {
         if value < 0_u8 || 4_u8 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: MultiplexTest::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 200 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[4..12].store_le(value);
@@ -1374,7 +1424,9 @@ impl MultiplexTestMultiplexorM0 {
     #[inline(always)]
     pub fn set_multiplexed_signal_zero_a(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 3_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: MultiplexTest::MESSAGE_ID,
+            });
         }
         let factor = 0.1_f32;
         let offset = 0_f32;
@@ -1416,7 +1468,9 @@ impl MultiplexTestMultiplexorM0 {
     #[inline(always)]
     pub fn set_multiplexed_signal_zero_b(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 3_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: MultiplexTest::MESSAGE_ID,
+            });
         }
         let factor = 0.1_f32;
         let offset = 0_f32;
@@ -1468,7 +1522,9 @@ impl MultiplexTestMultiplexorM1 {
     #[inline(always)]
     pub fn set_multiplexed_signal_one_a(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 6_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: MultiplexTest::MESSAGE_ID,
+            });
         }
         let factor = 0.1_f32;
         let offset = 0_f32;
@@ -1510,7 +1566,9 @@ impl MultiplexTestMultiplexorM1 {
     #[inline(always)]
     pub fn set_multiplexed_signal_one_b(&mut self, value: f32) -> Result<(), CanError> {
         if value < 0_f32 || 6_f32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 200 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: MultiplexTest::MESSAGE_ID,
+            });
         }
         let factor = 0.1_f32;
         let offset = 0_f32;
@@ -1523,7 +1581,7 @@ impl MultiplexTestMultiplexorM1 {
 
 /// IntegerFactorOffset
 ///
-/// - ID: 1337 (0x539)
+/// - Standard ID: 1337 (0x539)
 /// - Size: 8 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
@@ -1532,7 +1590,8 @@ pub struct IntegerFactorOffset {
 }
 
 impl IntegerFactorOffset {
-    pub const MESSAGE_ID: u32 = 1337;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x539) });
 
     pub const BYTE_WITH_OFFSET_MIN: u16 = 1_u16;
     pub const BYTE_WITH_OFFSET_MAX: u16 = 256_u16;
@@ -1598,12 +1657,14 @@ impl IntegerFactorOffset {
     #[inline(always)]
     pub fn set_byte_with_offset(&mut self, value: u16) -> Result<(), CanError> {
         if value < 1_u16 || 256_u16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: IntegerFactorOffset::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(1)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = value.checked_sub(1).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[0..8].store_le(value);
@@ -1641,12 +1702,14 @@ impl IntegerFactorOffset {
     #[inline(always)]
     pub fn set_byte_with_factor(&mut self, value: u16) -> Result<(), CanError> {
         if value < 0_u16 || 1020_u16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: IntegerFactorOffset::MESSAGE_ID,
+            });
         }
         let factor = 4;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[8..16].store_le(value);
@@ -1684,12 +1747,14 @@ impl IntegerFactorOffset {
     #[inline(always)]
     pub fn set_byte_with_both(&mut self, value: u16) -> Result<(), CanError> {
         if value < 16_u16 || 526_u16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: IntegerFactorOffset::MESSAGE_ID,
+            });
         }
         let factor = 2;
-        let value = value
-            .checked_sub(16)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = value.checked_sub(16).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[16..24].store_le(value);
@@ -1727,12 +1792,14 @@ impl IntegerFactorOffset {
     #[inline(always)]
     pub fn set_byte_with_negative_offset(&mut self, value: i16) -> Result<(), CanError> {
         if value < 0_i16 || 255_i16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: IntegerFactorOffset::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_add(1)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = value.checked_add(1).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[24..32].store_le(value);
@@ -1770,12 +1837,14 @@ impl IntegerFactorOffset {
     #[inline(always)]
     pub fn set_byte_with_negative_min(&mut self, value: i16) -> Result<(), CanError> {
         if value < -127_i16 || 127_i16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1337 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: IntegerFactorOffset::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_add(1)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1337 })?;
+        let value = value.checked_add(1).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u8;
 
         self.raw.view_bits_mut::<Lsb0>()[32..40].store_le(value);
@@ -1839,7 +1908,7 @@ impl<'a> Arbitrary<'a> for IntegerFactorOffset {
 
 /// NegativeFactorTest
 ///
-/// - ID: 1344 (0x540)
+/// - Standard ID: 1344 (0x540)
 /// - Size: 4 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
@@ -1848,7 +1917,8 @@ pub struct NegativeFactorTest {
 }
 
 impl NegativeFactorTest {
-    pub const MESSAGE_ID: u32 = 1344;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x540) });
 
     pub const UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MIN: i32 = -65535_i32;
     pub const UNSIGNED_NEGATIVE_FACTOR_SIGNAL_MAX: i32 = 0_i32;
@@ -1902,12 +1972,14 @@ impl NegativeFactorTest {
     #[inline(always)]
     pub fn set_unsigned_negative_factor_signal(&mut self, value: i32) -> Result<(), CanError> {
         if value < -65535_i32 || 0_i32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1344 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: NegativeFactorTest::MESSAGE_ID,
+            });
         }
         let factor = -1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1344 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as u16;
 
         self.raw.view_bits_mut::<Lsb0>()[0..16].store_le(value);
@@ -1946,12 +2018,14 @@ impl NegativeFactorTest {
     #[inline(always)]
     pub fn set_width_more_than_min_max(&mut self, value: i16) -> Result<(), CanError> {
         if value < -2_i16 || 2_i16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1344 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: NegativeFactorTest::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1344 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as i16;
 
         let value = u16::from_ne_bytes(value.to_ne_bytes());
@@ -2004,7 +2078,7 @@ impl<'a> Arbitrary<'a> for NegativeFactorTest {
 
 /// LargerIntsWithOffsets
 ///
-/// - ID: 1338 (0x53a)
+/// - Standard ID: 1338 (0x53a)
 /// - Size: 8 bytes
 /// - Transmitter: Sit
 #[derive(Clone, Copy)]
@@ -2013,7 +2087,8 @@ pub struct LargerIntsWithOffsets {
 }
 
 impl LargerIntsWithOffsets {
-    pub const MESSAGE_ID: u32 = 1338;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x53a) });
 
     pub const TWELVE_MIN: i16 = -1000_i16;
     pub const TWELVE_MAX: i16 = 3000_i16;
@@ -2067,12 +2142,16 @@ impl LargerIntsWithOffsets {
     #[inline(always)]
     pub fn set_twelve(&mut self, value: i16) -> Result<(), CanError> {
         if value < -1000_i16 || 3000_i16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1338 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: LargerIntsWithOffsets::MESSAGE_ID,
+            });
         }
         let factor = 1;
         let value = value
             .checked_add(1000)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1338 })?;
+            .ok_or(CanError::ParameterOutOfRange {
+                message_id: Self::MESSAGE_ID,
+            })?;
         let value = (value / factor) as u16;
 
         self.raw.view_bits_mut::<Lsb0>()[0..12].store_le(value);
@@ -2112,12 +2191,16 @@ impl LargerIntsWithOffsets {
     #[inline(always)]
     pub fn set_sixteen(&mut self, value: i32) -> Result<(), CanError> {
         if value < -1000_i32 || 64535_i32 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 1338 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: LargerIntsWithOffsets::MESSAGE_ID,
+            });
         }
         let factor = 1;
         let value = value
             .checked_add(1000)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 1338 })?;
+            .ok_or(CanError::ParameterOutOfRange {
+                message_id: Self::MESSAGE_ID,
+            })?;
         let value = (value / factor) as u16;
 
         self.raw.view_bits_mut::<Lsb0>()[12..28].store_le(value);
@@ -2165,7 +2248,7 @@ impl<'a> Arbitrary<'a> for LargerIntsWithOffsets {
 
 /// MsgWithoutSignals
 ///
-/// - ID: 513 (0x201)
+/// - Standard ID: 513 (0x201)
 /// - Size: 8 bytes
 /// - Transmitter: Ipsum
 #[derive(Clone, Copy)]
@@ -2174,7 +2257,8 @@ pub struct MsgWithoutSignals {
 }
 
 impl MsgWithoutSignals {
-    pub const MESSAGE_ID: u32 = 513;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x201) });
 
     /// Construct new MsgWithoutSignals from values
     pub fn new() -> Result<Self, CanError> {
@@ -2221,7 +2305,7 @@ impl<'a> Arbitrary<'a> for MsgWithoutSignals {
 
 /// TruncatedBeSignal
 ///
-/// - ID: 9001 (0x2329)
+/// - Standard ID: 9001 (0x2329)
 /// - Size: 8 bytes
 /// - Transmitter: Ipsum
 #[derive(Clone, Copy)]
@@ -2230,7 +2314,8 @@ pub struct TruncatedBeSignal {
 }
 
 impl TruncatedBeSignal {
-    pub const MESSAGE_ID: u32 = 9001;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x2329) });
 
     pub const FOO_MIN: i16 = -100_i16;
     pub const FOO_MAX: i16 = 100_i16;
@@ -2279,12 +2364,14 @@ impl TruncatedBeSignal {
     #[inline(always)]
     pub fn set_foo(&mut self, value: i16) -> Result<(), CanError> {
         if value < -100_i16 || 100_i16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 9001 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: TruncatedBeSignal::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 9001 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as i16;
 
         let value = u16::from_ne_bytes(value.to_ne_bytes());
@@ -2329,7 +2416,7 @@ impl<'a> Arbitrary<'a> for TruncatedBeSignal {
 
 /// TruncatedLeSignal
 ///
-/// - ID: 9002 (0x232a)
+/// - Standard ID: 9002 (0x232a)
 /// - Size: 8 bytes
 /// - Transmitter: Ipsum
 #[derive(Clone, Copy)]
@@ -2338,7 +2425,8 @@ pub struct TruncatedLeSignal {
 }
 
 impl TruncatedLeSignal {
-    pub const MESSAGE_ID: u32 = 9002;
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Standard(unsafe { StandardId::new_unchecked(0x232a) });
 
     pub const FOO_MIN: i16 = -100_i16;
     pub const FOO_MAX: i16 = 100_i16;
@@ -2387,12 +2475,14 @@ impl TruncatedLeSignal {
     #[inline(always)]
     pub fn set_foo(&mut self, value: i16) -> Result<(), CanError> {
         if value < -100_i16 || 100_i16 < value {
-            return Err(CanError::ParameterOutOfRange { message_id: 9002 });
+            return Err(CanError::ParameterOutOfRange {
+                message_id: TruncatedLeSignal::MESSAGE_ID,
+            });
         }
         let factor = 1;
-        let value = value
-            .checked_sub(0)
-            .ok_or(CanError::ParameterOutOfRange { message_id: 9002 })?;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
         let value = (value / factor) as i16;
 
         let value = u16::from_ne_bytes(value.to_ne_bytes());
@@ -2435,24 +2525,133 @@ impl<'a> Arbitrary<'a> for TruncatedLeSignal {
     }
 }
 
+/// MsgExtendedId
+///
+/// - Extended ID: 4660 (0x1234)
+/// - Size: 8 bytes
+/// - Transmitter: Sit
+#[derive(Clone, Copy)]
+pub struct MsgExtendedId {
+    raw: [u8; 8],
+}
+
+impl MsgExtendedId {
+    pub const MESSAGE_ID: embedded_can::Id =
+        Id::Extended(unsafe { ExtendedId::new_unchecked(0x1234) });
+
+    pub const DUMMY_MIN: u8 = 0_u8;
+    pub const DUMMY_MAX: u8 = 3_u8;
+
+    /// Construct new MsgExtendedId from values
+    pub fn new(dummy: u8) -> Result<Self, CanError> {
+        let mut res = Self { raw: [0u8; 8] };
+        res.set_dummy(dummy)?;
+        Ok(res)
+    }
+
+    /// Access message payload raw value
+    pub fn raw(&self) -> &[u8; 8] {
+        &self.raw
+    }
+
+    /// Dummy
+    ///
+    /// - Min: 0
+    /// - Max: 3
+    /// - Unit: ""
+    /// - Receivers: XXX
+    #[inline(always)]
+    pub fn dummy(&self) -> u8 {
+        self.dummy_raw()
+    }
+
+    /// Get raw value of Dummy
+    ///
+    /// - Start bit: 15
+    /// - Signal size: 2 bits
+    /// - Factor: 1
+    /// - Offset: 0
+    /// - Byte order: BigEndian
+    /// - Value type: Unsigned
+    #[inline(always)]
+    pub fn dummy_raw(&self) -> u8 {
+        let signal = self.raw.view_bits::<Msb0>()[8..10].load_be::<u8>();
+
+        let factor = 1;
+        u8::from(signal).saturating_mul(factor).saturating_add(0)
+    }
+
+    /// Set value of Dummy
+    #[inline(always)]
+    pub fn set_dummy(&mut self, value: u8) -> Result<(), CanError> {
+        if value < 0_u8 || 3_u8 < value {
+            return Err(CanError::ParameterOutOfRange {
+                message_id: MsgExtendedId::MESSAGE_ID,
+            });
+        }
+        let factor = 1;
+        let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
+            message_id: Self::MESSAGE_ID,
+        })?;
+        let value = (value / factor) as u8;
+
+        self.raw.view_bits_mut::<Msb0>()[8..10].store_be(value);
+        Ok(())
+    }
+}
+
+impl core::convert::TryFrom<&[u8]> for MsgExtendedId {
+    type Error = CanError;
+
+    #[inline(always)]
+    fn try_from(payload: &[u8]) -> Result<Self, Self::Error> {
+        if payload.len() != 8 {
+            return Err(CanError::InvalidPayloadSize);
+        }
+        let mut raw = [0u8; 8];
+        raw.copy_from_slice(&payload[..8]);
+        Ok(Self { raw })
+    }
+}
+
+impl core::fmt::Debug for MsgExtendedId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if f.alternate() {
+            f.debug_struct("MsgExtendedId")
+                .field("dummy", &self.dummy())
+                .finish()
+        } else {
+            f.debug_tuple("MsgExtendedId").field(&self.raw).finish()
+        }
+    }
+}
+
+#[cfg(feature = "arb")]
+impl<'a> Arbitrary<'a> for MsgExtendedId {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
+        let dummy = u.int_in_range(0..=3)?;
+        MsgExtendedId::new(dummy).map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
 /// This is just to make testing easier
 #[allow(dead_code)]
 fn main() {}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CanError {
-    UnknownMessageId(u32),
+    UnknownMessageId(embedded_can::Id),
     /// Signal parameter is not within the range
     /// defined in the dbc
     ParameterOutOfRange {
         /// dbc message id
-        message_id: u32,
+        message_id: embedded_can::Id,
     },
     InvalidPayloadSize,
     /// Multiplexor value not defined in the dbc
     InvalidMultiplexor {
         /// dbc message id
-        message_id: u32,
+        message_id: embedded_can::Id,
         /// Multiplexor value not defined in the dbc
         multiplexor: u16,
     },

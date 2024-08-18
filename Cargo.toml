@@ -18,10 +18,11 @@ rust-version = "1.78.0"
 std = []
 
 [dependencies]
-can-dbc = "5.0.0"
+can-dbc = "6.0.0"
 anyhow = "1.0.68"
 heck = "0.4.0"
 typed-builder = "0.18.0"
+embedded-can = "0.4.1"
 
 [workspace]
 members = [

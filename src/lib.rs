@@ -143,6 +143,7 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w)?;
     writeln!(&mut w, "use core::ops::BitOr;")?;
     writeln!(&mut w, "use bitvec::prelude::*;")?;
+    writeln!(&mut w, "use embedded_can::{{Id, StandardId, ExtendedId}};")?;
 
     writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
     writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
@@ -210,7 +211,7 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC, config: &Config<'_>) -> Result
         writeln!(w, "#[inline(never)]")?;
         writeln!(
             &mut w,
-            "pub fn from_can_message(id: u32, payload: &[u8]) -> Result<Self, CanError> {{",
+            "pub fn from_can_message(id: Id, payload: &[u8]) -> Result<Self, CanError> {{",
         )?;
         {
             let mut w = PadAdapter::wrap(&mut w);
@@ -221,12 +222,11 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC, config: &Config<'_>) -> Result
                 for msg in get_relevant_messages(dbc) {
                     writeln!(
                         w,
-                        "{} => Messages::{1}({1}::try_from(payload)?),",
-                        msg.message_id().0,
+                        "{0}::MESSAGE_ID => Messages::{0}({0}::try_from(payload)?),",
                         type_name(msg.message_name())
                     )?;
                 }
-                writeln!(w, r#"n => return Err(CanError::UnknownMessageId(n)),"#)?;
+                writeln!(w, r#"id => return Err(CanError::UnknownMessageId(id)),"#)?;
             }
             writeln!(&mut w, "}};")?;
             writeln!(&mut w, "Ok(res)")?;
@@ -243,7 +243,10 @@ fn render_root_enum(mut w: impl Write, dbc: &DBC, config: &Config<'_>) -> Result
 fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &DBC) -> Result<()> {
     writeln!(w, "/// {}", msg.message_name())?;
     writeln!(w, "///")?;
-    writeln!(w, "/// - ID: {0} (0x{0:x})", msg.message_id().0)?;
+    match msg.message_id() {
+        can_dbc::MessageId::Standard(id) => writeln!(w, "/// - Standard ID: {0} (0x{0:x})", id),
+        can_dbc::MessageId::Extended(id) => writeln!(w, "/// - Extended ID: {0} (0x{0:x})", id),
+    }?;
     writeln!(w, "/// - Size: {} bytes", msg.message_size())?;
     if let can_dbc::Transmitter::NodeName(transmitter) = msg.transmitter() {
         writeln!(w, "/// - Transmitter: {}", transmitter)?;
@@ -274,8 +277,18 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
 
         writeln!(
             &mut w,
-            "pub const MESSAGE_ID: u32 = {};",
-            msg.message_id().0
+            "pub const MESSAGE_ID: embedded_can::Id = {};",
+            match msg.message_id() {
+                // use StandardId::new().unwrap() once const_option is stable
+                can_dbc::MessageId::Standard(id) => format!(
+                    "Id::Standard(unsafe {{ StandardId::new_unchecked({0:#x})}})",
+                    id
+                ),
+                can_dbc::MessageId::Extended(id) => format!(
+                    "Id::Extended(unsafe {{ ExtendedId::new_unchecked({0:#x})}})",
+                    id
+                ),
+            }
         )?;
         writeln!(w)?;
 
@@ -623,8 +636,8 @@ fn render_set_signal(
                     let mut w = PadAdapter::wrap(&mut w);
                     writeln!(
                         w,
-                        r##"return Err(CanError::ParameterOutOfRange {{ message_id: {message_id} }});"##,
-                        message_id = msg.message_id().0,
+                        r##"return Err(CanError::ParameterOutOfRange {{ message_id: {}::MESSAGE_ID }});"##,
+                        type_name(msg.message_name())
                     )?;
                 }
                 writeln!(w, r"}}")?;
@@ -742,8 +755,8 @@ fn render_multiplexor_signal(
             }
             writeln!(
                 &mut w,
-                "multiplexor => Err(CanError::InvalidMultiplexor {{ message_id: {}, multiplexor: multiplexor.into() }}),",
-                msg.message_id().0
+                "multiplexor => Err(CanError::InvalidMultiplexor {{ message_id: {}::MESSAGE_ID, multiplexor: multiplexor.into() }}),",
+                type_name(msg.message_name())
             )?;
         }
 
@@ -914,8 +927,7 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
         }
         writeln!(
             &mut w,
-            "    .ok_or(CanError::ParameterOutOfRange {{ message_id: {} }})?;",
-            msg.message_id().0,
+            "    .ok_or(CanError::ParameterOutOfRange {{ message_id: Self::MESSAGE_ID }})?;",
         )?;
         writeln!(
             &mut w,

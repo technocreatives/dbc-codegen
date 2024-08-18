@@ -63,6 +63,9 @@ BO_ 9001 TruncatedBeSignal: 8 Ipsum
 BO_ 9002 TruncatedLeSignal: 8 Ipsum
   SG_ Foo : 0|12@1- (1,0) [-100|100] "" Vector__XXX
 
+BO_ 2147488308 MsgExtendedId: 8 Sit
+ SG_ Dummy : 15|2@0+ (1,0) [0|3] "" XXX
+
 VAL_ 512 Three 0 "OFF" 1 "ON" 2 "ONER" 3 "ONEST";
 VAL_ 512 Four 0 "Off" 1 "On" 2 "Oner" 3 "Onest";
 VAL_ 512 Type 0 "0Off" 1 "1On";
