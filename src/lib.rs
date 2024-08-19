@@ -74,6 +74,10 @@ pub struct Config<'a> {
     #[builder(default)]
     pub impl_error: FeatureConfig<'a>,
 
+    /// Optional: Generate `embedded_can::Frame` impl for each frame. Default: `Always`
+    #[builder(default = FeatureConfig::Always)]
+    pub impl_embedded_can_frame: FeatureConfig<'a>,
+
     /// Optional: Validate min and max values in generated signal setters. Default: `Always`
     #[builder(default = FeatureConfig::Always)]
     pub check_ranges: FeatureConfig<'a>,
@@ -427,6 +431,8 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
     }
     writeln!(w, "}}")?;
     writeln!(w)?;
+
+    render_embedded_can_frame(&mut w, config, msg)?;
 
     render_debug_impl(&mut w, config, msg)?;
 
@@ -1283,6 +1289,56 @@ fn multiplexed_enum_variant_name(
         multiplexor.name().to_pascal_case(),
         switch_index
     ))
+}
+
+fn render_embedded_can_frame(
+    w: &mut impl Write,
+    config: &Config<'_>,
+    msg: &Message,
+) -> Result<(), std::io::Error> {
+    config.impl_embedded_can_frame.fmt_cfg(w, |w| {
+        writeln!(
+            w,
+            "\
+impl embedded_can::Frame for {0} {{
+    fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {{
+        if id.into() != Self::MESSAGE_ID {{
+            None
+        }} else {{
+            data.try_into().ok()
+        }}
+    }}
+
+    fn new_remote(_id: impl Into<Id>, _dlc: usize) -> Option<Self> {{
+        unimplemented!()
+    }}
+
+    fn is_extended(&self) -> bool {{
+        match self.id() {{
+            Id::Standard(_) => false,
+            Id::Extended(_) => true,
+        }}
+    }}
+
+    fn is_remote_frame(&self) -> bool {{
+        false
+    }}
+
+    fn id(&self) -> Id {{
+        Self::MESSAGE_ID
+    }}
+
+    fn dlc(&self) -> usize {{
+        self.raw.len()
+    }}
+
+    fn data(&self) -> &[u8] {{
+        &self.raw
+    }}
+}}",
+            type_name(msg.message_name())
+        )
+    })
 }
 
 fn render_debug_impl(mut w: impl Write, config: &Config<'_>, msg: &Message) -> Result<()> {
