@@ -832,7 +832,7 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Res
 
             format!(
                 "self.raw.view_bits::<Lsb0>()[{start}..{end}].load_le::<{typ}>()",
-                typ = signal_to_rust_uint(signal),
+                typ = signal_to_rust_int(signal),
                 start = start_bit,
                 end = end_bit,
             )
@@ -842,7 +842,7 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Res
 
             format!(
                 "self.raw.view_bits::<Msb0>()[{start}..{end}].load_be::<{typ}>()",
-                typ = signal_to_rust_uint(signal),
+                typ = signal_to_rust_int(signal),
                 start = start_bit,
                 end = end_bit
             )
@@ -851,14 +851,6 @@ fn signal_from_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Res
 
     writeln!(&mut w, r#"let signal = {};"#, read_fn)?;
     writeln!(&mut w)?;
-
-    if *signal.value_type() == can_dbc::ValueType::Signed {
-        writeln!(
-            &mut w,
-            "let signal  = {}::from_ne_bytes(signal.to_ne_bytes());",
-            signal_to_rust_int(signal)
-        )?;
-    };
 
     if signal.signal_size == 1 {
         writeln!(&mut w, "signal == 1")?;
