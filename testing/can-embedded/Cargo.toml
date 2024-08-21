@@ -10,6 +10,7 @@ build-messages = ["dep:can-messages"]
 
 [dependencies]
 bitvec = { version = "1.0", default-features = false }
+embedded-can = "0.4.1"
 
 
 # This is optional and default so we can turn it off for the embedded target.

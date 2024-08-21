@@ -1,4 +1,5 @@
 use can_messages::Messages;
+use embedded_can::{Id, StandardId};
 
 fn main() {
     let input = std::env::args()
@@ -10,7 +11,7 @@ fn main() {
         let (id, payload) = {
             let mut s = data.split('#');
             let id = s.next().unwrap();
-            let id: u32 = u32::from_str_radix(id, 16).unwrap();
+            let id = Id::Standard(StandardId::new(u16::from_str_radix(id, 16).unwrap()).unwrap());
             let payload = s.next().unwrap();
             let payload = (0..(payload.len() / 2))
                 .map(|i| {
