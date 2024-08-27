@@ -149,8 +149,16 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w, "use bitvec::prelude::*;")?;
     writeln!(&mut w, "use embedded_can::{{Id, StandardId, ExtendedId}};")?;
 
-    writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
-    writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
+    match config.impl_arbitrary {
+        FeatureConfig::Always => {
+            writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
+        }
+        FeatureConfig::Gated(gate) => {
+            writeln!(w, r##"#[cfg(feature = "{gate}")]"##)?;
+            writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
+        }
+        FeatureConfig::Never => (),
+    }
 
     match config.impl_serde {
         FeatureConfig::Always => {
