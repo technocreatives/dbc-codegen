@@ -149,19 +149,13 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
     writeln!(&mut w, "use bitvec::prelude::*;")?;
     writeln!(&mut w, "use embedded_can::{{Id, StandardId, ExtendedId}};")?;
 
-    writeln!(w, r##"#[cfg(feature = "arb")]"##)?;
-    writeln!(&mut w, "use arbitrary::{{Arbitrary, Unstructured}};")?;
+    config.impl_arbitrary.fmt_cfg(&mut w, |w| {
+        writeln!(w, "use arbitrary::{{Arbitrary, Unstructured}};")
+    })?;
 
-    match config.impl_serde {
-        FeatureConfig::Always => {
-            writeln!(&mut w, "use serde::{{Serialize, Deserialize}};")?;
-        }
-        FeatureConfig::Gated(gate) => {
-            writeln!(w, r##"#[cfg(feature = "{gate}")]"##)?;
-            writeln!(&mut w, "use serde::{{Serialize, Deserialize}};")?;
-        }
-        FeatureConfig::Never => (),
-    }
+    config.impl_serde.fmt_cfg(&mut w, |w| {
+        writeln!(w, "use serde::{{Serialize, Deserialize}};")
+    })?;
 
     writeln!(&mut w)?;
 
