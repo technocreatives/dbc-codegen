@@ -927,7 +927,8 @@ fn signal_to_payload(mut w: impl Write, signal: &Signal, msg: &Message) -> Resul
         }
         writeln!(
             &mut w,
-            "    .ok_or(CanError::ParameterOutOfRange {{ message_id: Self::MESSAGE_ID }})?;",
+            "    .ok_or(CanError::ParameterOutOfRange {{ message_id: {}::MESSAGE_ID }})?;",
+            type_name(msg.message_name())
         )?;
         writeln!(
             &mut w,
