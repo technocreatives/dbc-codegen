@@ -85,6 +85,10 @@ pub struct Config<'a> {
     /// Optional: Allow dead code in the generated module. Default: `false`.
     #[builder(default)]
     pub allow_dead_code: bool,
+
+    /// Optional: Padding value used; set all unused bits to 1 if true else 0. Default: `false`.
+    #[builder(default)]
+    pub padding_value: bool,
 }
 
 /// Configuration for including features in the codegenerator.
@@ -335,7 +339,6 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
                     None
                 }
             })
-            .chain(["padding: bool".to_string()])
             .collect();
         writeln!(
             &mut w,
@@ -344,11 +347,11 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
         )?;
         {
             let mut w = PadAdapter::wrap(&mut w);
-            writeln!(&mut w, "let fill = if padding {{ 0xFF }} else {{ 0x00 }};",)?;
             writeln!(
                 &mut w,
-                "let {}res = Self {{ raw: [fill; {}] }};",
+                "let {}res = Self {{ raw: [{}; {}] }};",
                 if msg.signals().is_empty() { "" } else { "mut " },
+                if config.padding_value { "0xFF" } else { "0x00" },
                 msg.message_size()
             )?;
             for signal in msg.signals().iter() {
