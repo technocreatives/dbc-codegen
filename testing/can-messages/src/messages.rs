@@ -107,8 +107,9 @@ impl Foo {
     pub const CURRENT_MAX: f32 = 2047.9375_f32;
 
     /// Construct new Foo from values
-    pub fn new(voltage: f32, current: f32) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 4] };
+    pub fn new(voltage: f32, current: f32, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 4] };
         res.set_voltage(voltage)?;
         res.set_current(current)?;
         Ok(res)
@@ -305,8 +306,16 @@ impl Bar {
     pub const FOUR_MAX: u8 = 3_u8;
 
     /// Construct new Bar from values
-    pub fn new(one: u8, two: f32, three: u8, four: u8, xtype: bool) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(
+        one: u8,
+        two: f32,
+        three: u8,
+        four: u8,
+        xtype: bool,
+        padding: bool,
+    ) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_one(one)?;
         res.set_two(two)?;
         res.set_three(three)?;
@@ -357,7 +366,7 @@ impl Bar {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Bar::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -454,7 +463,7 @@ impl Bar {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Bar::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -507,7 +516,7 @@ impl Bar {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Bar::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -713,8 +722,9 @@ impl X4wd {
     pub const X4DRIVE_MAX: u8 = 7_u8;
 
     /// Construct new _4WD from values
-    pub fn new(x4drive: u8) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(x4drive: u8, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_x4drive(x4drive)?;
         Ok(res)
     }
@@ -769,7 +779,7 @@ impl X4wd {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: X4wd::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -893,8 +903,16 @@ impl Amet {
     pub const FOUR_MAX: u8 = 3_u8;
 
     /// Construct new Amet from values
-    pub fn new(one: u8, two: f32, three: u8, four: u8, five: bool) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(
+        one: u8,
+        two: f32,
+        three: u8,
+        four: u8,
+        five: bool,
+        padding: bool,
+    ) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_one(one)?;
         res.set_two(two)?;
         res.set_three(three)?;
@@ -945,7 +963,7 @@ impl Amet {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Amet::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1034,7 +1052,7 @@ impl Amet {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Amet::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1079,7 +1097,7 @@ impl Amet {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Amet::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1218,8 +1236,9 @@ impl Dolor {
     pub const ONE_FLOAT_MAX: f32 = 130_f32;
 
     /// Construct new Dolor from values
-    pub fn new(one_float: f32) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(one_float: f32, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_one_float(one_float)?;
         Ok(res)
     }
@@ -1395,8 +1414,9 @@ impl MultiplexTest {
     pub const MULTIPLEXED_SIGNAL_ONE_B_MAX: f32 = 6_f32;
 
     /// Construct new MultiplexTest from values
-    pub fn new(multiplexor: u8, unmultiplexed_signal: u8) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(multiplexor: u8, unmultiplexed_signal: u8, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_multiplexor(multiplexor)?;
         res.set_unmultiplexed_signal(unmultiplexed_signal)?;
         Ok(res)
@@ -1447,7 +1467,7 @@ impl MultiplexTest {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: MultiplexTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1512,7 +1532,7 @@ impl MultiplexTest {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: MultiplexTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1827,8 +1847,10 @@ impl IntegerFactorOffset {
         byte_with_both: u16,
         byte_with_negative_offset: i16,
         byte_with_negative_min: i16,
+        padding: bool,
     ) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_byte_with_offset(byte_with_offset)?;
         res.set_byte_with_factor(byte_with_factor)?;
         res.set_byte_with_both(byte_with_both)?;
@@ -1879,7 +1901,7 @@ impl IntegerFactorOffset {
         }
         let factor = 1;
         let value = value.checked_sub(1).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1924,7 +1946,7 @@ impl IntegerFactorOffset {
         }
         let factor = 4;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1969,7 +1991,7 @@ impl IntegerFactorOffset {
         }
         let factor = 2;
         let value = value.checked_sub(16).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -2014,7 +2036,7 @@ impl IntegerFactorOffset {
         }
         let factor = 1;
         let value = value.checked_add(1).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -2059,7 +2081,7 @@ impl IntegerFactorOffset {
         }
         let factor = 1;
         let value = value.checked_add(1).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -2181,8 +2203,10 @@ impl NegativeFactorTest {
     pub fn new(
         unsigned_negative_factor_signal: i32,
         width_more_than_min_max: i16,
+        padding: bool,
     ) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 4] };
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 4] };
         res.set_unsigned_negative_factor_signal(unsigned_negative_factor_signal)?;
         res.set_width_more_than_min_max(width_more_than_min_max)?;
         Ok(res)
@@ -2230,7 +2254,7 @@ impl NegativeFactorTest {
         }
         let factor = -1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: NegativeFactorTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as u16;
 
@@ -2276,7 +2300,7 @@ impl NegativeFactorTest {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: NegativeFactorTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as i16;
 
@@ -2384,8 +2408,9 @@ impl LargerIntsWithOffsets {
     pub const SIXTEEN_MAX: i32 = 64535_i32;
 
     /// Construct new LargerIntsWithOffsets from values
-    pub fn new(twelve: i16, sixteen: i32) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(twelve: i16, sixteen: i32, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_twelve(twelve)?;
         res.set_sixteen(sixteen)?;
         Ok(res)
@@ -2438,7 +2463,7 @@ impl LargerIntsWithOffsets {
         let value = value
             .checked_add(1000)
             .ok_or(CanError::ParameterOutOfRange {
-                message_id: Self::MESSAGE_ID,
+                message_id: LargerIntsWithOffsets::MESSAGE_ID,
             })?;
         let value = (value / factor) as u16;
 
@@ -2487,7 +2512,7 @@ impl LargerIntsWithOffsets {
         let value = value
             .checked_add(1000)
             .ok_or(CanError::ParameterOutOfRange {
-                message_id: Self::MESSAGE_ID,
+                message_id: LargerIntsWithOffsets::MESSAGE_ID,
             })?;
         let value = (value / factor) as u16;
 
@@ -2585,8 +2610,9 @@ impl MsgWithoutSignals {
         Id::Standard(unsafe { StandardId::new_unchecked(0x201) });
 
     /// Construct new MsgWithoutSignals from values
-    pub fn new() -> Result<Self, CanError> {
-        let res = Self { raw: [0u8; 8] };
+    pub fn new(padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let res = Self { raw: [fill; 8] };
         Ok(res)
     }
 
@@ -2681,8 +2707,9 @@ impl TruncatedBeSignal {
     pub const FOO_MAX: i16 = 100_i16;
 
     /// Construct new TruncatedBeSignal from values
-    pub fn new(foo: i16) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(foo: i16, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_foo(foo)?;
         Ok(res)
     }
@@ -2730,7 +2757,7 @@ impl TruncatedBeSignal {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: TruncatedBeSignal::MESSAGE_ID,
         })?;
         let value = (value / factor) as i16;
 
@@ -2828,8 +2855,9 @@ impl TruncatedLeSignal {
     pub const FOO_MAX: i16 = 100_i16;
 
     /// Construct new TruncatedLeSignal from values
-    pub fn new(foo: i16) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(foo: i16, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_foo(foo)?;
         Ok(res)
     }
@@ -2877,7 +2905,7 @@ impl TruncatedLeSignal {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: TruncatedLeSignal::MESSAGE_ID,
         })?;
         let value = (value / factor) as i16;
 
@@ -2975,8 +3003,9 @@ impl MsgExtendedId {
     pub const DUMMY_MAX: u8 = 3_u8;
 
     /// Construct new MsgExtendedId from values
-    pub fn new(dummy: u8) -> Result<Self, CanError> {
-        let mut res = Self { raw: [0u8; 8] };
+    pub fn new(dummy: u8, padding: bool) -> Result<Self, CanError> {
+        let fill = if padding { 0xFF } else { 0x00 };
+        let mut res = Self { raw: [fill; 8] };
         res.set_dummy(dummy)?;
         Ok(res)
     }
@@ -3023,7 +3052,7 @@ impl MsgExtendedId {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: MsgExtendedId::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
