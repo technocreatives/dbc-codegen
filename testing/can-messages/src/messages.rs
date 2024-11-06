@@ -18,6 +18,7 @@
 use arbitrary::{Arbitrary, Unstructured};
 use bitvec::prelude::*;
 use core::ops::BitOr;
+use defmt::Format;
 use embedded_can::{ExtendedId, Id, StandardId};
 
 /// All messages
@@ -634,7 +635,7 @@ impl<'a> Arbitrary<'a> for Bar {
     }
 }
 /// Defined values for Three
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum BarThree {
     Off,
     On,
@@ -656,7 +657,7 @@ impl From<BarThree> for u8 {
 }
 
 /// Defined values for Four
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum BarFour {
     Off,
     On,
@@ -678,7 +679,7 @@ impl From<BarFour> for u8 {
 }
 
 /// Defined values for Type
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum BarType {
     X0off,
     X1on,
@@ -848,7 +849,7 @@ impl<'a> Arbitrary<'a> for X4wd {
     }
 }
 /// Defined values for _4DRIVE
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum X4wd4drive {
     Off,
     X2wd,
@@ -1350,7 +1351,7 @@ impl<'a> Arbitrary<'a> for Dolor {
     }
 }
 /// Defined values for OneFloat
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum DolorOneFloat {
     Dolor,
     Other,
@@ -1593,13 +1594,13 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
     }
 }
 /// Defined values for multiplexed signal MultiplexTest
-#[derive(Debug)]
+#[derive(Debug, defmt::Format)]
 pub enum MultiplexTestMultiplexorIndex {
     M0(MultiplexTestMultiplexorM0),
     M1(MultiplexTestMultiplexorM1),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, defmt::Format, Default)]
 pub struct MultiplexTestMultiplexorM0 {
     raw: [u8; 8],
 }
@@ -1697,7 +1698,7 @@ impl MultiplexTestMultiplexorM0 {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, defmt::Format, Default)]
 pub struct MultiplexTestMultiplexorM1 {
     raw: [u8; 8],
 }

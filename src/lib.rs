@@ -68,6 +68,10 @@ pub struct Config<'a> {
     #[builder(default)]
     pub impl_serde: FeatureConfig<'a>,
 
+    /// Optional: `impl defmt::Format` for generated types.. Default: `Never`.
+    #[builder(default)]
+    pub impl_defmt: FeatureConfig<'a>,
+
     /// Optional: `impl Error` for generated error type. Default: `Never`.
     ///
     /// Note: this feature depends on `std`.
@@ -155,6 +159,10 @@ pub fn codegen(config: Config<'_>, out: impl Write) -> Result<()> {
 
     config.impl_arbitrary.fmt_cfg(&mut w, |w| {
         writeln!(w, "use arbitrary::{{Arbitrary, Unstructured}};")
+    })?;
+
+    config.impl_defmt.fmt_cfg(&mut w, |w| {
+        writeln!(w, "use defmt::Format;")
     })?;
 
     config.impl_serde.fmt_cfg(&mut w, |w| {
@@ -262,6 +270,7 @@ fn render_message(mut w: impl Write, config: &Config<'_>, msg: &Message, dbc: &D
     writeln!(w, "#[derive(Clone, Copy)]")?;
     config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
     config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
+    config.impl_serde.fmt_attr(&mut w, "derive(defmt::Format)")?;
     writeln!(w, "pub struct {} {{", type_name(msg.message_name()))?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -991,6 +1000,7 @@ fn write_enum(
     config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
     config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
     config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
+    config.impl_defmt.fmt_attr(&mut w, "derive(defmt::Format)")?;
     writeln!(w, "pub enum {} {{", type_name)?;
     {
         let mut w = PadAdapter::wrap(&mut w);
@@ -1423,6 +1433,7 @@ fn render_multiplexor_enums(
     config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
     config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
     config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
+    config.impl_defmt.fmt_attr(&mut w, "derive(defmt::Format)")?;
     writeln!(
         w,
         "pub enum {} {{",
@@ -1450,6 +1461,7 @@ fn render_multiplexor_enums(
         config.impl_debug.fmt_attr(&mut w, "derive(Debug)")?;
         config.impl_serde.fmt_attr(&mut w, "derive(Serialize)")?;
         config.impl_serde.fmt_attr(&mut w, "derive(Deserialize)")?;
+        config.impl_defmt.fmt_attr(&mut w, "derive(defmt::Format)")?;
         writeln!(w, r##"#[derive(Default)]"##)?;
         writeln!(
             w,
