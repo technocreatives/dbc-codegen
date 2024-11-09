@@ -357,7 +357,7 @@ impl Bar {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Bar::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -454,7 +454,7 @@ impl Bar {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Bar::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -507,7 +507,7 @@ impl Bar {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Bar::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -769,7 +769,7 @@ impl X4wd {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: X4wd::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -945,7 +945,7 @@ impl Amet {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Amet::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1034,7 +1034,7 @@ impl Amet {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Amet::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1079,7 +1079,7 @@ impl Amet {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: Amet::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1447,7 +1447,7 @@ impl MultiplexTest {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: MultiplexTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1512,7 +1512,7 @@ impl MultiplexTest {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: MultiplexTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1879,7 +1879,7 @@ impl IntegerFactorOffset {
         }
         let factor = 1;
         let value = value.checked_sub(1).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1924,7 +1924,7 @@ impl IntegerFactorOffset {
         }
         let factor = 4;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -1969,7 +1969,7 @@ impl IntegerFactorOffset {
         }
         let factor = 2;
         let value = value.checked_sub(16).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -2014,7 +2014,7 @@ impl IntegerFactorOffset {
         }
         let factor = 1;
         let value = value.checked_add(1).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -2059,7 +2059,7 @@ impl IntegerFactorOffset {
         }
         let factor = 1;
         let value = value.checked_add(1).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: IntegerFactorOffset::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
@@ -2230,7 +2230,7 @@ impl NegativeFactorTest {
         }
         let factor = -1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: NegativeFactorTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as u16;
 
@@ -2276,7 +2276,7 @@ impl NegativeFactorTest {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: NegativeFactorTest::MESSAGE_ID,
         })?;
         let value = (value / factor) as i16;
 
@@ -2438,7 +2438,7 @@ impl LargerIntsWithOffsets {
         let value = value
             .checked_add(1000)
             .ok_or(CanError::ParameterOutOfRange {
-                message_id: Self::MESSAGE_ID,
+                message_id: LargerIntsWithOffsets::MESSAGE_ID,
             })?;
         let value = (value / factor) as u16;
 
@@ -2487,7 +2487,7 @@ impl LargerIntsWithOffsets {
         let value = value
             .checked_add(1000)
             .ok_or(CanError::ParameterOutOfRange {
-                message_id: Self::MESSAGE_ID,
+                message_id: LargerIntsWithOffsets::MESSAGE_ID,
             })?;
         let value = (value / factor) as u16;
 
@@ -2730,7 +2730,7 @@ impl TruncatedBeSignal {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: TruncatedBeSignal::MESSAGE_ID,
         })?;
         let value = (value / factor) as i16;
 
@@ -2877,7 +2877,7 @@ impl TruncatedLeSignal {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: TruncatedLeSignal::MESSAGE_ID,
         })?;
         let value = (value / factor) as i16;
 
@@ -3023,7 +3023,7 @@ impl MsgExtendedId {
         }
         let factor = 1;
         let value = value.checked_sub(0).ok_or(CanError::ParameterOutOfRange {
-            message_id: Self::MESSAGE_ID,
+            message_id: MsgExtendedId::MESSAGE_ID,
         })?;
         let value = (value / factor) as u8;
 
