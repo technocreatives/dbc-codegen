@@ -23,7 +23,6 @@ anyhow = "1.0.68"
 heck = "0.4.0"
 typed-builder = "0.18.0"
 embedded-can = "0.4.1"
-defmt = "0.3.8"
 
 [workspace]
 members = [

@@ -259,7 +259,6 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "can-dbc",
- "defmt",
  "embedded-can",
  "heck 0.4.1",
  "typed-builder",
