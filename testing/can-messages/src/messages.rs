@@ -21,7 +21,7 @@ use core::ops::BitOr;
 use embedded_can::{ExtendedId, Id, StandardId};
 
 /// All messages
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, defmt::Format)]
 pub enum Messages {
     /// Foo
     Foo(Foo),
@@ -269,6 +269,17 @@ impl core::fmt::Debug for Foo {
         } else {
             f.debug_tuple("Foo").field(&self.raw).finish()
         }
+    }
+}
+
+impl defmt::Format for Foo {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "Foo {{ Voltage={:?} Current={:?} }}",
+            self.voltage(),
+            self.current(),
+        );
     }
 }
 
@@ -622,6 +633,20 @@ impl core::fmt::Debug for Bar {
     }
 }
 
+impl defmt::Format for Bar {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "Bar {{ One={:?} Two={:?} Three={:?} Four={:?} Type={:?} }}",
+            self.one(),
+            self.two(),
+            self.three(),
+            self.four(),
+            self.xtype(),
+        );
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Bar {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -634,7 +659,7 @@ impl<'a> Arbitrary<'a> for Bar {
     }
 }
 /// Defined values for Three
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum BarThree {
     Off,
     On,
@@ -656,7 +681,7 @@ impl From<BarThree> for u8 {
 }
 
 /// Defined values for Four
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum BarFour {
     Off,
     On,
@@ -678,7 +703,7 @@ impl From<BarFour> for u8 {
 }
 
 /// Defined values for Type
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum BarType {
     X0off,
     X1on,
@@ -840,6 +865,12 @@ impl core::fmt::Debug for X4wd {
     }
 }
 
+impl defmt::Format for X4wd {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "X4wd {{ _4DRIVE={:?} }}", self.x4drive(),);
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for X4wd {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -848,7 +879,7 @@ impl<'a> Arbitrary<'a> for X4wd {
     }
 }
 /// Defined values for _4DRIVE
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum X4wd4drive {
     Off,
     X2wd,
@@ -1188,6 +1219,20 @@ impl core::fmt::Debug for Amet {
     }
 }
 
+impl defmt::Format for Amet {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "Amet {{ One={:?} Two={:?} Three={:?} Four={:?} Five={:?} }}",
+            self.one(),
+            self.two(),
+            self.three(),
+            self.four(),
+            self.five(),
+        );
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Amet {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -1342,6 +1387,12 @@ impl core::fmt::Debug for Dolor {
     }
 }
 
+impl defmt::Format for Dolor {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "Dolor {{ OneFloat={:?} }}", self.one_float(),);
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for Dolor {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -1350,7 +1401,7 @@ impl<'a> Arbitrary<'a> for Dolor {
     }
 }
 /// Defined values for OneFloat
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, defmt::Format)]
 pub enum DolorOneFloat {
     Dolor,
     Other,
@@ -1583,6 +1634,16 @@ impl core::fmt::Debug for MultiplexTest {
     }
 }
 
+impl defmt::Format for MultiplexTest {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "MultiplexTest {{ UnmultiplexedSignal={:?} }}",
+            self.unmultiplexed_signal(),
+        );
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for MultiplexTest {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -1593,13 +1654,13 @@ impl<'a> Arbitrary<'a> for MultiplexTest {
     }
 }
 /// Defined values for multiplexed signal MultiplexTest
-#[derive(Debug)]
+#[derive(Debug, defmt::Format)]
 pub enum MultiplexTestMultiplexorIndex {
     M0(MultiplexTestMultiplexorM0),
     M1(MultiplexTestMultiplexorM1),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, defmt::Format, Default)]
 pub struct MultiplexTestMultiplexorM0 {
     raw: [u8; 8],
 }
@@ -1697,7 +1758,7 @@ impl MultiplexTestMultiplexorM0 {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, defmt::Format, Default)]
 pub struct MultiplexTestMultiplexorM1 {
     raw: [u8; 8],
 }
@@ -2139,6 +2200,19 @@ impl core::fmt::Debug for IntegerFactorOffset {
     }
 }
 
+impl defmt::Format for IntegerFactorOffset {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f,
+            "IntegerFactorOffset {{ ByteWithOffset={:?} ByteWithFactor={:?} ByteWithBoth={:?} ByteWithNegativeOffset={:?} ByteWithNegativeMin={:?} }}",
+            self.byte_with_offset(),
+            self.byte_with_factor(),
+            self.byte_with_both(),
+            self.byte_with_negative_offset(),
+            self.byte_with_negative_min(),
+            );
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for IntegerFactorOffset {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -2354,6 +2428,17 @@ impl core::fmt::Debug for NegativeFactorTest {
     }
 }
 
+impl defmt::Format for NegativeFactorTest {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "NegativeFactorTest {{ UnsignedNegativeFactorSignal={:?} WidthMoreThanMinMax={:?} }}",
+            self.unsigned_negative_factor_signal(),
+            self.width_more_than_min_max(),
+        );
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for NegativeFactorTest {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -2561,6 +2646,17 @@ impl core::fmt::Debug for LargerIntsWithOffsets {
     }
 }
 
+impl defmt::Format for LargerIntsWithOffsets {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            "LargerIntsWithOffsets {{ Twelve={:?} Sixteen={:?} }}",
+            self.twelve(),
+            self.sixteen(),
+        );
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for LargerIntsWithOffsets {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -2653,6 +2749,12 @@ impl core::fmt::Debug for MsgWithoutSignals {
         } else {
             f.debug_tuple("MsgWithoutSignals").field(&self.raw).finish()
         }
+    }
+}
+
+impl defmt::Format for MsgWithoutSignals {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "MsgWithoutSignals {{ }}",);
     }
 }
 
@@ -2799,6 +2901,12 @@ impl core::fmt::Debug for TruncatedBeSignal {
         } else {
             f.debug_tuple("TruncatedBeSignal").field(&self.raw).finish()
         }
+    }
+}
+
+impl defmt::Format for TruncatedBeSignal {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "TruncatedBeSignal {{ Foo={:?} }}", self.foo(),);
     }
 }
 
@@ -2949,6 +3057,12 @@ impl core::fmt::Debug for TruncatedLeSignal {
     }
 }
 
+impl defmt::Format for TruncatedLeSignal {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "TruncatedLeSignal {{ Foo={:?} }}", self.foo(),);
+    }
+}
+
 #[cfg(feature = "arb")]
 impl<'a> Arbitrary<'a> for TruncatedLeSignal {
     fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self, arbitrary::Error> {
@@ -3091,6 +3205,12 @@ impl core::fmt::Debug for MsgExtendedId {
         } else {
             f.debug_tuple("MsgExtendedId").field(&self.raw).finish()
         }
+    }
+}
+
+impl defmt::Format for MsgExtendedId {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(f, "MsgExtendedId {{ Dummy={:?} }}", self.dummy(),);
     }
 }
 
